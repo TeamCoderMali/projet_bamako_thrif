@@ -40,10 +40,11 @@ class OrderTrackingPage extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
+                      color: const Color(0xFFF7F4EE),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.checkroom, color: Colors.orange),
+                    child: const Icon(Icons.checkroom,
+                        color: const Color(0xFF6B7F4D)),
                   ),
                   const SizedBox(width: 12),
                   const Column(
@@ -56,7 +57,7 @@ class OrderTrackingPage extends StatelessWidget {
                       Text(
                         '25 000 FCFA',
                         style: TextStyle(
-                          color: Colors.orange,
+                          color: const Color(0xFF6B7F4D),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -95,18 +96,19 @@ class OrderTrackingPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: const Color(0xFFF7F4EE),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: const Color(0xFFD4E4B8)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.access_time, color: Colors.orange),
+                  Icon(Icons.access_time, color: const Color(0xFF6B7F4D)),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Action requise — Venez récupérer avant le 15 juin\n(J+7 — frais de garde après)',
-                      style: TextStyle(color: Colors.orange, fontSize: 12),
+                      style: TextStyle(
+                          color: const Color(0xFF6B7F4D), fontSize: 12),
                     ),
                   ),
                 ],
@@ -131,7 +133,7 @@ class OrderTrackingPage extends StatelessWidget {
                 color: done
                     ? Colors.orange
                     : active
-                        ? Colors.orange.shade200
+                        ? const Color(0xFFD4E4B8)
                         : Colors.grey.shade200,
                 shape: BoxShape.circle,
               ),

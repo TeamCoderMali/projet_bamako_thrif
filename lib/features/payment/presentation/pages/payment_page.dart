@@ -67,7 +67,7 @@ class _PaymentPageState extends State<PaymentPage> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
-                              color: Colors.orange,
+                              color: const Color(0xFF6B7F4D),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -77,13 +77,13 @@ class _PaymentPageState extends State<PaymentPage> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.orange.shade50,
+                              color: const Color(0xFFF7F4EE),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
                               'Fonds bloqués',
                               style: TextStyle(
-                                color: Colors.orange,
+                                color: const Color(0xFF6B7F4D),
                                 fontSize: 10,
                               ),
                             ),
@@ -108,7 +108,7 @@ class _PaymentPageState extends State<PaymentPage> {
             _buildPaymentOption(
               'orange_money',
               'Orange Money',
-              Colors.orange,
+              const Color(0xFF6B7F4D),
               Icons.phone_android,
             ),
             const SizedBox(height: 8),
@@ -162,7 +162,7 @@ class _PaymentPageState extends State<PaymentPage> {
               child: ElevatedButton(
                 onPressed: () => context.go(RouteNames.orders),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                  backgroundColor: const Color(0xFF6B7F4D),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -209,13 +209,11 @@ class _PaymentPageState extends State<PaymentPage> {
             Text(
               label,
               style: TextStyle(
-                fontWeight:
-                    isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
             const Spacer(),
-            if (isSelected)
-              Icon(Icons.check_circle, color: color),
+            if (isSelected) Icon(Icons.check_circle, color: color),
           ],
         ),
       ),

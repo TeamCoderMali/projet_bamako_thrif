@@ -14,7 +14,11 @@ class _HomePageState extends State<HomePage> {
   String _selectedCategory = 'Tous';
 
   final List<String> _categories = [
-    'Tous', 'Femme', 'Homme', 'Enfant', 'Chaussures'
+    'Tous',
+    'Femme',
+    'Homme',
+    'Enfant',
+    'Chaussures'
   ];
 
   final List<Map<String, dynamic>> _articles = [
@@ -74,8 +78,9 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                   CircleAvatar(
-                    backgroundColor: Colors.orange.shade100,
-                    child: const Icon(Icons.person, color: Colors.orange),
+                    backgroundColor: const Color(0xFFD4E4B8),
+                    child: const Icon(Icons.person,
+                        color: const Color(0xFF6B7F4D)),
                   ),
                 ],
               ),
@@ -87,7 +92,8 @@ class _HomePageState extends State<HomePage> {
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Rechercher un article...',
-                  prefixIcon: const Icon(Icons.search, color: Colors.orange),
+                  prefixIcon:
+                      const Icon(Icons.search, color: const Color(0xFF6B7F4D)),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -125,16 +131,16 @@ class _HomePageState extends State<HomePage> {
                         color: isSelected ? Colors.orange : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isSelected ? Colors.orange : Colors.grey.shade300,
+                          color:
+                              isSelected ? Colors.orange : Colors.grey.shade300,
                         ),
                       ),
                       child: Text(
                         _categories[index],
                         style: TextStyle(
                           color: isSelected ? Colors.white : Colors.grey,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -162,7 +168,7 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () {},
                     child: const Text(
                       'Voir tout',
-                      style: TextStyle(color: Colors.orange),
+                      style: TextStyle(color: const Color(0xFF6B7F4D)),
                     ),
                   ),
                 ],
@@ -203,7 +209,7 @@ class _HomePageState extends State<HomePage> {
                           Expanded(
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.orange.shade50,
+                                color: const Color(0xFFF7F4EE),
                                 borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(16),
                                 ),
@@ -212,7 +218,7 @@ class _HomePageState extends State<HomePage> {
                                 child: Icon(
                                   article['image'] as IconData,
                                   size: 60,
-                                  color: Colors.orange,
+                                  color: const Color(0xFF6B7F4D),
                                 ),
                               ),
                             ),
@@ -254,7 +260,7 @@ class _HomePageState extends State<HomePage> {
                                 Text(
                                   '${article['prix']} FCFA',
                                   style: const TextStyle(
-                                    color: Colors.orange,
+                                    color: const Color(0xFF6B7F4D),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
                                   ),
@@ -297,7 +303,7 @@ class _HomePageState extends State<HomePage> {
           }
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.orange,
+        selectedItemColor: const Color(0xFF6B7F4D),
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(

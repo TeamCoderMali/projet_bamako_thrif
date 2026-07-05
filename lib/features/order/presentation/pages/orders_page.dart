@@ -30,7 +30,7 @@ class OrdersPage extends StatelessWidget {
             'Nike Air Max 270',
             '25 000 FCFA',
             'En cours',
-            Colors.orange,
+            const Color(0xFF6B7F4D),
           ),
           _buildCommande(
             context,
@@ -76,10 +76,11 @@ class OrdersPage extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: const Color(0xFFF7F4EE),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.checkroom, color: Colors.orange),
+              child:
+                  const Icon(Icons.checkroom, color: const Color(0xFF6B7F4D)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -93,7 +94,7 @@ class OrdersPage extends StatelessWidget {
                   Text(
                     prix,
                     style: const TextStyle(
-                      color: Colors.orange,
+                      color: const Color(0xFF6B7F4D),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

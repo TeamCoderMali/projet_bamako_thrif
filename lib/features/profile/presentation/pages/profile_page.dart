@@ -22,7 +22,7 @@ class ProfilePage extends StatelessWidget {
                   children: [
                     const CircleAvatar(
                       radius: 40,
-                      backgroundColor: Colors.orange,
+                      backgroundColor: const Color(0xFF6B7F4D),
                       child: Text(
                         'AK',
                         style: TextStyle(
@@ -61,7 +61,7 @@ class ProfilePage extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.orange,
+                  color: const Color(0xFF6B7F4D),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -101,10 +101,13 @@ class ProfilePage extends StatelessWidget {
                   children: [
                     _buildMenuItem(Icons.list_alt, 'Mes annonces', () {}),
                     _buildMenuItem(Icons.favorite_border, 'Mes favoris', () {}),
-                    _buildMenuItem(Icons.shopping_bag_outlined, 'Mes commandes', () {}),
+                    _buildMenuItem(
+                        Icons.shopping_bag_outlined, 'Mes commandes', () {}),
                     _buildMenuItem(Icons.payment_outlined, 'Paiements', () {}),
-                    _buildMenuItem(Icons.notifications_outlined, 'Notifications', () {}),
-                    _buildMenuItem(Icons.settings_outlined, 'Paramètres', () {}),
+                    _buildMenuItem(
+                        Icons.notifications_outlined, 'Notifications', () {}),
+                    _buildMenuItem(
+                        Icons.settings_outlined, 'Paramètres', () {}),
                     _buildMenuItem(Icons.help_outline, 'Aide', () {}),
                     _buildMenuItem(
                       Icons.logout,
@@ -141,13 +144,16 @@ class ProfilePage extends StatelessWidget {
           }
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.orange,
+        selectedItemColor: const Color(0xFF6B7F4D),
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Accueil'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined), label: 'Accueil'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Publier'),
-          BottomNavigationBarItem(icon: Icon(Icons.message_outlined), label: 'Messages'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle_outline), label: 'Publier'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.message_outlined), label: 'Messages'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
       ),

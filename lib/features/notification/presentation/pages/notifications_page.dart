@@ -33,7 +33,7 @@ class NotificationsPage extends StatelessWidget {
           ),
           _buildNotif(
             Icons.access_time,
-            Colors.orange,
+            const Color(0xFF6B7F4D),
             'Rappel dépôt',
             'Vous avez 24h pour déposer votre article vendu.',
             'Il y a 5h',

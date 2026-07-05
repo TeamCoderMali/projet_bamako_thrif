@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bamako_thrift/core/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+
 class IntroPage extends StatefulWidget {
   const IntroPage({super.key});
 
@@ -60,7 +61,8 @@ class _IntroPageState extends State<IntroPage> {
                 itemCount: _slides.length,
                 itemBuilder: (context, index) {
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 16),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -69,13 +71,13 @@ class _IntroPageState extends State<IntroPage> {
                           height: 250,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
+                            color: const Color(0xFFF7F4EE),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Icon(
                             Icons.checkroom,
                             size: 100,
-                            color: Colors.orange,
+                            color: const Color(0xFF6B7F4D),
                           ),
                         ),
                         const SizedBox(height: 40),
@@ -144,15 +146,13 @@ class _IntroPageState extends State<IntroPage> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFF6B7F4D),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                   child: Text(
-                    _currentPage < _slides.length - 1
-                        ? 'Suivant'
-                        : 'Commencer',
+                    _currentPage < _slides.length - 1 ? 'Suivant' : 'Commencer',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

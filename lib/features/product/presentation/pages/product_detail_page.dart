@@ -31,9 +31,10 @@ class ProductDetailPage extends StatelessWidget {
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                color: Colors.orange.shade50,
+                color: const Color(0xFFF7F4EE),
                 child: const Center(
-                  child: Icon(Icons.checkroom, size: 120, color: Colors.orange),
+                  child: Icon(Icons.checkroom,
+                      size: 120, color: const Color(0xFF6B7F4D)),
                 ),
               ),
             ),
@@ -136,7 +137,7 @@ class ProductDetailPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.orange,
+                      color: const Color(0xFF6B7F4D),
                     ),
                   ),
 
@@ -168,7 +169,7 @@ class ProductDetailPage extends StatelessWidget {
                     child: Row(
                       children: [
                         const CircleAvatar(
-                          backgroundColor: Colors.orange,
+                          backgroundColor: const Color(0xFF6B7F4D),
                           child: Text(
                             'BT',
                             style: TextStyle(
@@ -218,7 +219,8 @@ class ProductDetailPage extends StatelessWidget {
                         child: OutlinedButton(
                           onPressed: () => context.go(RouteNames.messages),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.orange),
+                            side: const BorderSide(
+                                color: const Color(0xFF6B7F4D)),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -226,7 +228,7 @@ class ProductDetailPage extends StatelessWidget {
                           ),
                           child: const Text(
                             'Contacter',
-                            style: TextStyle(color: Colors.orange),
+                            style: TextStyle(color: const Color(0xFF6B7F4D)),
                           ),
                         ),
                       ),
@@ -235,7 +237,7 @@ class ProductDetailPage extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: () => context.go(RouteNames.payment),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
+                            backgroundColor: const Color(0xFF6B7F4D),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

@@ -38,11 +38,11 @@ class _ChatPageState extends State<ChatPage> {
             Stack(
               children: [
                 CircleAvatar(
-                  backgroundColor: Colors.orange.shade100,
+                  backgroundColor: const Color(0xFFD4E4B8),
                   child: const Text(
                     'B',
                     style: TextStyle(
-                      color: Colors.orange,
+                      color: const Color(0xFF6B7F4D),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -87,15 +87,15 @@ class _ChatPageState extends State<ChatPage> {
           // Article concerné
           Container(
             padding: const EdgeInsets.all(12),
-            color: Colors.orange.shade50,
+            color: const Color(0xFFF7F4EE),
             child: const Row(
               children: [
-                Icon(Icons.checkroom, color: Colors.orange, size: 20),
+                Icon(Icons.checkroom, color: const Color(0xFF6B7F4D), size: 20),
                 SizedBox(width: 8),
                 Text(
                   'Nike Air Max 270 — 25 000 FCFA',
                   style: TextStyle(
-                    color: Colors.orange,
+                    color: const Color(0xFF6B7F4D),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -178,7 +178,7 @@ class _ChatPageState extends State<ChatPage> {
                     width: 48,
                     height: 48,
                     decoration: const BoxDecoration(
-                      color: Colors.orange,
+                      color: const Color(0xFF6B7F4D),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.send, color: Colors.white),

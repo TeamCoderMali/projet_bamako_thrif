@@ -63,6 +63,23 @@ abstract class AppColors {
     Color(0xFFC3653D),
     Color(0xFFE08A5E),
   ];
+  // ── Couleurs manquantes pour le thème ──────────────────────────────────
+  static const Color onPrimaryContainer = Color(0xFF1A3A0A);
+  static const Color onSecondaryContainer = Color(0xFF2D1600);
+  static const Color onTertiaryContainer = Color(0xFF311300);
+  static const Color onSurfaceVariant = Color(0xFF45463F);
+  static const Color outlineVariant = Color(0xFFCAC4BC);
+
+  // ── Dark theme ─────────────────────────────────────────────────────────
+  static const Color darkPrimary = Color(0xFF8FAF7A);
+  static const Color darkOnPrimary = Color(0xFF1A3A0A);
+  static const Color darkPrimaryContainer = Color(0xFF2D5A1A);
+  static const Color darkSurface = Color(0xFF121210);
+  static const Color darkSurfaceVariant = Color(0xFF1E1E1C);
+  static const Color darkBackground = Color(0xFF0F0F0E);
+  static const Color darkOnSurface = Color(0xFFE4E4DC);
+  static const Color darkOutline = Color(0xFF8F9088);
+  static const Color darkOutlineVariant = Color(0xFF45463F);
 
   // ── Misc ───────────────────────────────────────────────────────────────
   static const Color shadow = Color(0x1A000000);

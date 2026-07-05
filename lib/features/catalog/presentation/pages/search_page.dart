@@ -25,10 +25,9 @@ class _SearchPageState extends State<SearchPage> {
   void _search(String query) {
     setState(() {
       _results = _allArticles
-          .where((a) =>
-              (a['titre'] as String)
-                  .toLowerCase()
-                  .contains(query.toLowerCase()))
+          .where((a) => (a['titre'] as String)
+              .toLowerCase()
+              .contains(query.toLowerCase()))
           .toList();
     });
   }
@@ -90,12 +89,12 @@ class _SearchPageState extends State<SearchPage> {
                           width: 60,
                           height: 60,
                           decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
+                            color: const Color(0xFFF7F4EE),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
                             article['image'] as IconData,
-                            color: Colors.orange,
+                            color: const Color(0xFF6B7F4D),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -111,7 +110,7 @@ class _SearchPageState extends State<SearchPage> {
                             Text(
                               '${article['prix']} FCFA',
                               style: const TextStyle(
-                                color: Colors.orange,
+                                color: const Color(0xFF6B7F4D),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

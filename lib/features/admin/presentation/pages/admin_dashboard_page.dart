@@ -40,8 +40,9 @@ class AdminDashboardPage extends StatelessWidget {
               mainAxisSpacing: 12,
               childAspectRatio: 1.5,
               children: [
-                _buildStat('Ventes', '12', Colors.orange, Icons.sell),
-                _buildStat('Revenus', '12 000 FCFA', Colors.green, Icons.payments),
+                _buildStat('Ventes', '12', const Color(0xFF6B7F4D), Icons.sell),
+                _buildStat(
+                    'Revenus', '12 000 FCFA', Colors.green, Icons.payments),
                 _buildStat('En cours', '5', Colors.blue, Icons.pending),
                 _buildStat('Nouveaux', '8', Colors.purple, Icons.person_add),
               ],
@@ -66,7 +67,7 @@ class AdminDashboardPage extends StatelessWidget {
                     Icons.inventory_2_outlined,
                     'Gérer les articles',
                     'Valider, modifier, inspecter',
-                    Colors.orange,
+                    const Color(0xFF6B7F4D),
                   ),
                   _buildAction(
                     Icons.people_outline,
@@ -98,9 +99,12 @@ class AdminDashboardPage extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 12),
-            _buildCommande('Nike Air Max 270', 'Dépôt attendu', Colors.orange),
-            _buildCommande('Robe longue bleue', 'Inspection en cours', Colors.blue),
-            _buildCommande('Sac à main', 'Disponible — non récupéré', Colors.red),
+            _buildCommande(
+                'Nike Air Max 270', 'Dépôt attendu', const Color(0xFF6B7F4D)),
+            _buildCommande(
+                'Robe longue bleue', 'Inspection en cours', Colors.blue),
+            _buildCommande(
+                'Sac à main', 'Disponible — non récupéré', Colors.red),
           ],
         ),
       ),
@@ -179,7 +183,8 @@ class AdminDashboardPage extends StatelessWidget {
             ),
             child: Text(
               statut,
-              style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: color, fontSize: 11, fontWeight: FontWeight.bold),
             ),
           ),
         ],

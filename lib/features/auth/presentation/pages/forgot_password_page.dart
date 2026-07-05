@@ -35,12 +35,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 width: 70,
                 height: 70,
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: const Color(0xFFF7F4EE),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.lock_reset,
-                  color: Colors.orange,
+                  color: const Color(0xFF6B7F4D),
                   size: 36,
                 ),
               ),
@@ -79,7 +79,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 child: ElevatedButton(
                   onPressed: () => context.go(RouteNames.login),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFF6B7F4D),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),

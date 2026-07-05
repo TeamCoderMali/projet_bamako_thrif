@@ -40,7 +40,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 children: [
                   const CircleAvatar(
                     radius: 50,
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFF6B7F4D),
                     child: Text(
                       'AK',
                       style: TextStyle(
@@ -56,7 +56,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
-                        color: Colors.orange,
+                        color: const Color(0xFF6B7F4D),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -122,7 +122,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               child: ElevatedButton(
                 onPressed: () => context.go(RouteNames.profile),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                  backgroundColor: const Color(0xFF6B7F4D),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),

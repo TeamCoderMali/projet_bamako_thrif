@@ -49,7 +49,7 @@ class PaymentSuccessPage extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => context.go(RouteNames.orders),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                      backgroundColor: const Color(0xFF6B7F4D),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),

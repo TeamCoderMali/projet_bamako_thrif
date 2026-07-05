@@ -15,11 +15,20 @@ class _FilterPageState extends State<FilterPage> {
   RangeValues _prixRange = const RangeValues(0, 50000);
 
   final List<String> _categories = [
-    'Tous', 'Femme', 'Homme', 'Enfant', 'Chaussures', 'Accessoires'
+    'Tous',
+    'Femme',
+    'Homme',
+    'Enfant',
+    'Chaussures',
+    'Accessoires'
   ];
 
   final List<String> _etats = [
-    'Tous', 'Satisfaisant', 'Bon état', 'Très satisfaisant', 'État 99'
+    'Tous',
+    'Satisfaisant',
+    'Bon état',
+    'Très satisfaisant',
+    'État 99'
   ];
 
   @override
@@ -48,7 +57,7 @@ class _FilterPageState extends State<FilterPage> {
             },
             child: const Text(
               'Réinitialiser',
-              style: TextStyle(color: Colors.orange),
+              style: TextStyle(color: const Color(0xFF6B7F4D)),
             ),
           ),
         ],
@@ -73,20 +82,23 @@ class _FilterPageState extends State<FilterPage> {
                   onTap: () => setState(() => _selectedCategorie = cat),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8,
+                      horizontal: 16,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.orange : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? Colors.orange : Colors.grey.shade300,
+                        color:
+                            isSelected ? Colors.orange : Colors.grey.shade300,
                       ),
                     ),
                     child: Text(
                       cat,
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.grey,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -111,20 +123,23 @@ class _FilterPageState extends State<FilterPage> {
                   onTap: () => setState(() => _selectedEtat = etat),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8,
+                      horizontal: 16,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.orange : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? Colors.orange : Colors.grey.shade300,
+                        color:
+                            isSelected ? Colors.orange : Colors.grey.shade300,
                       ),
                     ),
                     child: Text(
                       etat,
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.grey,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -158,7 +173,7 @@ class _FilterPageState extends State<FilterPage> {
               min: 0,
               max: 50000,
               divisions: 50,
-              activeColor: Colors.orange,
+              activeColor: const Color(0xFF6B7F4D),
               onChanged: (values) {
                 setState(() => _prixRange = values);
               },
@@ -173,7 +188,7 @@ class _FilterPageState extends State<FilterPage> {
               child: ElevatedButton(
                 onPressed: () => context.go(RouteNames.catalog),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                  backgroundColor: const Color(0xFF6B7F4D),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),

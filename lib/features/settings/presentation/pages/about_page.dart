@@ -30,7 +30,7 @@ class AboutPage extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: Colors.orange,
+                color: const Color(0xFF6B7F4D),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: const Icon(
@@ -71,7 +71,7 @@ class AboutPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: const Color(0xFFF7F4EE),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Column(

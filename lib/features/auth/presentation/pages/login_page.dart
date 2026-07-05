@@ -95,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
                     context.go(RouteNames.home);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFF6B7F4D),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -121,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: const Text(
                       "S'inscrire",
                       style: TextStyle(
-                        color: Colors.orange,
+                        color: const Color(0xFF6B7F4D),
                         fontWeight: FontWeight.bold,
                       ),
                     ),

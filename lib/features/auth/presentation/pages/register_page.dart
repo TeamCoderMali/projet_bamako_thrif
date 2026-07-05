@@ -98,7 +98,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     context.go(RouteNames.home);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFF6B7F4D),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -124,7 +124,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: const Text(
                       'Se connecter',
                       style: TextStyle(
-                        color: Colors.orange,
+                        color: const Color(0xFF6B7F4D),
                         fontWeight: FontWeight.bold,
                       ),
                     ),

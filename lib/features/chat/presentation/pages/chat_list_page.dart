@@ -20,31 +20,52 @@ class ChatListPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _buildChat(context, '1', 'Baba Traoré', 'Nike Air Max 270 — 25 000 FCFA', 'Oui, toujours disponible !', true),
-          _buildChat(context, '2', 'Awa Diallo', 'Robe longue — 5 000 FCFA', 'Je suis intéressée !', false),
-          _buildChat(context, '3', 'Moussa Koné', 'Sac à main — 15 000 FCFA', 'On peut se voir ?', false),
+          _buildChat(
+              context,
+              '1',
+              'Baba Traoré',
+              'Nike Air Max 270 — 25 000 FCFA',
+              'Oui, toujours disponible !',
+              true),
+          _buildChat(context, '2', 'Awa Diallo', 'Robe longue — 5 000 FCFA',
+              'Je suis intéressée !', false),
+          _buildChat(context, '3', 'Moussa Koné', 'Sac à main — 15 000 FCFA',
+              'On peut se voir ?', false),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 3,
         onTap: (index) {
           switch (index) {
-            case 0: context.go(RouteNames.home); break;
-            case 1: context.go(RouteNames.catalog); break;
-            case 2: context.go(RouteNames.publish); break;
-            case 3: context.go(RouteNames.messages); break;
-            case 4: context.go(RouteNames.profile); break;
+            case 0:
+              context.go(RouteNames.home);
+              break;
+            case 1:
+              context.go(RouteNames.catalog);
+              break;
+            case 2:
+              context.go(RouteNames.publish);
+              break;
+            case 3:
+              context.go(RouteNames.messages);
+              break;
+            case 4:
+              context.go(RouteNames.profile);
+              break;
           }
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.orange,
+        selectedItemColor: const Color(0xFF6B7F4D),
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Accueil'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined), label: 'Accueil'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Publier'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle_outline), label: 'Publier'),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline), label: 'Profil'),
         ],
       ),
     );
@@ -72,11 +93,11 @@ class ChatListPage extends StatelessWidget {
             Stack(
               children: [
                 CircleAvatar(
-                  backgroundColor: Colors.orange.shade100,
+                  backgroundColor: const Color(0xFFD4E4B8),
                   child: Text(
                     nom[0],
                     style: const TextStyle(
-                      color: Colors.orange,
+                      color: const Color(0xFF6B7F4D),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -107,7 +128,8 @@ class ChatListPage extends StatelessWidget {
                   ),
                   Text(
                     article,
-                    style: const TextStyle(color: Colors.orange, fontSize: 11),
+                    style: const TextStyle(
+                        color: const Color(0xFF6B7F4D), fontSize: 11),
                   ),
                   Text(
                     dernierMessage,

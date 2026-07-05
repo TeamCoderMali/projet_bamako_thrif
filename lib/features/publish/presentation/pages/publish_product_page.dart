@@ -59,18 +59,19 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
+                      color: const Color(0xFFF7F4EE),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.orange.shade200),
+                      border: Border.all(color: const Color(0xFFD4E4B8)),
                     ),
                     child: const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_a_photo, color: Colors.orange),
+                        Icon(Icons.add_a_photo, color: const Color(0xFF6B7F4D)),
                         SizedBox(height: 4),
                         Text(
                           'Ajouter',
-                          style: TextStyle(color: Colors.orange, fontSize: 12),
+                          style: TextStyle(
+                              color: const Color(0xFF6B7F4D), fontSize: 12),
                         ),
                       ],
                     ),
@@ -212,7 +213,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                   context.go(RouteNames.home);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                  backgroundColor: const Color(0xFF6B7F4D),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -261,14 +262,18 @@ class _PublishProductPageState extends State<PublishProductPage> {
           }
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.orange,
+        selectedItemColor: const Color(0xFF6B7F4D),
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Accueil'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined), label: 'Accueil'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: 'Publier'),
-          BottomNavigationBarItem(icon: Icon(Icons.message_outlined), label: 'Messages'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle), label: 'Publier'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.message_outlined), label: 'Messages'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline), label: 'Profil'),
         ],
       ),
     );

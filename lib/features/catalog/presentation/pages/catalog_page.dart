@@ -13,16 +13,51 @@ class _CatalogPageState extends State<CatalogPage> {
   String _selectedCategory = 'Tous';
 
   final List<String> _categories = [
-    'Tous', 'Femme', 'Homme', 'Enfant', 'Chaussures', 'Accessoires'
+    'Tous',
+    'Femme',
+    'Homme',
+    'Enfant',
+    'Chaussures',
+    'Accessoires'
   ];
 
   final List<Map<String, dynamic>> _articles = [
-    {'titre': 'Robe longue', 'prix': 5000, 'image': Icons.checkroom, 'etat': 'Bon état'},
-    {'titre': 'Nike Air Max', 'prix': 25000, 'image': Icons.sports_football, 'etat': 'Très satisfaisant'},
-    {'titre': 'Sac à main', 'prix': 15000, 'image': Icons.wallet, 'etat': 'Bon état'},
-    {'titre': 'Montre Casio', 'prix': 10000, 'image': Icons.watch, 'etat': 'Satisfaisant'},
-    {'titre': 'Jean slim', 'prix': 8000, 'image': Icons.checkroom, 'etat': 'Bon état'},
-    {'titre': 'Veste en cuir', 'prix': 20000, 'image': Icons.checkroom, 'etat': 'Très satisfaisant'},
+    {
+      'titre': 'Robe longue',
+      'prix': 5000,
+      'image': Icons.checkroom,
+      'etat': 'Bon état'
+    },
+    {
+      'titre': 'Nike Air Max',
+      'prix': 25000,
+      'image': Icons.sports_football,
+      'etat': 'Très satisfaisant'
+    },
+    {
+      'titre': 'Sac à main',
+      'prix': 15000,
+      'image': Icons.wallet,
+      'etat': 'Bon état'
+    },
+    {
+      'titre': 'Montre Casio',
+      'prix': 10000,
+      'image': Icons.watch,
+      'etat': 'Satisfaisant'
+    },
+    {
+      'titre': 'Jean slim',
+      'prix': 8000,
+      'image': Icons.checkroom,
+      'etat': 'Bon état'
+    },
+    {
+      'titre': 'Veste en cuir',
+      'prix': 20000,
+      'image': Icons.checkroom,
+      'etat': 'Très satisfaisant'
+    },
   ];
 
   @override
@@ -51,7 +86,8 @@ class _CatalogPageState extends State<CatalogPage> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Rechercher un article...',
-                prefixIcon: const Icon(Icons.search, color: Colors.orange),
+                prefixIcon:
+                    const Icon(Icons.search, color: const Color(0xFF6B7F4D)),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -78,20 +114,23 @@ class _CatalogPageState extends State<CatalogPage> {
                   child: Container(
                     margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8,
+                      horizontal: 16,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.orange : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? Colors.orange : Colors.grey.shade300,
+                        color:
+                            isSelected ? Colors.orange : Colors.grey.shade300,
                       ),
                     ),
                     child: Text(
                       _categories[index],
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.grey,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -135,7 +174,7 @@ class _CatalogPageState extends State<CatalogPage> {
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.orange.shade50,
+                              color: const Color(0xFFF7F4EE),
                               borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(16),
                               ),
@@ -144,7 +183,7 @@ class _CatalogPageState extends State<CatalogPage> {
                               child: Icon(
                                 article['image'] as IconData,
                                 size: 60,
-                                color: Colors.orange,
+                                color: const Color(0xFF6B7F4D),
                               ),
                             ),
                           ),
@@ -156,7 +195,8 @@ class _CatalogPageState extends State<CatalogPage> {
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2,
+                                  horizontal: 6,
+                                  vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
                                   color: Colors.green.shade50,
@@ -183,7 +223,7 @@ class _CatalogPageState extends State<CatalogPage> {
                               Text(
                                 '${article['prix']} FCFA',
                                 style: const TextStyle(
-                                  color: Colors.orange,
+                                  color: const Color(0xFF6B7F4D),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                 ),
@@ -204,22 +244,36 @@ class _CatalogPageState extends State<CatalogPage> {
         currentIndex: 1,
         onTap: (index) {
           switch (index) {
-            case 0: context.go(RouteNames.home); break;
-            case 1: context.go(RouteNames.catalog); break;
-            case 2: context.go(RouteNames.publish); break;
-            case 3: context.go(RouteNames.messages); break;
-            case 4: context.go(RouteNames.profile); break;
+            case 0:
+              context.go(RouteNames.home);
+              break;
+            case 1:
+              context.go(RouteNames.catalog);
+              break;
+            case 2:
+              context.go(RouteNames.publish);
+              break;
+            case 3:
+              context.go(RouteNames.messages);
+              break;
+            case 4:
+              context.go(RouteNames.profile);
+              break;
           }
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.orange,
+        selectedItemColor: const Color(0xFF6B7F4D),
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Accueil'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined), label: 'Accueil'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Publier'),
-          BottomNavigationBarItem(icon: Icon(Icons.message_outlined), label: 'Messages'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle_outline), label: 'Publier'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.message_outlined), label: 'Messages'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline), label: 'Profil'),
         ],
       ),
     );

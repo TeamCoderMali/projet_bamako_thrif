@@ -30,7 +30,7 @@ class WalletPage extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.orange,
+                color: const Color(0xFF6B7F4D),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Column(
@@ -61,17 +61,18 @@ class WalletPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: const Color(0xFFF7F4EE),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.orange),
+                  Icon(Icons.info_outline, color: const Color(0xFF6B7F4D)),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'L\'avoir est valable 3 mois et non remboursable en cash.',
-                      style: TextStyle(color: Colors.orange, fontSize: 12),
+                      style: TextStyle(
+                          color: const Color(0xFF6B7F4D), fontSize: 12),
                     ),
                   ),
                 ],
@@ -87,7 +88,8 @@ class WalletPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _buildTransaction('Remboursement commande #123', '+5 000 FCFA', Colors.green),
+            _buildTransaction(
+                'Remboursement commande #123', '+5 000 FCFA', Colors.green),
             _buildTransaction('Achat Nike Air Max', '-25 000 FCFA', Colors.red),
             _buildTransaction('Vente Robe longue', '+5 000 FCFA', Colors.green),
           ],
