@@ -59,7 +59,7 @@ ThemeData buildLightTheme() {
     scaffoldBackgroundColor: AppColors.background,
 
     // ── Card ────────────────────────────────────────────────────────────
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: AppSizes.cardElevation,
       color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
@@ -206,7 +206,7 @@ ThemeData buildLightTheme() {
     ),
 
     // ── Dialog ──────────────────────────────────────────────────────────
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: AppRadius.xl),
       elevation: 8,

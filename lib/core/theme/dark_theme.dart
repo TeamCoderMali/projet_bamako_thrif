@@ -58,7 +58,7 @@ ThemeData buildDarkTheme() {
     scaffoldBackgroundColor: AppColors.darkBackground,
 
     // ── Card ────────────────────────────────────────────────────────────
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0,
       color: AppColors.darkSurfaceVariant,
       shape: RoundedRectangleBorder(borderRadius: AppRadius.lg),
@@ -160,7 +160,7 @@ ThemeData buildDarkTheme() {
     ),
 
     // ── Dialog ──────────────────────────────────────────────────────────
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: AppColors.darkSurfaceVariant,
       shape: RoundedRectangleBorder(borderRadius: AppRadius.xl),
     ),
