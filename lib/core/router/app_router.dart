@@ -59,7 +59,7 @@ import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 
 final GoRouter appRouter = GoRouter(
   debugLogDiagnostics: true,
-  initialLocation: RouteNames.intro,
+  initialLocation: RouteNames.welcome,
   routes: [
     // ── Onboarding ─────────────────────────────────────────────────────
     GoRoute(
