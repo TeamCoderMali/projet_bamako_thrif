@@ -25,20 +25,31 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
+              // Logo
+              Center(
+                child: Image.asset(
+                  'assets/images/logo_danaya.png',
+                  width: 130,
+                  height: 130,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Titre
               const Text(
                 'Créer un compte',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFF2B2B2B),
                 ),
               ),
               const SizedBox(height: 8),
               const Text(
-                'Rejoins Bamako Thrift',
+                'Rejoins DANAYA',
                 style: TextStyle(color: Colors.grey),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
               // Nom complet
               TextField(
                 controller: _nomController,
@@ -94,9 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    context.go(RouteNames.home);
-                  },
+                  onPressed: () => context.go(RouteNames.home),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6B7F4D),
                     shape: RoundedRectangleBorder(
@@ -124,7 +133,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: const Text(
                       'Se connecter',
                       style: TextStyle(
-                        color: const Color(0xFF6B7F4D),
+                        color: Color(0xFF6B7F4D),
                         fontWeight: FontWeight.bold,
                       ),
                     ),

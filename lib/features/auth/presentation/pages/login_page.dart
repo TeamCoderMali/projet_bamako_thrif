@@ -24,21 +24,31 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
+              // Logo
+              Center(
+                child: Image.asset(
+                  'assets/images/logo_danaya.png',
+                  width: 150,
+                  height: 150,
+                ),
+              ),
+              const SizedBox(height: 16),
               // Titre
               const Text(
                 'Se connecter',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFF2B2B2B),
                 ),
               ),
               const SizedBox(height: 8),
               const Text(
-                'Bienvenue sur Bamako Thrift',
+                'Bienvenue sur DANAYA',
                 style: TextStyle(color: Colors.grey),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
               // Champ Email
               TextField(
                 controller: _emailController,
@@ -81,8 +91,11 @@ class _LoginPageState extends State<LoginPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {},
-                  child: const Text('Mot de passe oublié ?'),
+                  onPressed: () => context.go(RouteNames.forgotPassword),
+                  child: const Text(
+                    'Mot de passe oublié ?',
+                    style: TextStyle(color: Color(0xFFC3653D)),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -91,9 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    context.go(RouteNames.home);
-                  },
+                  onPressed: () => context.go(RouteNames.home),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6B7F4D),
                     shape: RoundedRectangleBorder(
@@ -121,7 +132,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: const Text(
                       "S'inscrire",
                       style: TextStyle(
-                        color: const Color(0xFF6B7F4D),
+                        color: Color(0xFF6B7F4D),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
