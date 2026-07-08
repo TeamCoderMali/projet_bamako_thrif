@@ -8,17 +8,20 @@ class AboutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF2B2B2B)),
           onPressed: () => context.go(RouteNames.settings),
         ),
         title: const Text(
           'À propos',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Color(0xFF2B2B2B),
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -26,26 +29,10 @@ class AboutPage extends StatelessWidget {
         child: Column(
           children: [
             // Logo
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: const Color(0xFF6B7F4D),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Icon(
-                Icons.checkroom,
-                color: Colors.white,
-                size: 60,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Bamako Thrift',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+            Image.asset(
+              'assets/images/logo_danaya.png',
+              width: 180,
+              height: 180,
             ),
             const Text(
               'Version 1.0.0',
@@ -63,7 +50,7 @@ class AboutPage extends StatelessWidget {
             _buildInfo('Fondée en', '2026'),
             _buildInfo('Basée à', 'Bamako, Mali'),
             _buildInfo('Paiement', 'Orange Money & Moov Money'),
-            _buildInfo('Support', 'support@bamakothrift.ml'),
+            _buildInfo('Support', 'support@danaya.ml'),
 
             const SizedBox(height: 32),
 
@@ -71,7 +58,7 @@ class AboutPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F4EE),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Column(
@@ -81,6 +68,7 @@ class AboutPage extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
+                      color: Color(0xFF2B2B2B),
                     ),
                   ),
                   SizedBox(height: 8),
@@ -110,7 +98,13 @@ class AboutPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2B2B2B),
+            ),
+          ),
         ],
       ),
     );
