@@ -33,7 +33,6 @@ class _WelcomePageState extends State<WelcomePage>
 
     _controller.forward();
 
-    // Naviguer vers Onboarding après 3 secondes
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) context.go(RouteNames.intro);
     });
@@ -58,44 +57,12 @@ class _WelcomePageState extends State<WelcomePage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: const Icon(
-                      Icons.checkroom,
-                      size: 70,
-                      color: Color(0xFF6B7F4D),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Nom
-                  const Text(
-                    'DANAYA',
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 4,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Slogan
-                  const Text(
-                    'Seconde main, première confiance.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                      fontFamily: 'Poppins',
-                    ),
+                  Image.asset(
+                    'assets/images/logo_danaya.png',
+                    width: 220,
+                    height: 220,
                   ),
                   const SizedBox(height: 60),
-                  // Loading indicator
                   const SizedBox(
                     width: 30,
                     height: 30,
