@@ -1,5 +1,5 @@
 name: bamako_thrift
-description: "Bamako Thrift – Marketplace de vêtements de seconde main."
+description: "DANAYA – Seconde main, première confiance."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -76,3 +76,13 @@ flutter:
     - assets/icons/
     - assets/animations/
     - assets/fonts/
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
