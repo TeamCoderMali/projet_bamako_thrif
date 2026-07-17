@@ -28,6 +28,7 @@ abstract class RouteNames {
   // ── Profile sub-routes ────────────────────────────────────────────────
   static const String editProfile = '/profile/edit';
   static const String wallet = '/profile/wallet';
+  static const String myListings = '/profile/listings';
   static const String history = '/profile/history';
 
   // ── Payment ───────────────────────────────────────────────────────────

@@ -1,219 +1,669 @@
+// ─── Bamako Thrift — Payment Page ────────────────────────────────────────────
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 
 class PaymentPage extends StatefulWidget {
-  const PaymentPage({super.key});
+  final ProductEntity? product;
+  const PaymentPage({super.key, this.product});
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  String _selectedMethod = 'orange_money';
+  String _method = 'orange_money';
+  bool _isProcessing = false;
+  final _phoneCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  // ── Formats ────────────────────────────────────────────────────────────────
+  String _fmt(double price) =>
+      '${price.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ')} FCFA';
+
+  String _condition(ProductCondition c) {
+    switch (c) {
+      case ProductCondition.newWithTags:    return 'Neuf avec étiquette';
+      case ProductCondition.newWithoutTags: return 'Neuf sans étiquette';
+      case ProductCondition.veryGood:       return 'Très bon état';
+      case ProductCondition.good:           return 'Bon état';
+      case ProductCondition.fair:           return 'État correct';
+    }
+  }
+
+  // ── Validation ─────────────────────────────────────────────────────────────
+  bool _validate() {
+    if (_method == 'card') {
+      // Pas de numéro de téléphone requis pour carte
+      return true;
+    }
+    if (_method == 'wave') return true;
+    final phone = _phoneCtrl.text.trim();
+    if (phone.isEmpty || phone.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Entrez un numéro de téléphone valide (8 chiffres)'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  // ── Paiement ───────────────────────────────────────────────────────────────
+  Future<void> _pay() async {
+    if (!_validate()) return;
+    setState(() => _isProcessing = true);
+
+    try {
+      // ── Simulation appel API paiement ──────────────────────────────────
+      // TODO: Remplacer par l'appel réel (CinetPay, Bizao, etc.)
+      final result = await _callPaymentGateway();
+
+      if (!mounted) return;
+
+      if (result.success) {
+        // ✅ Succès → créer la commande dans Firestore
+        await _createOrder();
+        if (mounted) context.go(RouteNames.paymentSuccess);
+      } else {
+        // ❌ Échec → rediriger vers page erreur avec raison
+        if (mounted) {
+          context.go(
+            RouteNames.paymentFailed,
+            extra: result.errorMessage,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        context.go(RouteNames.paymentFailed, extra: e.toString());
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  // ── Simulation API ─────────────────────────────────────────────────────────
+  Future<_PayResult> _callPaymentGateway() async {
+    // Délai simulé (2s)
+    await Future.delayed(const Duration(seconds: 2));
+
+    // TODO: intégrer CinetPay / Bizao / Orange Money API ici
+    // Pour l'instant on simule toujours le succès pendant le dev
+    // En prod, retourner _PayResult(false, 'Solde insuffisant') en cas d'échec
+    return _PayResult(true, null);
+  }
+
+  // ── Créer commande Firestore ───────────────────────────────────────────────
+  Future<void> _createOrder() async {
+    final product = widget.product;
+    if (product == null) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    // 1. Créer la commande
+    await FirebaseFirestore.instance.collection('order').add({
+      'buyerId':       uid,
+      'sellerId':      product.sellerId,
+      'productId':     product.id,
+      'productTitle':  product.title,
+      'productImageUrl': product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
+      'totalAmount':   product.price,
+      'status':        'pending',
+      'paymentMethod': _method,
+      'createdAt':     FieldValue.serverTimestamp(),
+    });
+
+    // 2. Marquer le produit comme vendu → disparaît du catalogue
+    await _markProductSold(product.id);
+
+    // 3. Enregistrer les transactions portefeuille
+    await _recordWalletTransactions(uid, product);
+  }
+
+  // ── Marquer produit vendu ──────────────────────────────────────────────────
+  Future<void> _markProductSold(String productId) async {
+    await FirebaseFirestore.instance
+        .collection('product')
+        .doc(productId)
+        .update({'status': 'sold'});
+  }
+
+  // ── Transactions portefeuille ──────────────────────────────────────────────
+  Future<void> _recordWalletTransactions(
+      String buyerId, ProductEntity product) async {
+    final db    = FirebaseFirestore.instance;
+    final price = product.price;
+    final title = product.title;
+
+    // Acheteur : débit
+    final buyerWallet = db.collection('wallet').doc(buyerId);
+    await buyerWallet.set({
+      'balance':    FieldValue.increment(-price),
+      'totalSpent': FieldValue.increment(price),
+      'updatedAt':  FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await buyerWallet.collection('transactions').add({
+      'type':      'debit',
+      'amount':    price,
+      'label':     'Achat – $title',
+      'productId': product.id,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Vendeur : crédit (en attente de confirmation réception)
+    final sellerWallet = db.collection('wallet').doc(product.sellerId);
+    await sellerWallet.set({
+      'balance':      FieldValue.increment(price),
+      'totalEarned':  FieldValue.increment(price),
+      'updatedAt':    FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await sellerWallet.collection('transactions').add({
+      'type':      'credit',
+      'amount':    price,
+      'label':     'Vente – $title',
+      'productId': product.id,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final product = widget.product;
+    final price   = product?.price ?? 0.0;
+    final fmtPrice = _fmt(price);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.go(RouteNames.home),
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => context.canPop() ? context.pop() : context.go(RouteNames.home),
         ),
         title: const Text(
-          'Paiement sécurisé',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          'Paiement',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+          ),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: Row(
+              children: [
+                Icon(Icons.lock_outline, size: 13, color: Colors.green.shade600),
+                const SizedBox(width: 4),
+                Text(
+                  'Sécurisé',
+                  style: TextStyle(
+                    color: Colors.green.shade600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Résumé commande
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
+
+            // ── Récapitulatif ──────────────────────────────────────────────
+            _SectionCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Nike Air Max 270 — Pointure 42',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    'Récapitulatif',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Vendeur : Baba Traoré ✓',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  const Divider(height: 24),
+                  const SizedBox(height: 12),
+                  if (product != null) ...[
+                    Text(
+                      product.title,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      [
+                        if (product.sellerName != null) product.sellerName!,
+                        if (product.size != null) 'Taille ${product.size}',
+                        _condition(product.condition),
+                      ].join(' · '),
+                      style: const TextStyle(
+                          color: Colors.grey, fontSize: 12),
+                    ),
+                  ] else
+                    const Text('Article',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Divider(height: 20),
+                  _PriceLine(label: 'Prix', value: fmtPrice),
+                  const SizedBox(height: 6),
+                  _PriceLine(label: 'Commission', value: 'Gratuit', valueColor: const Color(0xFF6B7F4D)),
+                  const Divider(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Total',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Row(
-                        children: [
-                          const Text(
-                            '25 000 FCFA',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: const Color(0xFF6B7F4D),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7F4EE),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'Fonds bloqués',
-                              style: TextStyle(
-                                color: const Color(0xFF6B7F4D),
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                        ],
+                      const Text('Total',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(
+                        fmtPrice,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Color(0xFF6B7F4D),
+                        ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            const Text(
-              'Méthode de paiement',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-
-            // Orange Money
-            _buildPaymentOption(
-              'orange_money',
-              'Orange Money',
-              const Color(0xFF6B7F4D),
-              Icons.phone_android,
-            ),
-            const SizedBox(height: 8),
-
-            // Moov Money
-            _buildPaymentOption(
-              'moov_money',
-              'Moov Money',
-              Colors.blue,
-              Icons.phone_android,
-            ),
-            const SizedBox(height: 8),
-
-            // Avoir
-            _buildPaymentOption(
-              'avoir',
-              'Mon Avoir (3 500 FCFA dispo)',
-              Colors.green,
-              Icons.account_balance_wallet,
-            ),
-
-            const SizedBox(height: 32),
-
-            // Info sécurité
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.security, color: Colors.green, size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Paiements 100% sécurisés — L\'argent est bloqué jusqu\'à validation',
-                      style: TextStyle(color: Colors.green, fontSize: 12),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F5E8),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.shield_outlined,
+                            size: 14, color: Color(0xFF6B7F4D)),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Fonds sécurisés — libérés après confirmation de réception',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF5A6B3E),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
-            // Bouton Payer
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () => context.go(RouteNames.orders),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6B7F4D),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text(
-                  'Payer maintenant',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+            // ── Moyens de paiement ─────────────────────────────────────────
+            const Text(
+              'Moyen de paiement',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            ),
+            const SizedBox(height: 10),
+
+            _MethodTile(
+              value: 'orange_money',
+              logo: 'assets/images/orange_money.png',
+              name: 'Orange Money',
+              detail: '*144# · Mali',
+              accentColor: const Color(0xFFFF7900),
+              selected: _method,
+              onTap: (v) => setState(() => _method = v),
+            ),
+            const SizedBox(height: 8),
+            _MethodTile(
+              value: 'moov_money',
+              logo: 'assets/images/moov_money.png',
+              name: 'Moov Money',
+              detail: '*155# · Mali',
+              accentColor: const Color(0xFF005EB8),
+              selected: _method,
+              onTap: (v) => setState(() => _method = v),
+            ),
+            const SizedBox(height: 8),
+            _MethodTile(
+              value: 'wave',
+              logo: 'assets/images/wave.png',
+              name: 'Wave',
+              detail: 'QR code',
+              accentColor: const Color(0xFF1BB3F0),
+              selected: _method,
+              onTap: (v) => setState(() => _method = v),
+            ),
+            const SizedBox(height: 8),
+            _MethodTile(
+              value: 'card',
+              logo: 'assets/images/carte_bancaire.png',
+              name: 'Carte bancaire',
+              detail: 'Visa / Mastercard',
+              accentColor: const Color(0xFF1A1A2E),
+              selected: _method,
+              onTap: (v) => setState(() => _method = v),
+            ),
+
+            const SizedBox(height: 16),
+
+            // ── Saisie selon le moyen ──────────────────────────────────────
+            if (_method == 'orange_money' || _method == 'moov_money') ...[
+              const Text('Numéro de téléphone',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              const SizedBox(height: 8),
+              _SectionCard(
+                child: TextField(
+                  controller: _phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  maxLength: 8,
+                  decoration: InputDecoration(
+                    hintText: '70 12 34 56',
+                    hintStyle: const TextStyle(color: Colors.grey),
+                    prefixText: '+223  ',
+                    prefixStyle: const TextStyle(
+                        color: Colors.black87, fontWeight: FontWeight.w600),
+                    counterText: '',
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
                   ),
                 ),
               ),
+              const SizedBox(height: 6),
+              Text(
+                _method == 'orange_money'
+                    ? 'Un message de confirmation vous sera envoyé via Orange Money'
+                    : 'Un message de confirmation vous sera envoyé via Moov Money',
+                style: const TextStyle(color: Colors.grey, fontSize: 11),
+              ),
+            ],
+
+            if (_method == 'wave') ...[
+              _SectionCard(
+                child: Column(
+                  children: [
+                    const Icon(Icons.qr_code_2,
+                        size: 72, color: Color(0xFF1BB3F0)),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Ouvrez l\'app Wave et scannez le QR code',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            if (_method == 'card') ...[
+              _SectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Numéro de carte',
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              hintText: 'MM/AA',
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              hintText: 'CVV',
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                            ),
+                            keyboardType: TextInputType.number,
+                            obscureText: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 24),
+
+            // ── Bouton Payer ───────────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _isProcessing ? null : _pay,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B7F4D),
+                  disabledBackgroundColor:
+                      const Color(0xFF6B7F4D).withOpacity(0.55),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isProcessing
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Text(
+                        'Payer $fmtPrice',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+              ),
             ),
+
+            const SizedBox(height: 14),
+            const Center(
+              child: Text(
+                '🔒  Paiement sécurisé · Aucun remboursement sans accord vendeur',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 10),
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildPaymentOption(
-    String value,
-    String label,
-    Color color,
-    IconData icon,
-  ) {
-    final isSelected = _selectedMethod == value;
+// ── Résultat API paiement ──────────────────────────────────────────────────
+class _PayResult {
+  final bool success;
+  final String? errorMessage;
+  const _PayResult(this.success, this.errorMessage);
+}
+
+// ── Widgets utilitaires ────────────────────────────────────────────────────
+
+class _SectionCard extends StatelessWidget {
+  final Widget child;
+  const _SectionCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: child,
+      );
+}
+
+class _PriceLine extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  const _PriceLine({required this.label, required this.value, this.valueColor});
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Text(value,
+              style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: valueColor ?? Colors.black87)),
+        ],
+      );
+}
+
+class _MethodTile extends StatelessWidget {
+  final String value;
+  final String logo;
+  final String name;
+  final String detail;
+  final Color accentColor;
+  final String selected;
+  final ValueChanged<String> onTap;
+
+  const _MethodTile({
+    required this.value,
+    required this.logo,
+    required this.name,
+    required this.detail,
+    required this.accentColor,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = selected == value;
     return GestureDetector(
-      onTap: () => setState(() => _selectedMethod = value),
-      child: Container(
-        padding: const EdgeInsets.all(16),
+      onTap: () => onTap(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : Colors.grey.shade200,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? accentColor : Colors.grey.shade200,
+            width: isSelected ? 1.8 : 1,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: accentColor.withOpacity(0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  )
+                ]
+              : [],
         ),
         child: Row(
           children: [
-            Icon(icon, color: color),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            // Logo
+            SizedBox(
+              width: 40,
+              height: 28,
+              child: Image.asset(
+                logo,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.payment,
+                  color: accentColor,
+                  size: 26,
+                ),
               ),
             ),
-            const Spacer(),
-            if (isSelected) Icon(Icons.check_circle, color: color),
+            const SizedBox(width: 12),
+            // Nom + détail
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: isSelected ? accentColor : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    detail,
+                    style: const TextStyle(
+                        color: Colors.grey, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            // Radio
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? accentColor : Colors.grey.shade300,
+                  width: 2,
+                ),
+                color: isSelected ? accentColor : Colors.transparent,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check,
+                      color: Colors.white, size: 13)
+                  : null,
+            ),
           ],
         ),
       ),
