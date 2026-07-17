@@ -2,18 +2,25 @@
 import '../entities/user_entity.dart';
 
 abstract class AuthRepository {
-  /// Connexion email/mot de passe.
+  /// Stream de l'état de connexion (UserEntity ou null).
+  Stream<UserEntity?> get authStateChanges;
+
+  /// Récupère l'utilisateur actuellement connecté (null si non connecté).
+  Future<UserEntity?> getCurrentUser();
+
+  /// Connexion email/mot de passe → retourne le UserEntity.
   Future<UserEntity> signInWithEmail({
     required String email,
     required String password,
   });
 
-  /// Inscription email/mot de passe.
+  /// Inscription email/mot de passe → crée le doc Firestore → retourne UserEntity.
   Future<UserEntity> registerWithEmail({
     required String email,
     required String password,
     required String fullName,
     String? phoneNumber,
+    UserRole role,
   });
 
   /// Connexion avec Google.
@@ -28,13 +35,7 @@ abstract class AuthRepository {
   /// Envoi email de vérification.
   Future<void> sendEmailVerification();
 
-  /// Récupère l'utilisateur actuellement connecté.
-  Future<UserEntity?> getCurrentUser();
-
-  /// Stream de l'état de connexion.
-  Stream<UserEntity?> get authStateChanges;
-
-  /// Met à jour le profil utilisateur.
+  /// Met à jour le profil utilisateur (Firestore + FirebaseAuth displayName).
   Future<UserEntity> updateProfile({
     String? fullName,
     String? bio,
@@ -42,6 +43,6 @@ abstract class AuthRepository {
     String? avatarUrl,
   });
 
-  /// Supprime le compte.
+  /// Supprime le compte (Firestore + Firebase Auth).
   Future<void> deleteAccount();
 }
