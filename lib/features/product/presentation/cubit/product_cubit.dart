@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../domain/repositories/product_repository.dart';
 
-// ── States ─────────────────────────────────────────────────────────────────
+// ── States ──────────────────────────────────────────────────────────────────
 abstract class ProductState extends Equatable {
   const ProductState();
 
@@ -55,6 +55,14 @@ class ProductDetailLoaded extends ProductState {
   List<Object?> get props => [product];
 }
 
+class ProductPublished extends ProductState {
+  final ProductEntity product;
+  const ProductPublished(this.product);
+
+  @override
+  List<Object?> get props => [product];
+}
+
 class ProductError extends ProductState {
   final String message;
   const ProductError(this.message);
@@ -63,7 +71,16 @@ class ProductError extends ProductState {
   List<Object?> get props => [message];
 }
 
-// ── Cubit ──────────────────────────────────────────────────────────────────
+class ProductSearchResult extends ProductState {
+  final List<ProductEntity> results;
+  final String query;
+  const ProductSearchResult({required this.results, required this.query});
+
+  @override
+  List<Object?> get props => [results, query];
+}
+
+// ── Cubit ────────────────────────────────────────────────────────────────────
 class ProductCubit extends Cubit<ProductState> {
   final ProductRepository _repository;
 
@@ -71,6 +88,7 @@ class ProductCubit extends Cubit<ProductState> {
       : _repository = repository,
         super(const ProductInitial());
 
+  // ── Charger les produits ──────────────────────────────────────────────────
   Future<void> loadProducts({
     ProductCategory? category,
     bool refresh = false,
@@ -86,21 +104,75 @@ class ProductCubit extends Cubit<ProductState> {
     }
   }
 
+  // ── Charger avec filtres avancés ──────────────────────────────────────────
+  Future<void> loadProductsWithFilters({
+    ProductCategory? category,
+    ProductCondition? condition,
+    double? minPrice,
+    double? maxPrice,
+  }) async {
+    emit(const ProductLoading());
+    try {
+      final products = await _repository.getProducts(
+        category: category,
+        condition: condition,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+      );
+      emit(ProductLoaded(products: products, hasMore: products.length == 20));
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  // ── Charger le détail d'un produit ───────────────────────────────────────
   Future<void> loadProductDetail(String id) async {
     emit(const ProductLoading());
     try {
       final product = await _repository.getProductById(id);
+      // Incrémenter les vues en arrière-plan
+      _repository.incrementViewCount(id).catchError((_) {});
       emit(ProductDetailLoaded(product));
     } catch (e) {
       emit(ProductError(e.toString()));
     }
   }
 
+  // ── Rechercher des produits ─────────────────────────────────────
   Future<void> searchProducts(String query) async {
     emit(const ProductLoading());
     try {
       final products = await _repository.searchProducts(query);
-      emit(ProductLoaded(products: products));
+      emit(ProductSearchResult(results: products, query: query));
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  // ── Créer un produit ──────────────────────────────────────────────────────
+  Future<void> createProduct(ProductEntity product) async {
+    emit(const ProductLoading());
+    try {
+      final created = await _repository.createProduct(product);
+      emit(ProductPublished(created));
+    } catch (e) {
+      emit(ProductError(e.toString()));
+      rethrow;
+    }
+  }
+
+  // ── Ajouter/retirer des favoris ───────────────────────────────────────────
+  Future<void> addToFavorites(String productId) async {
+    try {
+      await _repository.addToFavorites(productId);
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  Future<void> removeFromFavorites(String productId) async {
+    try {
+      await _repository.removeFromFavorites(productId);
     } catch (e) {
       emit(ProductError(e.toString()));
     }

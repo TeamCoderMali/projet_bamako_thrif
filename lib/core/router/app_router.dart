@@ -1,11 +1,14 @@
 /// ─── Bamako Thrift — GoRouter Configuration ───────────────────────────────
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'route_names.dart';
+import '../../features/auth/presentation/cubit/auth_cubit.dart';
 
-// ── Onboarding ─────────────────────────────────────────────────────────────
+// ── Onboarding ────────────────────────────────────────────────────────────────────
 import '../../features/onboarding/presentation/pages/welcome_page.dart';
 import '../../features/onboarding/presentation/pages/intro_page.dart';
+import '../../features/onboarding/presentation/pages/splash_page.dart';
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -31,20 +34,23 @@ import '../../features/publish/presentation/pages/publish_product_page.dart';
 import '../../features/payment/presentation/pages/payment_page.dart';
 import '../../features/payment/presentation/pages/payment_success_page.dart';
 import '../../features/payment/presentation/pages/payment_failed_page.dart';
+import '../../features/product/domain/entities/product_entity.dart';
 
 // ── Orders ─────────────────────────────────────────────────────────────────
 import '../../features/order/presentation/pages/orders_page.dart';
 import '../../features/order/presentation/pages/order_tracking_page.dart';
 
-// ── Chat ───────────────────────────────────────────────────────────────────
+// ── Chat ────────────────────────────────────────────────────────────────────────────────
 import '../../features/chat/presentation/pages/chat_list_page.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
+import '../../features/chat/presentation/pages/new_chat_page.dart';
 
 // ── Profile ────────────────────────────────────────────────────────────────
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/wallet_page.dart';
 import '../../features/profile/presentation/pages/history_page.dart';
+import '../../features/profile/presentation/pages/my_listings_page.dart';
 
 // ── Notifications ──────────────────────────────────────────────────────────
 import '../../features/notification/presentation/pages/notifications_page.dart';
@@ -59,8 +65,54 @@ import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 
 final GoRouter appRouter = GoRouter(
   debugLogDiagnostics: true,
-  initialLocation: RouteNames.login,
+  initialLocation: RouteNames.splash,
+  redirect: (context, state) {
+    // Routes publiques (pas de redirection)
+    final publicRoutes = [
+      RouteNames.splash,
+      RouteNames.login,
+      RouteNames.register,
+      RouteNames.forgotPassword,
+      RouteNames.verifyEmail,
+      RouteNames.welcome,
+      RouteNames.intro,
+    ];
+
+    final isPublicRoute =
+        publicRoutes.any((r) => state.matchedLocation == r ||
+            state.matchedLocation.startsWith('$r/'));
+
+    // Le splash gère lui-même la redirection, on ne l'intercepte pas
+    if (state.matchedLocation == RouteNames.splash) return null;
+
+    try {
+      final authState = context.read<AuthCubit>().state;
+      final isAuthenticated = authState is AuthAuthenticated;
+
+      // Utilisateur connecté qui essaie d'aller sur login/register → home
+      if (isAuthenticated && isPublicRoute) {
+        return RouteNames.home;
+      }
+
+      // Utilisateur non connecté sur une route protégée → login
+      if (!isAuthenticated && !isPublicRoute) {
+        return RouteNames.login;
+      }
+    } catch (_) {
+      // BuildContext sans BlocProvider → pas de redirection
+    }
+
+    return null;
+  },
   routes: [
+
+    // ── Splash ──────────────────────────────────────────────────────────────────
+    GoRoute(
+      path: RouteNames.splash,
+      name: 'splash',
+      builder: (context, state) => const SplashPage(),
+    ),
+
     // ── Onboarding ─────────────────────────────────────────────────────
     GoRoute(
       path: RouteNames.welcome,
@@ -102,23 +154,28 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const HomePage(),
     ),
 
-    // ── Catalog ────────────────────────────────────────────────────────
+    // ── Catalog ──────────────────────────────────────────────────────────────────
     GoRoute(
       path: RouteNames.catalog,
       name: 'catalog',
       builder: (context, state) => const CatalogPage(),
-      routes: [
-        GoRoute(
-          path: 'search',
-          name: 'search',
-          builder: (context, state) => const SearchPage(),
-        ),
-        GoRoute(
-          path: 'filters',
-          name: 'filters',
-          builder: (context, state) => const FilterPage(),
-        ),
-      ],
+    ),
+
+    // ── Search ──────────────────────────────────────────────────────────────────
+    GoRoute(
+      path: RouteNames.search,
+      name: 'search',
+      builder: (context, state) => const SearchPage(),
+    ),
+
+    // ── Filters ──────────────────────────────────────────────────────────────────
+    GoRoute(
+      path: RouteNames.filters,
+      name: 'filters',
+      builder: (context, state) {
+        final filters = state.extra as CatalogFilters?;
+        return FilterPage(currentFilters: filters);
+      },
     ),
 
     // ── Product detail ─────────────────────────────────────────────────
@@ -142,7 +199,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: RouteNames.payment,
       name: 'payment',
-      builder: (context, state) => const PaymentPage(),
+      builder: (context, state) {
+        final product = state.extra as ProductEntity?;
+        return PaymentPage(product: product);
+      },
       routes: [
         GoRoute(
           path: 'success',
@@ -156,6 +216,7 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
+
 
     // ── Orders ─────────────────────────────────────────────────────────
     GoRoute(
@@ -180,6 +241,11 @@ final GoRouter appRouter = GoRouter(
       name: 'chatList',
       builder: (context, state) => const ChatListPage(),
       routes: [
+        GoRoute(
+          path: 'new',
+          name: 'newChat',
+          builder: (context, state) => const NewChatPage(),
+        ),
         GoRoute(
           path: ':id',
           name: 'chat',
@@ -206,6 +272,11 @@ final GoRouter appRouter = GoRouter(
           path: 'wallet',
           name: 'wallet',
           builder: (context, state) => const WalletPage(),
+        ),
+        GoRoute(
+          path: 'listings',
+          name: 'myListings',
+          builder: (context, state) => const MyListingsPage(),
         ),
         GoRoute(
           path: 'history',

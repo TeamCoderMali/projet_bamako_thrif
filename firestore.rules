@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Fonctions utilitaires ──────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // ── Collection users ───────────────────────────────────────────────────
+    // Chaque utilisateur peut lire/écrire uniquement son propre document.
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+
+      // Sous-collection favorites
+      match /favorites/{productId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // ── Collection product ─────────────────────────────────────────────────
+    // Lecture publique pour les utilisateurs connectés.
+    // Création uniquement par l'auteur.
+    // Modification/suppression uniquement par l'auteur.
+    match /product/{productId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (resource.data.sellerId == request.auth.uid
+            || request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['viewCount', 'favoriteCount']));
+      allow delete: if isAuthenticated()
+        && resource.data.sellerId == request.auth.uid;
+    }
+
+    // ── Collection chat ────────────────────────────────────────────────────
+    // Un chat est accessible uniquement aux participants.
+    match /chat/{chatId} {
+      allow read, write: if isAuthenticated()
+        && request.auth.uid in resource.data.participantIds;
+      allow create: if isAuthenticated()
+        && request.auth.uid in request.resource.data.participantIds;
+
+      // Messages : uniquement les participants du chat parent
+      match /message/{messageId} {
+        allow read: if isAuthenticated()
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds;
+        allow create: if isAuthenticated()
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds
+          && request.resource.data.senderId == request.auth.uid;
+        allow update: if isAuthenticated()
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds;
+        allow delete: if false;
+      }
+    }
+
+    // ── Collection notification ────────────────────────────────────────────
+    // Chaque utilisateur lit/modifie uniquement ses notifications.
+    match /notification/{notificationId} {
+      allow read, update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+    }
+
+    // ── Collection order ──────────────────────────────────────────────────
+    match /order/{orderId} {
+      allow read: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid);
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid);
+      allow delete: if false;
+    }
+  }
+}
