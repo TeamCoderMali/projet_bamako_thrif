@@ -1,0 +1,40 @@
+// ─── Bamako Thrift — Firebase Storage Security Rules ─────────────────────────
+// À copier dans : Firebase Console → Storage → Rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Images de produits ─────────────────────────────────────────────────
+    // Chemin : product_images/{userId}/{filename}
+    match /product_images/{userId}/{filename} {
+      // Lire : tout utilisateur authentifié
+      allow read: if request.auth != null;
+
+      // Écrire : uniquement le propriétaire, fichier image, max 5 MB
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024;
+
+      // Supprimer : uniquement le propriétaire
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Avatars de profil ──────────────────────────────────────────────────
+    // Chemin : avatars/{userId}.jpg
+    match /avatars/{userId}.jpg {
+      // Lire : tout utilisateur authentifié
+      allow read: if request.auth != null;
+
+      // Écrire : uniquement le propriétaire, fichier image, max 2 MB
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 2 * 1024 * 1024;
+
+      // Supprimer : uniquement le propriétaire
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

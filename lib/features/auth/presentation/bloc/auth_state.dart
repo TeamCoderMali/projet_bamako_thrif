@@ -17,6 +17,7 @@ class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
+/// Utilisateur connecté — contient le UserEntity complet (depuis Firestore).
 class AuthAuthenticated extends AuthState {
   final UserEntity user;
   const AuthAuthenticated(this.user);

@@ -14,6 +14,7 @@ class RegisterWithEmailUseCase extends UseCase<UserEntity, RegisterParams> {
       password: params.password,
       fullName: params.fullName,
       phoneNumber: params.phoneNumber,
+      role: params.role,
     );
   }
 }
@@ -23,11 +24,13 @@ class RegisterParams {
   final String password;
   final String fullName;
   final String? phoneNumber;
+  final UserRole role;
 
   const RegisterParams({
     required this.email,
     required this.password,
     required this.fullName,
     this.phoneNumber,
+    this.role = UserRole.buyer,
   });
 }
