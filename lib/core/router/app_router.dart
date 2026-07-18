@@ -51,6 +51,8 @@ import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/wallet_page.dart';
 import '../../features/profile/presentation/pages/history_page.dart';
 import '../../features/profile/presentation/pages/my_listings_page.dart';
+import '../../features/profile/presentation/pages/favorites_page.dart';
+import '../../features/profile/presentation/pages/support_page.dart';
 
 // ── Notifications ──────────────────────────────────────────────────────────
 import '../../features/notification/presentation/pages/notifications_page.dart';
@@ -78,9 +80,8 @@ final GoRouter appRouter = GoRouter(
       RouteNames.intro,
     ];
 
-    final isPublicRoute =
-        publicRoutes.any((r) => state.matchedLocation == r ||
-            state.matchedLocation.startsWith('$r/'));
+    final isPublicRoute = publicRoutes.any((r) =>
+        state.matchedLocation == r || state.matchedLocation.startsWith('$r/'));
 
     // Le splash gère lui-même la redirection, on ne l'intercepte pas
     if (state.matchedLocation == RouteNames.splash) return null;
@@ -105,7 +106,6 @@ final GoRouter appRouter = GoRouter(
     return null;
   },
   routes: [
-
     // ── Splash ──────────────────────────────────────────────────────────────────
     GoRoute(
       path: RouteNames.splash,
@@ -217,7 +217,6 @@ final GoRouter appRouter = GoRouter(
       ],
     ),
 
-
     // ── Orders ─────────────────────────────────────────────────────────
     GoRoute(
       path: RouteNames.orders,
@@ -263,6 +262,16 @@ final GoRouter appRouter = GoRouter(
       name: 'profile',
       builder: (context, state) => const ProfilePage(),
       routes: [
+        GoRoute(
+          path: 'favorites',
+          name: 'favorites',
+          builder: (context, state) => const FavoritesPage(),
+        ),
+        GoRoute(
+          path: 'support',
+          name: 'support',
+          builder: (context, state) => const SupportPage(),
+        ),
         GoRoute(
           path: 'edit',
           name: 'editProfile',

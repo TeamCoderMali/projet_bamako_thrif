@@ -80,8 +80,8 @@ class ProfilePage extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           user?.email ?? '',
-                          style: const TextStyle(
-                              color: Colors.grey, fontSize: 13),
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 13),
                         ),
                         if (user?.bio != null && user!.bio!.isNotEmpty) ...[
                           const SizedBox(height: 6),
@@ -128,8 +128,7 @@ class ProfilePage extends StatelessWidget {
                           children: [
                             _buildStat(
                                 '${user?.totalListings ?? 0}', 'Annonces'),
-                            _buildStat(
-                                '${user?.totalSales ?? 0}', 'Ventes'),
+                            _buildStat('${user?.totalSales ?? 0}', 'Ventes'),
                             _buildStat(
                               user != null && user.reviewCount > 0
                                   ? '${user.rating.toStringAsFixed(1)}★'
@@ -207,12 +206,10 @@ class ProfilePage extends StatelessWidget {
                     color: Colors.white,
                     child: Column(
                       children: [
-                        _buildMenuItem(
-                            Icons.list_alt,
-                            'Mes annonces',
+                        _buildMenuItem(Icons.list_alt, 'Mes annonces',
                             () => context.go(RouteNames.myListings)),
-                        _buildMenuItem(
-                            Icons.favorite_border, 'Mes favoris', () {}),
+                        _buildMenuItem(Icons.favorite_border, 'Mes favoris',
+                            () => context.go(RouteNames.favorites)),
                         _buildMenuItem(
                           Icons.shopping_bag_outlined,
                           'Mes commandes',
@@ -228,8 +225,8 @@ class ProfilePage extends StatelessWidget {
                           'Paramètres',
                           () => context.go(RouteNames.settings),
                         ),
-                        _buildMenuItem(
-                            Icons.help_outline, 'Aide & Support', () {}),
+                        _buildMenuItem(Icons.help_outline, 'Aide & Support',
+                            () => context.go(RouteNames.support)),
                         const Divider(height: 1),
                         _buildMenuItem(
                           Icons.logout,
@@ -292,13 +289,11 @@ class ProfilePage extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Se déconnecter ?'),
         content: const Text('Voulez-vous vraiment quitter votre compte ?'),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler',
-                style: TextStyle(color: Colors.grey)),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -320,10 +315,11 @@ class ProfilePage extends StatelessWidget {
         Text(
           value,
           style: const TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2B2B2B)),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2B2B2B)),
         ),
-        Text(label,
-            style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
       ],
     );
   }
