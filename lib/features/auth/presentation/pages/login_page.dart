@@ -26,7 +26,6 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-
     await context.read<AuthCubit>().signIn(
           email: _emailController.text.trim(),
           password: _passwordController.text,
@@ -51,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF7F4EE),
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -61,27 +60,37 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 20),
-                    // Logo
+
+                    // ── Logo ──────────────────────────────────────────────
                     Center(
                       child: Image.asset(
                         'assets/images/logo_danaya.png',
-                        width: 150,
-                        height: 150,
+                        width: 140,
+                        height: 140,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Se connecter',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2B2B2B),
+                    const SizedBox(height: 24),
+
+                    // ── Titre ─────────────────────────────────────────────
+                    const Center(
+                      child: Text(
+                        'Se connecter',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2B2B2B),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Bienvenue sur DANAYA',
-                      style: TextStyle(color: Colors.grey),
+                    const Center(
+                      child: Text(
+                        'Bienvenue sur DANAYA',
+                        style: TextStyle(
+                          color: Color(0xFF888888),
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 32),
 
@@ -89,16 +98,32 @@ class _LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2B2B2B),
+                      ),
                       decoration: InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: const Icon(Icons.email_outlined),
+                        labelText: 'Email ou téléphone',
+                        labelStyle: const TextStyle(color: Color(0xFF888888)),
+                        prefixIcon: const Icon(
+                          Icons.email_outlined,
+                          color: Color(0xFF6B7F4D),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(
+                              color: Color(0xFFE0E0E0), width: 1),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           borderSide: const BorderSide(
-                              color: Color(0xFF6B7F4D), width: 1.5),
+                              color: Color(0xFF6B7F4D), width: 2),
                         ),
                       ),
                       validator: (v) {
@@ -115,25 +140,42 @@ class _LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF2B2B2B),
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Mot de passe',
-                        prefixIcon: const Icon(Icons.lock_outline),
+                        labelStyle: const TextStyle(color: Color(0xFF888888)),
+                        prefixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: Color(0xFF6B7F4D),
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
                                 ? Icons.visibility_off
                                 : Icons.visibility,
+                            color: const Color(0xFF6B7F4D),
                           ),
                           onPressed: () => setState(
                               () => _obscurePassword = !_obscurePassword),
                         ),
+                        filled: true,
+                        fillColor: Colors.white,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(
+                              color: Color(0xFFE0E0E0), width: 1),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           borderSide: const BorderSide(
-                              color: Color(0xFF6B7F4D), width: 1.5),
+                              color: Color(0xFF6B7F4D), width: 2),
                         ),
                       ),
                       validator: (v) => (v == null || v.isEmpty)
@@ -146,24 +188,27 @@ class _LoginPageState extends State<LoginPage> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () =>
-                            context.go(RouteNames.forgotPassword),
+                        onPressed: () => context.go(RouteNames.forgotPassword),
                         child: const Text(
                           'Mot de passe oublié ?',
-                          style: TextStyle(color: Color(0xFFC3653D)),
+                          style: TextStyle(
+                            color: Color(0xFFC3653D),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // ── Bouton Se connecter ────────────────────────────────
                     SizedBox(
                       width: double.infinity,
-                      height: 56,
+                      height: 58,
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6B7F4D),
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -174,20 +219,142 @@ class _LoginPageState extends State<LoginPage> {
                             : const Text(
                                 'Se connecter',
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 17,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
 
-                    // ── Lien Inscription ──────────────────────────────────
+                    // ── Séparateur ─────────────────────────────────────────
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(
+                            color: Color(0xFFBDBDBD),
+                            thickness: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'ou continuer avec',
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                          child: Divider(
+                            color: Color(0xFFBDBDBD),
+                            thickness: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Boutons Google & Facebook ──────────────────────────
+                    Row(
+                      children: [
+                        // Google
+                        Expanded(
+                          child: Container(
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFFE0E0E0),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                // TODO collègue : Firebase Auth Google
+                              },
+                              icon: Image.asset(
+                                'assets/images/google_logo.png',
+                                width: 22,
+                                height: 22,
+                              ),
+                              label: const Text(
+                                'Google',
+                                style: TextStyle(
+                                  color: Color(0xFF2B2B2B),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Facebook
+                        Expanded(
+                          child: Container(
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFFE0E0E0),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                // TODO collègue : Firebase Auth Facebook
+                              },
+                              icon: const Icon(
+                                Icons.facebook,
+                                color: Color(0xFF1877F2),
+                                size: 26,
+                              ),
+                              label: const Text(
+                                'Facebook',
+                                style: TextStyle(
+                                  color: Color(0xFF2B2B2B),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+
+                    // ── Lien Inscription ───────────────────────────────────
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text("Pas de compte ? "),
+                        const Text(
+                          "Pas de compte ? ",
+                          style: TextStyle(
+                            color: Color(0xFF666666),
+                            fontSize: 14,
+                          ),
+                        ),
                         GestureDetector(
                           onTap: () => context.go(RouteNames.register),
                           child: const Text(
@@ -195,11 +362,13 @@ class _LoginPageState extends State<LoginPage> {
                             style: TextStyle(
                               color: Color(0xFF6B7F4D),
                               fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
