@@ -24,9 +24,11 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop() ? context.pop() : context.go(RouteNames.profile),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(RouteNames.profile),
         ),
-        title: const Text('Paramètres', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Paramètres',
+            style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: ListView(
         padding: const EdgeInsets.all(18),
@@ -36,7 +38,8 @@ class _SettingsPageState extends State<SettingsPage> {
           _card([
             _item(context, Icons.person_outline, 'Modifier le profil',
                 () => context.go(RouteNames.editProfile)),
-            _item(context, Icons.lock_outline, 'Changer le mot de passe', () {}),
+            _item(
+                context, Icons.lock_outline, 'Changer le mot de passe', () {}),
             _item(context, Icons.privacy_tip_outlined, 'Confidentialité',
                 () => context.go(RouteNames.privacy)),
           ]),
@@ -74,8 +77,17 @@ class _SettingsPageState extends State<SettingsPage> {
           _card([
             _item(context, Icons.info_outline, 'À propos de l\'app',
                 () => context.go(RouteNames.about)),
-            _item(context, Icons.help_outline, 'Aide & Support', () {}),
-            _item(context, Icons.star_outline, 'Noter l\'application', () {}),
+            _item(context, Icons.help_outline, 'Aide & Support',
+                () => context.go(RouteNames.support)),
+            _item(context, Icons.star_outline, 'Noter l\'application', () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content:
+                      Text('Disponible après publication sur le Play Store'),
+                  backgroundColor: Color(0xFF6B7F4D),
+                ),
+              );
+            }),
           ]),
 
           const SizedBox(height: 22),
@@ -133,8 +145,8 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(children: children),
       );
 
-  Widget _item(BuildContext context, IconData icon, String title,
-      VoidCallback onTap) {
+  Widget _item(
+      BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFF6B7F4D), size: 22),
       title: Text(title, style: const TextStyle(fontSize: 14)),

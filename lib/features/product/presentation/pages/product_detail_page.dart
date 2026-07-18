@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
@@ -21,6 +22,7 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _isContactLoading = false;
+  bool _isFavorite = false;
 
   @override
   void initState() {
@@ -40,7 +42,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         return;
       }
 
-      // Empêcher de se contacter soi-même
       if (currentUser.id == product.sellerId) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -83,6 +84,29 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     } finally {
       if (mounted) setState(() => _isContactLoading = false);
     }
+  }
+
+  // ── Partager le produit ────────────────────────────────────────────────
+  void _shareProduct(ProductEntity product) {
+    Share.share(
+      '🛍️ ${product.title}\n'
+      '💰 ${product.price.toStringAsFixed(0)} FCFA\n\n'
+      'Disponible sur DANAYA – Seconde main, première confiance.',
+    );
+  }
+
+  // ── Ajouter/Retirer des favoris (local pour l'instant) ─────────────────
+  void _toggleFavorite() {
+    setState(() => _isFavorite = !_isFavorite);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _isFavorite ? 'Ajouté aux favoris ❤️' : 'Retiré des favoris',
+        ),
+        backgroundColor: const Color(0xFF6B7F4D),
+        duration: const Duration(seconds: 1),
+      ),
+    );
   }
 
   @override
@@ -137,7 +161,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           pinned: true,
           backgroundColor: Colors.white,
           leading: GestureDetector(
-            onTap: () => context.canPop() ? context.pop() : context.go(RouteNames.home),
+            onTap: () =>
+                context.canPop() ? context.pop() : context.go(RouteNames.home),
             child: Container(
               margin: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
@@ -148,10 +173,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
           actions: [
+            // ── Favori ──────────────────────────────────────────────────
             GestureDetector(
-              onTap: () {
-                // TODO: Partager
-              },
+              onTap: _toggleFavorite,
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: _isFavorite ? Colors.red : Colors.black,
+                ),
+              ),
+            ),
+            // ── Partager ────────────────────────────────────────────────
+            GestureDetector(
+              onTap: () => _shareProduct(product),
               child: Container(
                 margin: const EdgeInsets.all(8),
                 padding: const EdgeInsets.all(8),
@@ -208,7 +248,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                 const SizedBox(height: 8),
 
-                // ── Infos rapides (vues, favs) ─────────────────────────────
+                // ── Infos rapides ──────────────────────────────────────────
                 Row(
                   children: [
                     const Icon(Icons.remove_red_eye_outlined,

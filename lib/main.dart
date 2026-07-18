@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/constants/app_keys.dart';
 import 'core/dependency_injection/injection.dart';
@@ -45,6 +46,9 @@ Future<void> main() async {
   await configureDependencies();
   logger.info('Dépendances initialisées');
 
+  // ── Localisation ─────────────────────────────────────────────────────────
+  await initializeDateFormatting('fr_FR', null);
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -52,8 +56,8 @@ Future<void> main() async {
           create: (_) => ThemeCubit(),
         ),
         BlocProvider<AuthCubit>(
-          create: (_) => AuthCubit(sl<FirebaseAuthRepositoryImpl>())
-            ..checkAuthStatus(),
+          create: (_) =>
+              AuthCubit(sl<FirebaseAuthRepositoryImpl>())..checkAuthStatus(),
         ),
         BlocProvider<ProductCubit>(
           create: (_) => sl<ProductCubit>()..loadProducts(refresh: true),
@@ -80,18 +84,18 @@ class BamakoThriftApp extends StatelessWidget {
               title: 'DANAYA',
               debugShowCheckedModeBanner: false,
 
-              // ── Theme ──────────────────────────────────────────────────────────────
+              // ── Theme ────────────────────────────────────────────────────
               theme: buildLightTheme(),
               darkTheme: buildDarkTheme(),
               themeMode: themeMode,
 
-              // ── Navigation ──────────────────────────────────────────────────────────
+              // ── Navigation ───────────────────────────────────────────────
               routerConfig: appRouter,
 
-              // ── Keys ───────────────────────────────────────────────────────────────
+              // ── Keys ─────────────────────────────────────────────────────
               scaffoldMessengerKey: AppKeys.scaffoldMessengerKey,
 
-              // ── Builder ────────────────────────────────────────────────────────────
+              // ── Builder ──────────────────────────────────────────────────
               builder: (context, child) {
                 return MediaQuery(
                   data: MediaQuery.of(context).copyWith(

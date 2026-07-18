@@ -242,7 +242,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Text(
                             'ou continuer avec',
                             style: TextStyle(
-                              color: Colors.grey[700],
+                              color: const Color.fromARGB(255, 50, 50, 50),
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
