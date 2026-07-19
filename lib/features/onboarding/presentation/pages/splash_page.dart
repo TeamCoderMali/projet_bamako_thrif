@@ -1,6 +1,7 @@
 // ─── Bamako Thrift — Splash Page ─────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:go_router/go_router.dart';
@@ -40,8 +41,20 @@ class _SplashPageState extends State<SplashPage>
     Future.delayed(const Duration(milliseconds: 1500), _checkAuth);
   }
 
-  void _checkAuth() {
+  Future<void> _checkAuth() async {
     if (!mounted) return;
+
+    // ── Vérifier si c'est la première fois ──────────────────────────────
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+
+    if (!hasSeenOnboarding) {
+      await prefs.setBool('has_seen_onboarding', true);
+      if (mounted) context.go(RouteNames.welcome);
+      return;
+    }
+
+    // ── Vérifier l'état auth ─────────────────────────────────────────────
     final state = context.read<AuthCubit>().state;
     if (state is AuthAuthenticated) {
       context.go(RouteNames.home);
