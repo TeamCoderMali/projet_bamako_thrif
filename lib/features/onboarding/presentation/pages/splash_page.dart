@@ -55,6 +55,7 @@ class _SplashPageState extends State<SplashPage>
     }
 
     // ── Vérifier l'état auth ─────────────────────────────────────────────
+    if (!mounted) return;
     final state = context.read<AuthCubit>().state;
     if (state is AuthAuthenticated) {
       context.go(RouteNames.home);
@@ -87,71 +88,56 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        if (state is AuthAuthenticated) {
-          context.go(RouteNames.home);
-        } else if (state is AuthUnauthenticated || state is AuthError) {
-          context.go(RouteNames.login);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFF2B2B2B),
-        body: Center(
-          child: FadeTransition(
-            opacity: _fadeAnim,
-            child: ScaleTransition(
-              scale: _scaleAnim,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Logo ─────────────────────────────────────────────────
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: Image.asset(
-                      'assets/images/logo_danaya.png',
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                    ),
+    return Scaffold(
+      backgroundColor: const Color(0xFF2B2B2B),
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: ScaleTransition(
+            scale: _scaleAnim,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Logo ─────────────────────────────────────────────────
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Image.asset(
+                    'assets/images/logo_danaya.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.cover,
                   ),
-
-                  const SizedBox(height: 28),
-
-                  // ── Nom app ───────────────────────────────────────────────
-                  const Text(
-                    'DANAYA',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 4,
-                    ),
+                ),
+                const SizedBox(height: 28),
+                const Text(
+                  'DANAYA',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 4,
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'La mode malienne d\'occasion',
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 14,
-                      letterSpacing: 1,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'La mode malienne d\'occasion',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 14,
+                    letterSpacing: 1,
                   ),
-
-                  const SizedBox(height: 60),
-
-                  // ── Spinner ───────────────────────────────────────────────
-                  SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      color: const Color(0xFF6B7F4D),
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      strokeWidth: 2.5,
-                    ),
+                ),
+                const SizedBox(height: 60),
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    color: const Color(0xFF6B7F4D),
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    strokeWidth: 2.5,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
