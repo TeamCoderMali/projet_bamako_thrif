@@ -1,8 +1,6 @@
 // ─── Bamako Thrift — Splash Page ─────────────────────────────────────────────
-// Page de chargement affichée au démarrage pendant la vérification auth
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:go_router/go_router.dart';
@@ -39,7 +37,6 @@ class _SplashPageState extends State<SplashPage>
 
     _controller.forward();
 
-    // Délai minimal pour que l'animation se joue, puis vérifier l'auth
     Future.delayed(const Duration(milliseconds: 1500), _checkAuth);
   }
 
@@ -49,7 +46,6 @@ class _SplashPageState extends State<SplashPage>
     if (state is AuthAuthenticated) {
       context.go(RouteNames.home);
     } else if (state is AuthLoading || state is AuthInitial) {
-      // Encore en chargement → on réécoute
       _listenUntilResolved();
     } else {
       context.go(RouteNames.login);
@@ -58,7 +54,9 @@ class _SplashPageState extends State<SplashPage>
 
   void _listenUntilResolved() {
     final cubit = context.read<AuthCubit>();
-    cubit.stream.firstWhere((s) => s is! AuthLoading && s is! AuthInitial).then((state) {
+    cubit.stream
+        .firstWhere((s) => s is! AuthLoading && s is! AuthInitial)
+        .then((state) {
       if (!mounted) return;
       if (state is AuthAuthenticated) {
         context.go(RouteNames.home);
@@ -78,7 +76,6 @@ class _SplashPageState extends State<SplashPage>
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
-        // Si l'état change pendant le splash (ex: auth très rapide)
         if (state is AuthAuthenticated) {
           context.go(RouteNames.home);
         } else if (state is AuthUnauthenticated || state is AuthError) {
@@ -95,30 +92,14 @@ class _SplashPageState extends State<SplashPage>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── Logo / Icône ─────────────────────────────────────────
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF8FA85A), Color(0xFF6B7F4D)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF6B7F4D).withOpacity(0.4),
-                          blurRadius: 30,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '👗',
-                        style: TextStyle(fontSize: 48),
-                      ),
+                  // ── Logo ─────────────────────────────────────────────────
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Image.asset(
+                      'assets/images/logo_danaya.png',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
                     ),
                   ),
 
