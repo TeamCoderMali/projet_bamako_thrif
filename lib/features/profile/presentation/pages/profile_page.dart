@@ -32,7 +32,6 @@ class ProfilePage extends StatelessWidget {
                     color: Colors.white,
                     child: Column(
                       children: [
-                        // Avatar
                         Stack(
                           children: [
                             CircleAvatar(
@@ -93,7 +92,6 @@ class ProfilePage extends StatelessWidget {
                           ),
                         ],
                         const SizedBox(height: 16),
-                        // Rôle badge
                         if (user != null)
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -122,7 +120,6 @@ class ProfilePage extends StatelessWidget {
                             ),
                           ),
                         const SizedBox(height: 16),
-                        // Stats
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -138,7 +135,6 @@ class ProfilePage extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        // Bouton modifier profil
                         OutlinedButton.icon(
                           onPressed: () =>
                               context.go('${RouteNames.profile}/edit'),
@@ -206,6 +202,14 @@ class ProfilePage extends StatelessWidget {
                     color: Colors.white,
                     child: Column(
                       children: [
+                        // ── Bouton Admin (caché) ───────────────────────────
+                        if (user != null && user.isAdmin)
+                          _buildMenuItem(
+                            Icons.admin_panel_settings,
+                            'Dashboard Admin',
+                            () => context.go(RouteNames.adminDashboard),
+                            color: const Color(0xFFC3653D),
+                          ),
                         _buildMenuItem(Icons.list_alt, 'Mes annonces',
                             () => context.go(RouteNames.myListings)),
                         _buildMenuItem(Icons.favorite_border, 'Mes favoris',
