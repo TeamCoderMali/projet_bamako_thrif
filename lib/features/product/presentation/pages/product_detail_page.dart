@@ -23,11 +23,90 @@ class ProductDetailPage extends StatefulWidget {
 class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _isContactLoading = false;
   bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
 
   @override
   void initState() {
     super.initState();
     context.read<ProductCubit>().loadProductDetail(widget.productId);
+    _checkIfFavorite();
+  }
+
+  // ── Vérifier si déjà en favori ─────────────────────────────────────────
+  Future<void> _checkIfFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('favorites')
+        .doc(widget.productId)
+        .get();
+
+    if (doc.exists && mounted) {
+      setState(() => _isFavorite = true);
+    }
+  }
+
+  // ── Ajouter/Retirer des favoris Firestore ──────────────────────────────
+  Future<void> _toggleFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      context.go(RouteNames.login);
+      return;
+    }
+
+    if (_isFavoriteLoading) return;
+    setState(() => _isFavoriteLoading = true);
+
+    final favRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('favorites')
+        .doc(widget.productId);
+
+    try {
+      if (_isFavorite) {
+        await favRef.delete();
+        if (mounted) {
+          setState(() => _isFavorite = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Retiré des favoris'),
+              backgroundColor: Color(0xFF6B7F4D),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      } else {
+        await favRef.set({
+          'productId': widget.productId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        if (mounted) {
+          setState(() => _isFavorite = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ajouté aux favoris ❤️'),
+              backgroundColor: Color(0xFF6B7F4D),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur : ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFavoriteLoading = false);
+    }
   }
 
   // ── Ouvrir un chat avec le vendeur ─────────────────────────────────────
@@ -95,20 +174,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  // ── Ajouter/Retirer des favoris (local pour l'instant) ─────────────────
-  void _toggleFavorite() {
-    setState(() => _isFavorite = !_isFavorite);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isFavorite ? 'Ajouté aux favoris ❤️' : 'Retiré des favoris',
-        ),
-        backgroundColor: const Color(0xFF6B7F4D),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,7 +220,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget _buildContent(BuildContext context, ProductEntity product) {
     return CustomScrollView(
       slivers: [
-        // ── Image en-tête ─────────────────────────────────────────────────
         SliverAppBar(
           expandedHeight: 320,
           pinned: true,
@@ -183,10 +247,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  _isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: _isFavorite ? Colors.red : Colors.black,
-                ),
+                child: _isFavoriteLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF6B7F4D),
+                        ),
+                      )
+                    : Icon(
+                        _isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: _isFavorite ? Colors.red : Colors.black,
+                      ),
               ),
             ),
             // ── Partager ────────────────────────────────────────────────
@@ -207,14 +280,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             background: _buildImageGallery(product),
           ),
         ),
-
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Badge état ─────────────────────────────────────────────
                 Row(
                   children: [
                     _Badge(
@@ -233,10 +304,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ],
                   ],
                 ),
-
                 const SizedBox(height: 12),
-
-                // ── Titre ─────────────────────────────────────────────────
                 Text(
                   product.title,
                   style: const TextStyle(
@@ -245,44 +313,34 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     color: Color(0xFF2B2B2B),
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
-                // ── Infos rapides ──────────────────────────────────────────
                 Row(
                   children: [
                     const Icon(Icons.remove_red_eye_outlined,
                         size: 14, color: Colors.grey),
                     const SizedBox(width: 4),
-                    Text(
-                      '${product.viewCount} vues',
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
+                    Text('${product.viewCount} vues',
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 12)),
                     const SizedBox(width: 16),
                     const Icon(Icons.favorite_border,
                         size: 14, color: Colors.grey),
                     const SizedBox(width: 4),
-                    Text(
-                      '${product.favoriteCount} favoris',
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
+                    Text('${product.favoriteCount} favoris',
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 12)),
                     if (product.location != null) ...[
                       const SizedBox(width: 16),
                       const Icon(Icons.location_on_outlined,
                           size: 14, color: Colors.grey),
                       const SizedBox(width: 4),
-                      Text(
-                        product.location!,
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
+                      Text(product.location!,
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 12)),
                     ],
                   ],
                 ),
-
                 const SizedBox(height: 14),
-
-                // ── Prix ──────────────────────────────────────────────────
                 Text(
                   '${product.price.toStringAsFixed(0)} FCFA',
                   style: const TextStyle(
@@ -291,39 +349,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     color: Color(0xFF6B7F4D),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
-                // ── Description ──────────────────────────────────────────
-                const Text(
-                  'Description',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                const Text('Description',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Text(
                   product.description,
                   style: const TextStyle(
-                    color: Colors.grey,
-                    height: 1.6,
-                    fontSize: 14,
-                  ),
+                      color: Colors.grey, height: 1.6, fontSize: 14),
                 ),
-
                 const SizedBox(height: 24),
-
-                // ── Couleur ───────────────────────────────────────────────
                 if (product.color != null) ...[
-                  const Text(
-                    'Couleur',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
+                  const Text('Couleur',
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
                   Text(product.color!,
                       style: const TextStyle(color: Colors.grey)),
                   const SizedBox(height: 20),
                 ],
-
-                // ── Vendeur ──────────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -365,10 +410,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ),
                             const Text(
                               'Vendeur vérifié ✓',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 12,
-                              ),
+                              style:
+                                  TextStyle(color: Colors.green, fontSize: 12),
                             ),
                           ],
                         ),
@@ -377,10 +420,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
-                // ── Boutons Contacter / Acheter ───────────────────────────
                 Row(
                   children: [
                     Expanded(
@@ -397,10 +437,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               )
                             : const Icon(Icons.chat_bubble_outline,
                                 color: Color(0xFF6B7F4D), size: 18),
-                        label: const Text(
-                          'Contacter',
-                          style: TextStyle(color: Color(0xFF6B7F4D)),
-                        ),
+                        label: const Text('Contacter',
+                            style: TextStyle(color: Color(0xFF6B7F4D))),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF6B7F4D)),
                           shape: RoundedRectangleBorder(
@@ -413,10 +451,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => context.go(
-                          '/payment',
-                          extra: product,
-                        ),
+                        onPressed: () => context.go('/payment', extra: product),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6B7F4D),
                           shape: RoundedRectangleBorder(
@@ -427,9 +462,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         child: const Text(
                           'Acheter',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
