@@ -21,7 +21,7 @@ abstract class RouteNames {
   static const String profile = '/profile';
 
   // ── Catalog ───────────────────────────────────────────────────────────
-  static const String search = '/search';
+  static const String search = '/catalog/search';
   static const String filters = '/filters';
   static const String productDetail = '/product/:id';
 
