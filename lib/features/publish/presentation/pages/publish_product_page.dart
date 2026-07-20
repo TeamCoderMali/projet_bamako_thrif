@@ -33,8 +33,8 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   final List<File> _selectedImages = [];
   bool _isPublishing = false;
-  double _uploadProgress = 0.0; // 0.0 → 1.0
-  String _publishStep = ''; // feedback utilisateur
+  double _uploadProgress = 0.0;
+  String _publishStep = '';
 
   final List<Map<String, dynamic>> _categories = [
     {'label': 'Femme', 'value': ProductCategory.women},
@@ -71,7 +71,8 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   Future<void> _pickImages() async {
     final picker = ImagePicker();
-    final picked = await picker.pickMultiImage(imageQuality: 75, limit: 5 - _selectedImages.length);
+    final picked = await picker.pickMultiImage(
+        imageQuality: 75, limit: 5 - _selectedImages.length);
     if (picked.isNotEmpty && mounted) {
       setState(() {
         _selectedImages.addAll(picked.map((x) => File(x.path)));
@@ -102,15 +103,13 @@ class _PublishProductPageState extends State<PublishProductPage> {
       final user = authState.user;
       List<String> imageUrls = [];
 
-      // ── 1. Upload des images vers Firebase Storage ─────────────────────
       if (_selectedImages.isNotEmpty) {
         final storageService = sl<StorageService>();
         final total = _selectedImages.length;
 
         for (int i = 0; i < total; i++) {
           if (mounted) {
-            setState(() => _publishStep =
-                'Envoi photo ${i + 1}/$total...');
+            setState(() => _publishStep = 'Envoi photo ${i + 1}/$total...');
           }
           final url =
               await storageService.uploadProductImage(_selectedImages[i]);
@@ -121,7 +120,6 @@ class _PublishProductPageState extends State<PublishProductPage> {
         }
       }
 
-      // ── 2. Créer le document Firestore ─────────────────────────────────
       if (mounted) {
         setState(() {
           _publishStep = 'Création de l\'annonce...';
@@ -199,24 +197,21 @@ class _PublishProductPageState extends State<PublishProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF6B7F4D),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: _isPublishing ? null : () => context.go(RouteNames.home),
         ),
         title: const Text(
           'Publier un article',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
-
-      // ── Overlay de progression ────────────────────────────────────────────
       body: Stack(
         children: [
-          // Formulaire principal
           SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Form(
@@ -224,7 +219,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Section photos ────────────────────────────────────────
+                  // ── Section photos ──────────────────────────────────────
                   _sectionTitle('Photos (max 5)'),
                   const SizedBox(height: 4),
                   const Text(
@@ -236,7 +231,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
                   const SizedBox(height: 22),
 
-                  // ── Titre ─────────────────────────────────────────────────
+                  // ── Titre ───────────────────────────────────────────────
                   _sectionTitle('Titre *'),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -249,7 +244,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
                   const SizedBox(height: 18),
 
-                  // ── Catégorie ─────────────────────────────────────────────
+                  // ── Catégorie ───────────────────────────────────────────
                   _sectionTitle('Catégorie *'),
                   const SizedBox(height: 8),
                   _dropdownContainer(
@@ -271,14 +266,14 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
                   const SizedBox(height: 18),
 
-                  // ── État ──────────────────────────────────────────────────
+                  // ── État ────────────────────────────────────────────────
                   _sectionTitle('État du vêtement *'),
                   const SizedBox(height: 8),
                   _buildConditionSelector(),
 
                   const SizedBox(height: 18),
 
-                  // ── Prix ──────────────────────────────────────────────────
+                  // ── Prix ────────────────────────────────────────────────
                   _sectionTitle('Prix en FCFA *'),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -297,7 +292,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
                   const SizedBox(height: 18),
 
-                  // ── Marque ────────────────────────────────────────────────
+                  // ── Marque ──────────────────────────────────────────────
                   _sectionTitle('Marque'),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -307,7 +302,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
                   const SizedBox(height: 18),
 
-                  // ── Taille ────────────────────────────────────────────────
+                  // ── Taille ──────────────────────────────────────────────
                   _sectionTitle('Taille'),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -317,7 +312,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
                   const SizedBox(height: 18),
 
-                  // ── Couleur ───────────────────────────────────────────────
+                  // ── Couleur ─────────────────────────────────────────────
                   _sectionTitle('Couleur'),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -327,17 +322,18 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
                   const SizedBox(height: 18),
 
-                  // ── Localisation ──────────────────────────────────────────
+                  // ── Localisation ────────────────────────────────────────
                   _sectionTitle('Localisation'),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _localisationController,
-                    decoration: _inputDeco('Ex: Bamako, Hamdallaye ACI 2000...'),
+                    decoration:
+                        _inputDeco('Ex: Bamako, Hamdallaye ACI 2000...'),
                   ),
 
                   const SizedBox(height: 18),
 
-                  // ── Description ───────────────────────────────────────────
+                  // ── Description ─────────────────────────────────────────
                   _sectionTitle('Description *'),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -352,7 +348,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
                   const SizedBox(height: 30),
 
-                  // ── Bouton Publier ────────────────────────────────────────
+                  // ── Bouton Publier ──────────────────────────────────────
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -371,11 +367,11 @@ class _PublishProductPageState extends State<PublishProductPage> {
                               color: Colors.white, strokeWidth: 2)
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.rocket_launch_outlined,
+                              children: const [
+                                Icon(Icons.rocket_launch_outlined,
                                     color: Colors.white, size: 20),
-                                const SizedBox(width: 8),
-                                const Text(
+                                SizedBox(width: 8),
+                                Text(
                                   'Publier gratuitement',
                                   style: TextStyle(
                                     fontSize: 18,
@@ -401,7 +397,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
             ),
           ),
 
-          // ── Overlay de progression ──────────────────────────────────────
+          // ── Overlay progression ─────────────────────────────────────────
           if (_isPublishing)
             Positioned.fill(
               child: Container(
@@ -423,7 +419,6 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Icône animée
                         Container(
                           width: 64,
                           height: 64,
@@ -448,7 +443,6 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
-                        // Barre de progression
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: LinearProgressIndicator(
@@ -482,7 +476,6 @@ class _PublishProductPageState extends State<PublishProductPage> {
             ),
         ],
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2,
         onTap: _isPublishing
@@ -512,8 +505,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined), label: 'Accueil'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.search), label: 'Chercher'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
           BottomNavigationBarItem(
               icon: Icon(Icons.add_circle), label: 'Publier'),
           BottomNavigationBarItem(
@@ -525,115 +517,161 @@ class _PublishProductPageState extends State<PublishProductPage> {
     );
   }
 
-  // ── Sélecteur d'images ──────────────────────────────────────────────────────
   Widget _buildImagePicker() {
-    return SizedBox(
-      height: 110,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          // Bouton ajouter
-          if (_selectedImages.length < 5)
-            GestureDetector(
-              onTap: _isPublishing ? null : _pickImages,
-              child: Container(
-                width: 100,
-                height: 100,
-                margin: const EdgeInsets.only(right: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F4EE),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: const Color(0xFF6B7F4D).withOpacity(0.5),
-                      style: BorderStyle.solid),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add_a_photo,
-                        color: const Color(0xFF6B7F4D),
-                        size: 28),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_selectedImages.length}/5',
-                      style: const TextStyle(
-                          color: Color(0xFF6B7F4D),
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ],
+    return Column(
+      children: [
+        if (_selectedImages.isEmpty)
+          GestureDetector(
+            onTap: _isPublishing ? null : _pickImages,
+            child: Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF6B7F4D).withOpacity(0.4),
+                  style: BorderStyle.solid,
                 ),
               ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.add_a_photo_outlined,
+                      color: Color(0xFF6B7F4D),
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Ajouter des photos',
+                    style: TextStyle(
+                      color: Color(0xFF6B7F4D),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Max 5 photos • Touchez pour sélectionner',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
-
-          // Images sélectionnées
-          ..._selectedImages.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final file = entry.value;
-            return Stack(
+          )
+        else
+          SizedBox(
+            height: 110,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
               children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(
-                      image: FileImage(file),
-                      fit: BoxFit.cover,
-                    ),
-                    border: idx == 0
-                        ? Border.all(
-                            color: const Color(0xFF6B7F4D), width: 2.5)
-                        : null,
-                  ),
-                ),
-                // Badge "Principal" sur la 1ère image
-                if (idx == 0)
-                  Positioned(
-                    bottom: 4,
-                    left: 4,
+                if (_selectedImages.length < 5)
+                  GestureDetector(
+                    onTap: _isPublishing ? null : _pickImages,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 2),
+                      width: 100,
+                      height: 100,
+                      margin: const EdgeInsets.only(right: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6B7F4D),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'Principale',
-                        style: TextStyle(color: Colors.white, fontSize: 8),
-                      ),
-                    ),
-                  ),
-                // Bouton supprimer
-                if (!_isPublishing)
-                  Positioned(
-                    top: 2,
-                    right: 12,
-                    child: GestureDetector(
-                      onTap: () =>
-                          setState(() => _selectedImages.removeAt(idx)),
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+                        color: const Color(0xFFF7F4EE),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF6B7F4D).withOpacity(0.5),
                         ),
-                        child: const Icon(Icons.close,
-                            color: Colors.white, size: 12),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.add_a_photo,
+                              color: Color(0xFF6B7F4D), size: 28),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${_selectedImages.length}/5',
+                            style: const TextStyle(
+                              color: Color(0xFF6B7F4D),
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
+                ..._selectedImages.asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final file = entry.value;
+                  return Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        margin: const EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: DecorationImage(
+                            image: FileImage(file),
+                            fit: BoxFit.cover,
+                          ),
+                          border: idx == 0
+                              ? Border.all(
+                                  color: const Color(0xFF6B7F4D), width: 2.5)
+                              : null,
+                        ),
+                      ),
+                      if (idx == 0)
+                        Positioned(
+                          bottom: 4,
+                          left: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6B7F4D),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'Principale',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 8),
+                            ),
+                          ),
+                        ),
+                      if (!_isPublishing)
+                        Positioned(
+                          top: 2,
+                          right: 12,
+                          child: GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedImages.removeAt(idx)),
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.close,
+                                  color: Colors.white, size: 12),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                }),
               ],
-            );
-          }),
-        ],
-      ),
+            ),
+          ),
+      ],
     );
   }
 
-  // ── Sélecteur état (cards) ───────────────────────────────────────────────────
   Widget _buildConditionSelector() {
     return Wrap(
       spacing: 8,
@@ -645,17 +683,13 @@ class _PublishProductPageState extends State<PublishProductPage> {
           onTap: () => setState(() => _selectedCondition = condition),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFF6B7F4D)
-                  : Colors.white,
+              color: isSelected ? const Color(0xFF6B7F4D) : Colors.white,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected
-                    ? const Color(0xFF6B7F4D)
-                    : Colors.grey.shade300,
+                color:
+                    isSelected ? const Color(0xFF6B7F4D) : Colors.grey.shade300,
               ),
             ),
             child: Text(
@@ -663,8 +697,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
               style: TextStyle(
                 color: isSelected ? Colors.white : Colors.grey.shade700,
                 fontSize: 12,
-                fontWeight:
-                    isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
@@ -691,8 +724,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: Color(0xFF6B7F4D), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF6B7F4D), width: 1.5),
         ),
       );
 

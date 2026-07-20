@@ -30,8 +30,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUid =
-        context.read<AuthCubit>().currentUser?.id ?? '';
+    final currentUid = context.read<AuthCubit>().currentUser?.id ?? '';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -112,8 +111,8 @@ class _ChatListPageState extends State<ChatListPage> {
               return GestureDetector(
                 onTap: () => context.go('/messages/${chat.id}'),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 4),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -149,8 +148,7 @@ class _ChatListPageState extends State<ChatListPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   otherName,
@@ -262,12 +260,10 @@ class _ChatListPageState extends State<ChatListPage> {
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined), label: 'Accueil'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.search), label: 'Chercher'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
           BottomNavigationBarItem(
               icon: Icon(Icons.add_circle_outline), label: 'Publier'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.message), label: 'Messages'),
+          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
           BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: 'Profil'),
         ],
