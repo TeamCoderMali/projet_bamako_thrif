@@ -20,134 +20,159 @@ class ProfilePage extends StatelessWidget {
         final user = state is AuthAuthenticated ? state.user : null;
 
         return Scaffold(
-          backgroundColor: Colors.grey.shade50,
+          backgroundColor: const Color(0xFFF7F4EE),
           body: SafeArea(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // ── Header profil ─────────────────────────────────────────
+                  // ── Header vert gradient ──────────────────────────────────
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    color: Colors.white,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF6B7F4D), Color(0xFF8FA85A)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
                     child: Column(
                       children: [
-                        Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 40,
-                              backgroundColor: const Color(0xFF6B7F4D),
-                              backgroundImage: user?.avatarUrl != null
-                                  ? CachedNetworkImageProvider(user!.avatarUrl!)
-                                  : null,
-                              child: user?.avatarUrl == null
-                                  ? Text(
-                                      user?.initials ?? '?',
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : null,
+                        // Avatar
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.5),
+                              width: 3,
                             ),
-                            if (user?.isEmailVerified == true)
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.green,
-                                    shape: BoxShape.circle,
+                          ),
+                          child: user?.avatarUrl != null
+                              ? ClipOval(
+                                  child: CachedNetworkImage(
+                                    imageUrl: user!.avatarUrl!,
+                                    fit: BoxFit.cover,
                                   ),
-                                  child: const Icon(Icons.check,
-                                      color: Colors.white, size: 14),
+                                )
+                              : Center(
+                                  child: Text(
+                                    user?.initials ?? '?',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                          ],
                         ),
                         const SizedBox(height: 12),
+
+                        // Nom
                         Text(
                           user?.fullName ?? 'Utilisateur',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2B2B2B),
+                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: 4),
+
+                        // Email
                         Text(
                           user?.email ?? '',
-                          style:
-                              const TextStyle(color: Colors.grey, fontSize: 13),
-                        ),
-                        if (user?.bio != null && user!.bio!.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            user.bio!,
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 12),
-                            textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.7),
                           ),
-                        ],
-                        const SizedBox(height: 16),
-                        if (user != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: user.isSeller
-                                  ? const Color(0xFF6B7F4D).withOpacity(0.1)
-                                  : Colors.blue.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: user.isSeller
-                                    ? const Color(0xFF6B7F4D)
-                                    : Colors.blue,
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              user.isSeller ? '🏪 Vendeur' : '🛍️ Acheteur',
-                              style: TextStyle(
-                                color: user.isSeller
-                                    ? const Color(0xFF6B7F4D)
-                                    : Colors.blue,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildStat(
-                                '${user?.totalListings ?? 0}', 'Annonces'),
-                            _buildStat('${user?.totalSales ?? 0}', 'Ventes'),
-                            _buildStat(
-                              user != null && user.reviewCount > 0
-                                  ? '${user.rating.toStringAsFixed(1)}★'
-                                  : '—',
-                              'Note',
-                            ),
-                          ],
                         ),
                         const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          onPressed: () =>
-                              context.go('${RouteNames.profile}/edit'),
-                          icon: const Icon(Icons.edit_outlined,
-                              size: 16, color: Color(0xFF6B7F4D)),
-                          label: const Text(
-                            'Modifier le profil',
-                            style: TextStyle(color: Color(0xFF6B7F4D)),
+
+                        // Badge rôle
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.4),
+                            ),
                           ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF6B7F4D)),
-                            shape: RoundedRectangleBorder(
+                          child: Text(
+                            user?.isSeller == true
+                                ? '🏪 Vendeur'
+                                : '🛍️ Acheteur',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Stats
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              _buildStat(
+                                  '${user?.totalListings ?? 0}', 'Annonces'),
+                              Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: Colors.white.withOpacity(0.2)),
+                              _buildStat('${user?.totalSales ?? 0}', 'Ventes'),
+                              Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: Colors.white.withOpacity(0.2)),
+                              _buildStat(
+                                user != null && user.reviewCount > 0
+                                    ? '${user.rating.toStringAsFixed(1)}★'
+                                    : '—',
+                                'Note',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Bouton modifier
+                        GestureDetector(
+                          onTap: () => context.go('${RouteNames.profile}/edit'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.4),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.edit_outlined,
+                                    color: Colors.white, size: 16),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Modifier le profil',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -155,91 +180,170 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
-
-                  // ── Portefeuille ──────────────────────────────────────────
-                  GestureDetector(
-                    onTap: () => context.go(RouteNames.wallet),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6B7F4D),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Mon Portefeuille',
-                                style: TextStyle(
-                                    color: Colors.white70, fontSize: 12),
-                              ),
-                              Text(
-                                'Voir le solde →',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Icon(Icons.account_balance_wallet,
-                              color: Colors.white70),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // ── Menu ──────────────────────────────────────────────────
-                  Container(
-                    color: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        // ── Bouton Admin (caché) ───────────────────────────
-                        if (user != null && user.isAdmin)
-                          _buildMenuItem(
-                            Icons.admin_panel_settings,
-                            'Dashboard Admin',
-                            () => context.go(RouteNames.adminDashboard),
-                            color: const Color(0xFFC3653D),
+                        // ── Portefeuille terracotta ───────────────────────
+                        GestureDetector(
+                          onTap: () => context.go(RouteNames.wallet),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFC3653D), Color(0xFFE08A5E)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFFC3653D).withOpacity(0.3),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Mon Portefeuille',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Voir le solde →',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Icon(
+                                  Icons.account_balance_wallet,
+                                  color: Colors.white70,
+                                  size: 32,
+                                ),
+                              ],
+                            ),
                           ),
-                        _buildMenuItem(Icons.list_alt, 'Mes annonces',
-                            () => context.go(RouteNames.myListings)),
-                        _buildMenuItem(Icons.payment_outlined, 'Paiements',
-                            () => context.go(RouteNames.orders)),
-                        _buildMenuItem(Icons.favorite_border, 'Mes favoris',
-                            () => context.go(RouteNames.favorites)),
-                        _buildMenuItem(
-                          Icons.shopping_bag_outlined,
-                          'Mes commandes',
-                          () => context.go(RouteNames.orders),
                         ),
-                        _buildMenuItem(
-                          Icons.notifications_outlined,
-                          'Notifications',
-                          () => context.go(RouteNames.notifications),
-                        ),
-                        _buildMenuItem(
-                          Icons.settings_outlined,
-                          'Paramètres',
-                          () => context.go(RouteNames.settings),
-                        ),
-                        _buildMenuItem(Icons.help_outline, 'Aide & Support',
-                            () => context.go(RouteNames.support)),
-                        const Divider(height: 1),
-                        _buildMenuItem(
-                          Icons.logout,
-                          'Se déconnecter',
-                          () => _confirmSignOut(context),
-                          color: Colors.red,
-                        ),
+
+                        const SizedBox(height: 12),
+
+                        // ── Dashboard Admin ───────────────────────────────
+                        if (user != null && user.isAdmin) ...[
+                          _buildMenuSection([
+                            _buildMenuItem(
+                              context,
+                              icon: Icons.admin_panel_settings,
+                              iconBg: const Color(0xFFC3653D).withOpacity(0.1),
+                              iconColor: const Color(0xFFC3653D),
+                              title: 'Dashboard Admin',
+                              titleColor: const Color(0xFFC3653D),
+                              onTap: () =>
+                                  context.go(RouteNames.adminDashboard),
+                            ),
+                          ]),
+                          const SizedBox(height: 12),
+                        ],
+
+                        // ── Menu principal ────────────────────────────────
+                        _buildMenuSection([
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.list_alt,
+                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                            iconColor: const Color(0xFF6B7F4D),
+                            title: 'Mes annonces',
+                            onTap: () => context.go(RouteNames.myListings),
+                          ),
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.favorite_border,
+                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                            iconColor: const Color(0xFF6B7F4D),
+                            title: 'Mes favoris',
+                            onTap: () => context.go(RouteNames.favorites),
+                          ),
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.shopping_bag_outlined,
+                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                            iconColor: const Color(0xFF6B7F4D),
+                            title: 'Mes commandes',
+                            onTap: () => context.go(RouteNames.orders),
+                          ),
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.credit_card_outlined,
+                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                            iconColor: const Color(0xFF6B7F4D),
+                            title: 'Paiements',
+                            onTap: () => context.go(RouteNames.payment),
+                          ),
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.notifications_outlined,
+                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                            iconColor: const Color(0xFF6B7F4D),
+                            title: 'Notifications',
+                            onTap: () => context.go(RouteNames.notifications),
+                            isLast: true,
+                          ),
+                        ]),
+
+                        const SizedBox(height: 12),
+
+                        // ── Menu secondaire ───────────────────────────────
+                        _buildMenuSection([
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.settings_outlined,
+                            iconBg: Colors.grey.withOpacity(0.1),
+                            iconColor: Colors.grey,
+                            title: 'Paramètres',
+                            onTap: () => context.go(RouteNames.settings),
+                          ),
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.help_outline,
+                            iconBg: Colors.grey.withOpacity(0.1),
+                            iconColor: Colors.grey,
+                            title: 'Aide & Support',
+                            onTap: () => context.go(RouteNames.support),
+                            isLast: true,
+                          ),
+                        ]),
+
+                        const SizedBox(height: 12),
+
+                        // ── Déconnexion ───────────────────────────────────
+                        _buildMenuSection([
+                          _buildMenuItem(
+                            context,
+                            icon: Icons.logout,
+                            iconBg: Colors.red.withOpacity(0.1),
+                            iconColor: Colors.red,
+                            title: 'Se déconnecter',
+                            titleColor: Colors.red,
+                            onTap: () => _confirmSignOut(context),
+                            isLast: true,
+                          ),
+                        ]),
+
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -271,21 +375,131 @@ class ProfilePage extends StatelessWidget {
             type: BottomNavigationBarType.fixed,
             selectedItemColor: const Color(0xFF6B7F4D),
             unselectedItemColor: Colors.grey,
+            backgroundColor: Colors.white,
+            elevation: 8,
             items: const [
               BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined), label: 'Accueil'),
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: 'Accueil'),
               BottomNavigationBarItem(
                   icon: Icon(Icons.search), label: 'Chercher'),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.add_circle_outline), label: 'Publier'),
+                  icon: Icon(Icons.add_circle_outline),
+                  activeIcon: Icon(Icons.add_circle),
+                  label: 'Publier'),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.message_outlined), label: 'Messages'),
+                  icon: Icon(Icons.message_outlined),
+                  activeIcon: Icon(Icons.message),
+                  label: 'Messages'),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.person), label: 'Profil'),
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: 'Profil'),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStat(String value, String label) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuSection(List<Widget> items) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(children: items),
+    );
+  }
+
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required String title,
+    required VoidCallback onTap,
+    Color titleColor = const Color(0xFF2B2B2B),
+    bool isLast = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          border: isLast
+              ? null
+              : const Border(
+                  bottom: BorderSide(color: Color(0xFFF5F5F5), width: 1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: titleColor,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: titleColor == const Color(0xFF2B2B2B)
+                  ? Colors.grey.shade300
+                  : titleColor.withOpacity(0.4),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -312,37 +526,6 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStat(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2B2B2B)),
-        ),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildMenuItem(
-    IconData icon,
-    String title,
-    VoidCallback onTap, {
-    Color color = Colors.black87,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: color, size: 22),
-      title: Text(title, style: TextStyle(color: color, fontSize: 14)),
-      trailing: Icon(Icons.chevron_right,
-          color: color == Colors.red ? Colors.red.shade200 : Colors.grey,
-          size: 20),
-      onTap: onTap,
     );
   }
 }
