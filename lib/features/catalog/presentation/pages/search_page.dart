@@ -21,21 +21,24 @@ class _SearchPageState extends State<SearchPage> {
   Timer? _debounce;
   bool _isSearching = false;
 
-  // ── Filtres ─────────────────────────────────────────────────────────────────
   ProductCategory? _selectedCategory;
   ProductCondition? _selectedCondition;
 
   final List<Map<String, dynamic>> _categories = [
-    {'label': 'Femme',       'value': ProductCategory.women,      'emoji': '👗'},
-    {'label': 'Homme',       'value': ProductCategory.men,        'emoji': '👔'},
-    {'label': 'Enfant',      'value': ProductCategory.children,   'emoji': '👶'},
-    {'label': 'Chaussures',  'value': ProductCategory.shoes,      'emoji': '👟'},
-    {'label': 'Accessoires', 'value': ProductCategory.accessories,'emoji': '🧣'},
-    {'label': 'Sacs',        'value': ProductCategory.bags,       'emoji': '👜'},
-    {'label': 'Bijoux',      'value': ProductCategory.jewelry,    'emoji': '💍'},
-    {'label': 'Sport',       'value': ProductCategory.sportswear, 'emoji': '⚽'},
-    {'label': 'Tradition',   'value': ProductCategory.traditional,'emoji': '🎋'},
-    {'label': 'Autre',       'value': ProductCategory.other,      'emoji': '📦'},
+    {'label': 'Femme', 'value': ProductCategory.women, 'emoji': '👗'},
+    {'label': 'Homme', 'value': ProductCategory.men, 'emoji': '👔'},
+    {'label': 'Enfant', 'value': ProductCategory.children, 'emoji': '👶'},
+    {'label': 'Chaussures', 'value': ProductCategory.shoes, 'emoji': '👟'},
+    {
+      'label': 'Accessoires',
+      'value': ProductCategory.accessories,
+      'emoji': '🧣'
+    },
+    {'label': 'Sacs', 'value': ProductCategory.bags, 'emoji': '👜'},
+    {'label': 'Bijoux', 'value': ProductCategory.jewelry, 'emoji': '💍'},
+    {'label': 'Sport', 'value': ProductCategory.sportswear, 'emoji': '⚽'},
+    {'label': 'Tradition', 'value': ProductCategory.traditional, 'emoji': '🎋'},
+    {'label': 'Autre', 'value': ProductCategory.other, 'emoji': '📦'},
   ];
 
   @override
@@ -45,7 +48,6 @@ class _SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
-  // ── Recherche avec debounce 400ms ────────────────────────────────────────────
   void _onQueryChanged(String query) {
     _debounce?.cancel();
     if (query.trim().isEmpty) {
@@ -65,9 +67,9 @@ class _SearchPageState extends State<SearchPage> {
       context.read<ProductCubit>().searchProducts(q);
     } else {
       context.read<ProductCubit>().loadProducts(
-        category: _selectedCategory,
-        refresh: true,
-      );
+            category: _selectedCategory,
+            refresh: true,
+          );
     }
   }
 
@@ -76,11 +78,11 @@ class _SearchPageState extends State<SearchPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF7F4EE),
         elevation: 0,
         titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF2B2B2B)),
           onPressed: () => context.go(RouteNames.home),
         ),
         title: Container(
@@ -100,7 +102,7 @@ class _SearchPageState extends State<SearchPage> {
               hintText: 'Robe, Nike, sac à main...',
               hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
               filled: true,
-              fillColor: const Color(0xFFF7F4EE),
+              fillColor: Colors.white,
               prefixIcon: _isSearching
                   ? const Padding(
                       padding: EdgeInsets.all(12),
@@ -111,18 +113,20 @@ class _SearchPageState extends State<SearchPage> {
                             strokeWidth: 2, color: Color(0xFF6B7F4D)),
                       ),
                     )
-                  : const Icon(Icons.search, color: Colors.grey),
+                  : const Icon(Icons.search, color: Color(0xFF6B7F4D)),
               suffixIcon: _controller.text.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.close, color: Colors.grey),
                       onPressed: () {
                         _controller.clear();
-                        context.read<ProductCubit>().loadProducts(refresh: true);
+                        context
+                            .read<ProductCubit>()
+                            .loadProducts(refresh: true);
                       },
                     )
                   : null,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -175,18 +179,14 @@ class _SearchPageState extends State<SearchPage> {
                   children: [
                     Text(
                       '${products.length} résultat${products.length > 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 13,
-                      ),
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
                     ),
                     const Spacer(),
-                    // Filtre état
                     GestureDetector(
                       onTap: _showConditionFilter,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: _selectedCondition != null
                               ? const Color(0xFF6B7F4D)
@@ -229,12 +229,11 @@ class _SearchPageState extends State<SearchPage> {
               Expanded(
                 child: GridView.builder(
                   padding: const EdgeInsets.all(12),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
-                    childAspectRatio: 0.72,
+                    childAspectRatio: 0.68,
                   ),
                   itemCount: products.length,
                   itemBuilder: (ctx, i) => _ProductCard(product: products[i]),
@@ -247,7 +246,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // ── Filtre catégories horizontal ─────────────────────────────────────────────
   Widget _buildCategoryFilter() {
     return SizedBox(
       height: 48,
@@ -274,7 +272,8 @@ class _SearchPageState extends State<SearchPage> {
                   isSelected ? null : cat['value'] as ProductCategory);
               _applyFilters();
             },
-            child: _chip(cat['label'] as String, cat['emoji'] as String, isSelected),
+            child: _chip(
+                cat['label'] as String, cat['emoji'] as String, isSelected),
           );
         },
       ),
@@ -292,6 +291,13 @@ class _SearchPageState extends State<SearchPage> {
         border: Border.all(
           color: selected ? const Color(0xFF6B7F4D) : Colors.grey.shade200,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -311,7 +317,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // ── État vide / erreur ────────────────────────────────────────────────────────
   Widget _buildEmpty({
     required IconData icon,
     required String title,
@@ -322,25 +327,39 @@ class _SearchPageState extends State<SearchPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 72, color: iconColor.withOpacity(0.4)),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 48, color: iconColor),
+          ),
           const SizedBox(height: 16),
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black54)),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2B2B2B),
+            ),
+          ),
           if (subtitle != null) ...[
             const SizedBox(height: 6),
-            Text(subtitle,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                subtitle,
                 style: const TextStyle(color: Colors.grey, fontSize: 13),
-                textAlign: TextAlign.center),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ],
         ],
       ),
     );
   }
 
-  // ── Page de suggestions (avant toute recherche) ──────────────────────────────
   Widget _buildSuggestionsView() {
     final suggestions = [
       '👗 Robe',
@@ -357,8 +376,14 @@ class _SearchPageState extends State<SearchPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Suggestions populaires',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const Text(
+            'Suggestions populaires',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: Color(0xFF2B2B2B),
+            ),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -371,16 +396,27 @@ class _SearchPageState extends State<SearchPage> {
                   context.read<ProductCubit>().searchProducts(q);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Text(s,
-                      style: const TextStyle(
-                          fontSize: 13, color: Colors.black87)),
+                  child: Text(
+                    s,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF2B2B2B),
+                    ),
+                  ),
                 ),
               );
             }).toList(),
@@ -390,7 +426,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  // ── Bottom sheet filtre état ──────────────────────────────────────────────────
   void _showConditionFilter() {
     showModalBottomSheet(
       context: context,
@@ -415,9 +450,10 @@ class _SearchPageState extends State<SearchPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('État du vêtement',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text(
+                'État du vêtement',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               const SizedBox(height: 12),
               ...ProductCondition.values.map((c) {
                 return RadioListTile<ProductCondition?>(
@@ -454,16 +490,20 @@ class _SearchPageState extends State<SearchPage> {
 
   String _conditionLabel(ProductCondition c) {
     switch (c) {
-      case ProductCondition.newWithTags:    return 'Neuf avec étiquette';
-      case ProductCondition.newWithoutTags: return 'Neuf sans étiquette';
-      case ProductCondition.veryGood:       return 'Très bon état';
-      case ProductCondition.good:           return 'Bon état';
-      case ProductCondition.fair:           return 'État correct';
+      case ProductCondition.newWithTags:
+        return 'Neuf avec étiquette';
+      case ProductCondition.newWithoutTags:
+        return 'Neuf sans étiquette';
+      case ProductCondition.veryGood:
+        return 'Très bon état';
+      case ProductCondition.good:
+        return 'Bon état';
+      case ProductCondition.fair:
+        return 'État correct';
     }
   }
 }
 
-// ── Carte produit dans la grille de résultats ─────────────────────────────────
 class _ProductCard extends StatelessWidget {
   final ProductEntity product;
   const _ProductCard({required this.product});
@@ -478,87 +518,136 @@ class _ProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
             Expanded(
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
-                child: product.mainImageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: product.mainImageUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        placeholder: (_, __) => Container(
-                          color: const Color(0xFFF7F4EE),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0xFF6B7F4D), strokeWidth: 2),
+              flex: 3,
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: product.mainImageUrl != null
+                        ? CachedNetworkImage(
+                            imageUrl: product.mainImageUrl!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            placeholder: (_, __) => Container(
+                              color: const Color(0xFFF7F4EE),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                    color: Color(0xFF6B7F4D), strokeWidth: 2),
+                              ),
+                            ),
+                            errorWidget: (_, __, ___) => Container(
+                              color: const Color(0xFFF7F4EE),
+                              child: const Center(
+                                child: Icon(Icons.checkroom,
+                                    color: Color(0xFFB8C9A0), size: 40),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            color: const Color(0xFFF7F4EE),
+                            child: const Center(
+                              child: Icon(Icons.checkroom,
+                                  color: Color(0xFFB8C9A0), size: 40),
+                            ),
                           ),
-                        ),
-                        errorWidget: (_, __, ___) => Container(
-                          color: const Color(0xFFF7F4EE),
-                          child: const Center(
-                            child: Icon(Icons.checkroom,
-                                color: Color(0xFFB8C9A0), size: 40),
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: const Color(0xFFF7F4EE),
-                        child: const Center(
-                          child: Icon(Icons.checkroom,
-                              color: Color(0xFFB8C9A0), size: 40),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6B7F4D),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _conditionLabel(product.condition),
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            // Infos
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${product.price.toStringAsFixed(0)} FCFA',
-                    style: const TextStyle(
-                      color: Color(0xFF6B7F4D),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                  if (product.size != null || product.brand != null)
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                     Text(
-                      [product.brand, product.size]
-                          .where((e) => e != null)
-                          .join(' · '),
+                      product.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          color: Colors.grey, fontSize: 11),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        color: Color(0xFF2B2B2B),
+                        height: 1.3,
+                      ),
                     ),
-                ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${product.price.toStringAsFixed(0)} FCFA',
+                          style: const TextStyle(
+                            color: Color(0xFF6B7F4D),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        if (product.brand != null)
+                          Text(
+                            product.brand!,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 10,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _conditionLabel(ProductCondition condition) {
+    switch (condition) {
+      case ProductCondition.newWithTags:
+        return 'Neuf ✓';
+      case ProductCondition.newWithoutTags:
+        return 'Neuf';
+      case ProductCondition.veryGood:
+        return 'Très bon';
+      case ProductCondition.good:
+        return 'Bon état';
+      case ProductCondition.fair:
+        return 'Correct';
+    }
   }
 }

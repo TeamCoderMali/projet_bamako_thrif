@@ -16,7 +16,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
-  ProductCategory? _selectedCategory; // null = Tous
+  ProductCategory? _selectedCategory;
 
   final List<Map<String, dynamic>> _categoryFilters = [
     {'label': 'Tous', 'value': null, 'icon': Icons.grid_view_rounded},
@@ -50,7 +50,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Recharger les produits à chaque retour sur l'accueil
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<ProductCubit>().loadProducts(refresh: true);
@@ -65,19 +64,12 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ────────────────────────────────────────────────────
             _buildHeader(context),
             const SizedBox(height: 12),
-
-            // ── Barre de recherche ─────────────────────────────────────────
             _buildSearchBar(context),
             const SizedBox(height: 14),
-
-            // ── Filtres catégories ─────────────────────────────────────────
             _buildCategoryFilters(),
             const SizedBox(height: 14),
-
-            // ── Titre section ──────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -95,14 +87,15 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () => context.go(RouteNames.catalog),
                     child: const Text(
                       'Voir tout',
-                      style: TextStyle(color: Color(0xFF6B7F4D)),
+                      style: TextStyle(
+                        color: Color(0xFFC3653D),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-
-            // ── Grille produits Firestore ──────────────────────────────────
             Expanded(
               child: BlocBuilder<ProductCubit, ProductState>(
                 builder: (context, state) {
@@ -110,20 +103,16 @@ class _HomePageState extends State<HomePage> {
                       state is ProductInitial ||
                       state is ProductDetailLoaded ||
                       state is ProductSearchResult) {
-                    // En cours de rechargement → spinner
                     return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF6B7F4D),
-                      ),
+                      child:
+                          CircularProgressIndicator(color: Color(0xFF6B7F4D)),
                     );
                   }
                   if (state is ProductError) {
                     return _buildError(context, state.message);
                   }
                   if (state is ProductLoaded) {
-                    if (state.products.isEmpty) {
-                      return _buildEmpty();
-                    }
+                    if (state.products.isEmpty) return _buildEmpty();
                     return _buildProductGrid(context, state.products);
                   }
                   return const Center(
@@ -138,8 +127,6 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: _buildBottomNav(context),
     );
   }
-
-  // ── Widgets ────────────────────────────────────────────────────────────────
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
@@ -157,14 +144,18 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Text(
                     'Bonjour $name 👋',
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 13,
+                    ),
                   ),
                   const Text(
                     'DANAYA',
                     style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2B2B2B),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF6B7F4D),
+                      letterSpacing: 1,
                     ),
                   ),
                 ],
@@ -173,43 +164,56 @@ class _HomePageState extends State<HomePage> {
           ),
           Row(
             children: [
-              // Cloche notification
               GestureDetector(
                 onTap: () => context.go(RouteNames.notifications),
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.notifications_outlined,
-                      color: Color(0xFF6B7F4D)),
+                  child: const Icon(
+                    Icons.notifications_outlined,
+                    color: Color(0xFF6B7F4D),
+                    size: 22,
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              // Avatar
+              const SizedBox(width: 10),
               GestureDetector(
                 onTap: () => context.go(RouteNames.profile),
                 child: BlocBuilder<AuthCubit, AuthState>(
                   builder: (context, state) {
-                    final user =
-                        state is AuthAuthenticated ? state.user : null;
+                    final user = state is AuthAuthenticated ? state.user : null;
                     if (user?.avatarUrl != null) {
                       return CircleAvatar(
                         backgroundImage:
                             CachedNetworkImageProvider(user!.avatarUrl!),
-                        radius: 20,
+                        radius: 22,
                       );
                     }
-                    return CircleAvatar(
-                      backgroundColor: const Color(0xFFD4E4B8),
-                      radius: 20,
-                      child: Text(
-                        user?.initials ?? '?',
-                        style: const TextStyle(
-                          color: Color(0xFF6B7F4D),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                    return Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6B7F4D),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          user?.initials ?? '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     );
@@ -229,18 +233,39 @@ class _HomePageState extends State<HomePage> {
       child: GestureDetector(
         onTap: () => context.go('${RouteNames.catalog}/search'),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.search, color: Color(0xFF6B7F4D)),
-              SizedBox(width: 10),
-              Text(
-                'Rechercher un article...',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+              const Icon(Icons.search, color: Color(0xFF6B7F4D), size: 20),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Rechercher un article...',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.tune,
+                  color: Color(0xFF6B7F4D),
+                  size: 16,
+                ),
               ),
             ],
           ),
@@ -270,23 +295,28 @@ class _HomePageState extends State<HomePage> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: const EdgeInsets.only(right: 8),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected ? const Color(0xFF6B7F4D) : Colors.white,
                 borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
                 border: Border.all(
                   color: isSelected
                       ? const Color(0xFF6B7F4D)
-                      : Colors.grey.shade300,
+                      : Colors.grey.shade200,
                 ),
               ),
               child: Text(
                 filter['label'] as String,
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.grey.shade700,
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 13,
                 ),
               ),
@@ -306,10 +336,10 @@ class _HomePageState extends State<HomePage> {
             .loadProducts(category: _selectedCategory, refresh: true);
       },
       child: GridView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.72,
+          childAspectRatio: 0.68,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
@@ -327,18 +357,46 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.checkroom_outlined, size: 64, color: Colors.grey.shade300),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6B7F4D).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.checkroom_outlined,
+              size: 48,
+              color: Color(0xFF6B7F4D),
+            ),
+          ),
           const SizedBox(height: 16),
           const Text(
             'Aucun article disponible',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(
+              color: Color(0xFF2B2B2B),
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 8),
-          TextButton(
+          const Text(
+            'Soyez le premier à publier !',
+            style: TextStyle(color: Colors.grey, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
             onPressed: () => context.go(RouteNames.publish),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6B7F4D),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
             child: const Text(
-              'Publier le premier',
-              style: TextStyle(color: Color(0xFF6B7F4D)),
+              'Publier un article',
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -358,11 +416,10 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6B7F4D)),
-            onPressed: () => context
-                .read<ProductCubit>()
-                .loadProducts(refresh: true),
-            child: const Text('Réessayer',
-                style: TextStyle(color: Colors.white)),
+            onPressed: () =>
+                context.read<ProductCubit>().loadProducts(refresh: true),
+            child:
+                const Text('Réessayer', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -427,7 +484,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// ── Carte produit ────────────────────────────────────────────────────────────
 class _ProductCard extends StatelessWidget {
   final ProductEntity product;
   const _ProductCard({required this.product});
@@ -442,95 +498,128 @@ class _ProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
+            // ── Image ───────────────────────────────────────────────────
             Expanded(
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
-                child: product.mainImageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: product.mainImageUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        placeholder: (_, __) => Container(
-                          color: const Color(0xFFF7F4EE),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0xFF6B7F4D),
-                              strokeWidth: 2,
+              flex: 3,
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: product.mainImageUrl != null
+                        ? CachedNetworkImage(
+                            imageUrl: product.mainImageUrl!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            placeholder: (_, __) => Container(
+                              color: const Color(0xFFF7F4EE),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF6B7F4D),
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                            errorWidget: (_, __, ___) => Container(
+                              color: const Color(0xFFF7F4EE),
+                              child: const Center(
+                                child: Icon(Icons.checkroom,
+                                    size: 48, color: Color(0xFF6B7F4D)),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            color: const Color(0xFFF7F4EE),
+                            child: const Center(
+                              child: Icon(Icons.checkroom,
+                                  size: 48, color: Color(0xFF6B7F4D)),
                             ),
                           ),
-                        ),
-                        errorWidget: (_, __, ___) => Container(
-                          color: const Color(0xFFF7F4EE),
-                          child: const Center(
-                            child: Icon(Icons.checkroom,
-                                size: 48, color: Color(0xFF6B7F4D)),
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: const Color(0xFFF7F4EE),
-                        child: const Center(
-                          child: Icon(Icons.checkroom,
-                              size: 48, color: Color(0xFF6B7F4D)),
-                        ),
-                      ),
-              ),
-            ),
-            // Infos
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                  ),
                   // Badge état
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      _conditionLabel(product.condition),
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6B7F4D),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Color(0xFF2B2B2B),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${product.price.toStringAsFixed(0)} FCFA',
-                    style: const TextStyle(
-                      color: Color(0xFF6B7F4D),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      child: Text(
+                        _conditionLabel(product.condition),
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
+              ),
+            ),
+
+            // ── Infos ────────────────────────────────────────────────────
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      product.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        color: Color(0xFF2B2B2B),
+                        height: 1.3,
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${product.price.toStringAsFixed(0)} FCFA',
+                          style: const TextStyle(
+                            color: Color(0xFF6B7F4D),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        if (product.location != null)
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_outlined,
+                                  size: 10, color: Colors.grey),
+                              Text(
+                                product.location!,
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -542,15 +631,15 @@ class _ProductCard extends StatelessWidget {
   String _conditionLabel(ProductCondition condition) {
     switch (condition) {
       case ProductCondition.newWithTags:
-        return 'Neuf avec étiquette';
+        return 'Neuf ✓';
       case ProductCondition.newWithoutTags:
-        return 'Neuf sans étiquette';
+        return 'Neuf';
       case ProductCondition.veryGood:
-        return 'Très bon état';
+        return 'Très bon';
       case ProductCondition.good:
         return 'Bon état';
       case ProductCondition.fair:
-        return 'État correct';
+        return 'Correct';
     }
   }
 }
