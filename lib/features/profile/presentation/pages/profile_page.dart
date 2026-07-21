@@ -212,6 +212,8 @@ class ProfilePage extends StatelessWidget {
                           ),
                         _buildMenuItem(Icons.list_alt, 'Mes annonces',
                             () => context.go(RouteNames.myListings)),
+                        _buildMenuItem(Icons.payment_outlined, 'Paiements',
+                            () => context.go(RouteNames.orders)),
                         _buildMenuItem(Icons.favorite_border, 'Mes favoris',
                             () => context.go(RouteNames.favorites)),
                         _buildMenuItem(
