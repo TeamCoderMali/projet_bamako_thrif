@@ -27,27 +27,26 @@ class _PaymentPageState extends State<PaymentPage> {
     super.dispose();
   }
 
-  // ── Formats ────────────────────────────────────────────────────────────────
   String _fmt(double price) =>
       '${price.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ')} FCFA';
 
   String _condition(ProductCondition c) {
     switch (c) {
-      case ProductCondition.newWithTags:    return 'Neuf avec étiquette';
-      case ProductCondition.newWithoutTags: return 'Neuf sans étiquette';
-      case ProductCondition.veryGood:       return 'Très bon état';
-      case ProductCondition.good:           return 'Bon état';
-      case ProductCondition.fair:           return 'État correct';
+      case ProductCondition.newWithTags:
+        return 'Neuf avec étiquette';
+      case ProductCondition.newWithoutTags:
+        return 'Neuf sans étiquette';
+      case ProductCondition.veryGood:
+        return 'Très bon état';
+      case ProductCondition.good:
+        return 'Bon état';
+      case ProductCondition.fair:
+        return 'État correct';
     }
   }
 
-  // ── Validation ─────────────────────────────────────────────────────────────
   bool _validate() {
-    if (_method == 'card') {
-      // Pas de numéro de téléphone requis pour carte
-      return true;
-    }
-    if (_method == 'wave') return true;
+    if (_method == 'card' || _method == 'wave') return true;
     final phone = _phoneCtrl.text.trim();
     if (phone.isEmpty || phone.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -61,80 +60,54 @@ class _PaymentPageState extends State<PaymentPage> {
     return true;
   }
 
-  // ── Paiement ───────────────────────────────────────────────────────────────
   Future<void> _pay() async {
     if (!_validate()) return;
     setState(() => _isProcessing = true);
-
     try {
-      // ── Simulation appel API paiement ──────────────────────────────────
-      // TODO: Remplacer par l'appel réel (CinetPay, Bizao, etc.)
       final result = await _callPaymentGateway();
-
       if (!mounted) return;
-
       if (result.success) {
-        // ✅ Succès → créer la commande dans Firestore
         await _createOrder();
         if (mounted) context.go(RouteNames.paymentSuccess);
       } else {
-        // ❌ Échec → rediriger vers page erreur avec raison
-        if (mounted) {
-          context.go(
-            RouteNames.paymentFailed,
-            extra: result.errorMessage,
-          );
-        }
+        if (mounted)
+          context.go(RouteNames.paymentFailed, extra: result.errorMessage);
       }
     } catch (e) {
-      if (mounted) {
-        context.go(RouteNames.paymentFailed, extra: e.toString());
-      }
+      if (mounted) context.go(RouteNames.paymentFailed, extra: e.toString());
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
   }
 
-  // ── Simulation API ─────────────────────────────────────────────────────────
   Future<_PayResult> _callPaymentGateway() async {
-    // Délai simulé (2s)
     await Future.delayed(const Duration(seconds: 2));
-
-    // TODO: intégrer CinetPay / Bizao / Orange Money API ici
-    // Pour l'instant on simule toujours le succès pendant le dev
-    // En prod, retourner _PayResult(false, 'Solde insuffisant') en cas d'échec
     return _PayResult(true, null);
   }
 
-  // ── Créer commande Firestore ───────────────────────────────────────────────
   Future<void> _createOrder() async {
     final product = widget.product;
     if (product == null) return;
-
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    // 1. Créer la commande
     await FirebaseFirestore.instance.collection('order').add({
-      'buyerId':       uid,
-      'sellerId':      product.sellerId,
-      'productId':     product.id,
-      'productTitle':  product.title,
-      'productImageUrl': product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
-      'totalAmount':   product.price,
-      'status':        'pending',
+      'buyerId': uid,
+      'sellerId': product.sellerId,
+      'productId': product.id,
+      'productTitle': product.title,
+      'productImageUrl':
+          product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
+      'totalAmount': product.price,
+      'status': 'pending',
       'paymentMethod': _method,
-      'createdAt':     FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // 2. Marquer le produit comme vendu → disparaît du catalogue
     await _markProductSold(product.id);
-
-    // 3. Enregistrer les transactions portefeuille
     await _recordWalletTransactions(uid, product);
   }
 
-  // ── Marquer produit vendu ──────────────────────────────────────────────────
   Future<void> _markProductSold(String productId) async {
     await FirebaseFirestore.instance
         .collection('product')
@@ -142,39 +115,36 @@ class _PaymentPageState extends State<PaymentPage> {
         .update({'status': 'sold'});
   }
 
-  // ── Transactions portefeuille ──────────────────────────────────────────────
   Future<void> _recordWalletTransactions(
       String buyerId, ProductEntity product) async {
-    final db    = FirebaseFirestore.instance;
+    final db = FirebaseFirestore.instance;
     final price = product.price;
     final title = product.title;
 
-    // Acheteur : débit
     final buyerWallet = db.collection('wallet').doc(buyerId);
     await buyerWallet.set({
-      'balance':    FieldValue.increment(-price),
+      'balance': FieldValue.increment(-price),
       'totalSpent': FieldValue.increment(price),
-      'updatedAt':  FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     await buyerWallet.collection('transactions').add({
-      'type':      'debit',
-      'amount':    price,
-      'label':     'Achat – $title',
+      'type': 'debit',
+      'amount': price,
+      'label': 'Achat – $title',
       'productId': product.id,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Vendeur : crédit (en attente de confirmation réception)
     final sellerWallet = db.collection('wallet').doc(product.sellerId);
     await sellerWallet.set({
-      'balance':      FieldValue.increment(price),
-      'totalEarned':  FieldValue.increment(price),
-      'updatedAt':    FieldValue.serverTimestamp(),
+      'balance': FieldValue.increment(price),
+      'totalEarned': FieldValue.increment(price),
+      'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     await sellerWallet.collection('transactions').add({
-      'type':      'credit',
-      'amount':    price,
-      'label':     'Vente – $title',
+      'type': 'credit',
+      'amount': price,
+      'label': 'Vente – $title',
       'productId': product.id,
       'createdAt': FieldValue.serverTimestamp(),
     });
@@ -183,22 +153,23 @@ class _PaymentPageState extends State<PaymentPage> {
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
-    final price   = product?.price ?? 0.0;
+    final price = product?.price ?? 0.0;
     final fmtPrice = _fmt(price);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF6B7F4D),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => context.canPop() ? context.pop() : context.go(RouteNames.home),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(RouteNames.home),
         ),
         title: const Text(
           'Paiement',
           style: TextStyle(
-            color: Colors.black87,
+            color: Colors.white,
             fontWeight: FontWeight.w700,
             fontSize: 17,
           ),
@@ -206,19 +177,26 @@ class _PaymentPageState extends State<PaymentPage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 14),
-            child: Row(
-              children: [
-                Icon(Icons.lock_outline, size: 13, color: Colors.green.shade600),
-                const SizedBox(width: 4),
-                Text(
-                  'Sécurisé',
-                  style: TextStyle(
-                    color: Colors.green.shade600,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.lock_outline, size: 13, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text(
+                    'Sécurisé',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -228,7 +206,6 @@ class _PaymentPageState extends State<PaymentPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // ── Récapitulatif ──────────────────────────────────────────────
             _SectionCard(
               child: Column(
@@ -252,8 +229,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         if (product.size != null) 'Taille ${product.size}',
                         _condition(product.condition),
                       ].join(' · '),
-                      style: const TextStyle(
-                          color: Colors.grey, fontSize: 12),
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ] else
                     const Text('Article',
@@ -261,7 +237,11 @@ class _PaymentPageState extends State<PaymentPage> {
                   const Divider(height: 20),
                   _PriceLine(label: 'Prix', value: fmtPrice),
                   const SizedBox(height: 6),
-                  _PriceLine(label: 'Commission', value: 'Gratuit', valueColor: const Color(0xFF6B7F4D)),
+                  _PriceLine(
+                    label: 'Frais de service',
+                    value: '1 000 FCFA',
+                    valueColor: const Color(0xFFC3653D),
+                  ),
                   const Divider(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -270,7 +250,7 @@ class _PaymentPageState extends State<PaymentPage> {
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 15)),
                       Text(
-                        fmtPrice,
+                        _fmt(price + 1000),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
@@ -281,8 +261,8 @@ class _PaymentPageState extends State<PaymentPage> {
                   ),
                   const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF0F5E8),
                       borderRadius: BorderRadius.circular(8),
@@ -464,7 +444,7 @@ class _PaymentPageState extends State<PaymentPage> {
             // ── Bouton Payer ───────────────────────────────────────────────
             SizedBox(
               width: double.infinity,
-              height: 52,
+              height: 54,
               child: ElevatedButton(
                 onPressed: _isProcessing ? null : _pay,
                 style: ElevatedButton.styleFrom(
@@ -472,9 +452,9 @@ class _PaymentPageState extends State<PaymentPage> {
                   disabledBackgroundColor:
                       const Color(0xFF6B7F4D).withOpacity(0.55),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  elevation: 0,
+                  elevation: 2,
                 ),
                 child: _isProcessing
                     ? const SizedBox(
@@ -486,11 +466,11 @@ class _PaymentPageState extends State<PaymentPage> {
                         ),
                       )
                     : Text(
-                        'Payer $fmtPrice',
+                        'Payer ${_fmt(price + 1000)}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 16,
                         ),
                       ),
               ),
@@ -512,14 +492,11 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 }
 
-// ── Résultat API paiement ──────────────────────────────────────────────────
 class _PayResult {
   final bool success;
   final String? errorMessage;
   const _PayResult(this.success, this.errorMessage);
 }
-
-// ── Widgets utilitaires ────────────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
   final Widget child;
@@ -531,11 +508,11 @@ class _SectionCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 6,
+              blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
@@ -554,8 +531,7 @@ class _PriceLine extends StatelessWidget {
   Widget build(BuildContext context) => Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
           Text(value,
               style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -611,7 +587,6 @@ class _MethodTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Logo
             SizedBox(
               width: 40,
               height: 28,
@@ -626,7 +601,6 @@ class _MethodTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Nom + détail
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,13 +615,11 @@ class _MethodTile extends StatelessWidget {
                   ),
                   Text(
                     detail,
-                    style: const TextStyle(
-                        color: Colors.grey, fontSize: 11),
+                    style: const TextStyle(color: Colors.grey, fontSize: 11),
                   ),
                 ],
               ),
             ),
-            // Radio
             Container(
               width: 20,
               height: 20,
@@ -660,8 +632,7 @@ class _MethodTile extends StatelessWidget {
                 color: isSelected ? accentColor : Colors.transparent,
               ),
               child: isSelected
-                  ? const Icon(Icons.check,
-                      color: Colors.white, size: 13)
+                  ? const Icon(Icons.check, color: Colors.white, size: 13)
                   : null,
             ),
           ],
