@@ -33,17 +33,21 @@ class _ChatListPageState extends State<ChatListPage> {
     final currentUid = context.read<AuthCubit>().currentUser?.id ?? '';
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF6B7F4D),
         elevation: 0,
         title: const Text(
           'Messages',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: Color(0xFF6B7F4D)),
+            icon: const Icon(Icons.edit_outlined, color: Colors.white),
             tooltip: 'Nouveau message',
             onPressed: () => context.go('/messages/new'),
           ),
@@ -78,12 +82,26 @@ class _ChatListPageState extends State<ChatListPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.chat_bubble_outline,
-                      size: 64, color: Colors.grey.shade300),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.chat_bubble_outline,
+                      size: 48,
+                      color: Color(0xFF6B7F4D),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'Aucun message pour l\'instant',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: TextStyle(
+                      color: Color(0xFF2B2B2B),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -96,12 +114,10 @@ class _ChatListPageState extends State<ChatListPage> {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             itemCount: chats.length,
             itemBuilder: (context, index) {
               final chat = chats[index];
-
-              // Trouver le nom de l'autre participant
               final otherUid = chat.participantIds
                   .firstWhere((id) => id != currentUid, orElse: () => '');
               final otherName =
@@ -111,34 +127,44 @@ class _ChatListPageState extends State<ChatListPage> {
               return GestureDetector(
                 onTap: () => context.go('/messages/${chat.id}'),
                 child: Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  padding: const EdgeInsets.all(14),
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
+                    border: unread > 0
+                        ? Border.all(
+                            color: const Color(0xFF6B7F4D).withOpacity(0.3),
+                            width: 1.5,
+                          )
+                        : null,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 6,
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: Row(
                     children: [
-                      // Avatar
-                      CircleAvatar(
-                        backgroundColor: const Color(0xFFD4E4B8),
-                        radius: 24,
-                        child: Text(
-                          otherName.isNotEmpty
-                              ? otherName[0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            color: Color(0xFF6B7F4D),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6B7F4D).withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            otherName.isNotEmpty
+                                ? otherName[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(
+                              color: Color(0xFF6B7F4D),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
                           ),
                         ),
                       ),
@@ -155,8 +181,8 @@ class _ChatListPageState extends State<ChatListPage> {
                                   style: TextStyle(
                                     fontWeight: unread > 0
                                         ? FontWeight.bold
-                                        : FontWeight.w500,
-                                    fontSize: 14,
+                                        : FontWeight.w600,
+                                    fontSize: 15,
                                     color: const Color(0xFF2B2B2B),
                                   ),
                                 ),
@@ -168,21 +194,35 @@ class _ChatListPageState extends State<ChatListPage> {
                                           ? const Color(0xFF6B7F4D)
                                           : Colors.grey,
                                       fontSize: 11,
+                                      fontWeight: unread > 0
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
                                     ),
                                   ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            // Produit lié
-                            if (chat.productTitle != null)
-                              Text(
-                                '📦 ${chat.productTitle}',
-                                style: const TextStyle(
-                                  color: Color(0xFF6B7F4D),
-                                  fontSize: 11,
-                                ),
+                            if (chat.productTitle != null) ...[
+                              const SizedBox(height: 3),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.checkroom,
+                                    size: 12,
+                                    color: Color(0xFFC3653D),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    chat.productTitle!,
+                                    style: const TextStyle(
+                                      color: Color(0xFFC3653D),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            const SizedBox(height: 2),
+                            ],
+                            const SizedBox(height: 4),
                             Row(
                               children: [
                                 Expanded(
@@ -192,7 +232,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: unread > 0
-                                          ? Colors.black87
+                                          ? const Color(0xFF2B2B2B)
                                           : Colors.grey,
                                       fontSize: 12,
                                       fontWeight: unread > 0
@@ -206,7 +246,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                   Container(
                                     padding: const EdgeInsets.all(5),
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFF6B7F4D),
+                                      color: Color(0xFFC3653D),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Text(
@@ -259,13 +299,19 @@ class _ChatListPageState extends State<ChatListPage> {
         backgroundColor: Colors.white,
         items: const [
           BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined), label: 'Accueil'),
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Accueil'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle_outline), label: 'Publier'),
+              icon: Icon(Icons.add_circle_outline),
+              activeIcon: Icon(Icons.add_circle),
+              label: 'Publier'),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Profil'),
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profil'),
         ],
       ),
     );
