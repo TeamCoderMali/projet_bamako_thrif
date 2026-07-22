@@ -47,7 +47,7 @@ class PaymentFailedPage extends StatelessWidget {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () => context.go(RouteNames.payment),
+                    onPressed: () => context.push(RouteNames.payment),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6B7F4D),
                       shape: RoundedRectangleBorder(

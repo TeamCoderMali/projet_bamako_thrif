@@ -78,7 +78,7 @@ class _SettingsPageState extends State<SettingsPage> {
             _item(context, Icons.info_outline, 'À propos de l\'app',
                 () => context.go(RouteNames.about)),
             _item(context, Icons.help_outline, 'Aide & Support',
-                () => context.go(RouteNames.support)),
+                () => context.push(RouteNames.support)),
             _item(context, Icons.star_outline, 'Noter l\'application', () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

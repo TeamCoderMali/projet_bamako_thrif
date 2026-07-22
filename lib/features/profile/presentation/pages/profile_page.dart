@@ -186,7 +186,7 @@ class ProfilePage extends StatelessWidget {
                       children: [
                         // ── Portefeuille terracotta ───────────────────────
                         GestureDetector(
-                          onTap: () => context.go(RouteNames.wallet),
+                          onTap: () => context.push(RouteNames.wallet),
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(18),
@@ -253,7 +253,7 @@ class ProfilePage extends StatelessWidget {
                               title: 'Dashboard Admin',
                               titleColor: const Color(0xFFC3653D),
                               onTap: () =>
-                                  context.go(RouteNames.adminDashboard),
+                                  context.push(RouteNames.adminDashboard),
                             ),
                           ]),
                           const SizedBox(height: 12),
@@ -267,7 +267,7 @@ class ProfilePage extends StatelessWidget {
                             iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
                             iconColor: const Color(0xFF6B7F4D),
                             title: 'Mes annonces',
-                            onTap: () => context.go(RouteNames.myListings),
+                            onTap: () => context.push(RouteNames.myListings),
                           ),
                           _buildMenuItem(
                             context,
@@ -275,7 +275,7 @@ class ProfilePage extends StatelessWidget {
                             iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
                             iconColor: const Color(0xFF6B7F4D),
                             title: 'Mes favoris',
-                            onTap: () => context.go(RouteNames.favorites),
+                            onTap: () => context.push(RouteNames.favorites),
                           ),
                           _buildMenuItem(
                             context,
@@ -283,7 +283,7 @@ class ProfilePage extends StatelessWidget {
                             iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
                             iconColor: const Color(0xFF6B7F4D),
                             title: 'Mes commandes',
-                            onTap: () => context.go(RouteNames.orders),
+                            onTap: () => context.push(RouteNames.orders),
                           ),
                           _buildMenuItem(
                             context,
@@ -291,7 +291,7 @@ class ProfilePage extends StatelessWidget {
                             iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
                             iconColor: const Color(0xFF6B7F4D),
                             title: 'Paiements',
-                            onTap: () => context.go(RouteNames.payment),
+                            onTap: () => context.push(RouteNames.payment),
                           ),
                           _buildMenuItem(
                             context,
@@ -299,7 +299,7 @@ class ProfilePage extends StatelessWidget {
                             iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
                             iconColor: const Color(0xFF6B7F4D),
                             title: 'Notifications',
-                            onTap: () => context.go(RouteNames.notifications),
+                            onTap: () => context.push(RouteNames.notifications),
                             isLast: true,
                           ),
                         ]),
@@ -314,7 +314,7 @@ class ProfilePage extends StatelessWidget {
                             iconBg: Colors.grey.withOpacity(0.1),
                             iconColor: Colors.grey,
                             title: 'Paramètres',
-                            onTap: () => context.go(RouteNames.settings),
+                            onTap: () => context.push(RouteNames.settings),
                           ),
                           _buildMenuItem(
                             context,
@@ -322,7 +322,7 @@ class ProfilePage extends StatelessWidget {
                             iconBg: Colors.grey.withOpacity(0.1),
                             iconColor: Colors.grey,
                             title: 'Aide & Support',
-                            onTap: () => context.go(RouteNames.support),
+                            onTap: () => context.push(RouteNames.support),
                             isLast: true,
                           ),
                         ]),

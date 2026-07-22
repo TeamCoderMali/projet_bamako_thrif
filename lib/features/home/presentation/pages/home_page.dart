@@ -165,7 +165,7 @@ class _HomePageState extends State<HomePage> {
           Row(
             children: [
               GestureDetector(
-                onTap: () => context.go(RouteNames.notifications),
+                onTap: () => context.push(RouteNames.notifications),
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
