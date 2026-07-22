@@ -196,323 +196,296 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: _isPublishing ? null : () => context.go(RouteNames.home),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && !_isPublishing) context.go(RouteNames.home);
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF7F4EE),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF6B7F4D),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: _isPublishing ? null : () => context.go(RouteNames.home),
+          ),
+          title: const Text(
+            'Publier un article',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
         ),
-        title: const Text(
-          'Publier un article',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Section photos ──────────────────────────────────────
-                  _sectionTitle('Photos (max 5)'),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Des photos de qualité augmentent vos chances de vente.',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                  const SizedBox(height: 10),
-                  _buildImagePicker(),
-
-                  const SizedBox(height: 22),
-
-                  // ── Titre ───────────────────────────────────────────────
-                  _sectionTitle('Titre *'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _titreController,
-                    decoration: _inputDeco('Ex: Robe longue bleue Zara'),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Le titre est requis'
-                        : null,
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ── Catégorie ───────────────────────────────────────────
-                  _sectionTitle('Catégorie *'),
-                  const SizedBox(height: 8),
-                  _dropdownContainer(
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<ProductCategory>(
-                        value: _selectedCategory,
-                        isExpanded: true,
-                        items: _categories.map((cat) {
-                          return DropdownMenuItem<ProductCategory>(
-                            value: cat['value'] as ProductCategory,
-                            child: Text(cat['label'] as String),
-                          );
-                        }).toList(),
-                        onChanged: (v) =>
-                            setState(() => _selectedCategory = v!),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ── État ────────────────────────────────────────────────
-                  _sectionTitle('État du vêtement *'),
-                  const SizedBox(height: 8),
-                  _buildConditionSelector(),
-
-                  const SizedBox(height: 18),
-
-                  // ── Prix ────────────────────────────────────────────────
-                  _sectionTitle('Prix en FCFA *'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _prixController,
-                    keyboardType: TextInputType.number,
-                    decoration: _inputDeco('Ex: 5000').copyWith(
-                      suffixText: 'FCFA',
-                    ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Prix requis';
-                      final val = double.tryParse(v.replaceAll(' ', ''));
-                      if (val == null || val <= 0) return 'Prix invalide';
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ── Marque ──────────────────────────────────────────────
-                  _sectionTitle('Marque'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _marqueController,
-                    decoration: _inputDeco('Ex: Zara, Nike, Adidas...'),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ── Taille ──────────────────────────────────────────────
-                  _sectionTitle('Taille'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _tailleController,
-                    decoration: _inputDeco('Ex: M, 38, 42...'),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ── Couleur ─────────────────────────────────────────────
-                  _sectionTitle('Couleur'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _couleurController,
-                    decoration: _inputDeco('Ex: Bleu marine, Rouge, Noir...'),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ── Localisation ────────────────────────────────────────
-                  _sectionTitle('Localisation'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _localisationController,
-                    decoration:
-                        _inputDeco('Ex: Bamako, Hamdallaye ACI 2000...'),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ── Description ─────────────────────────────────────────
-                  _sectionTitle('Description *'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _descriptionController,
-                    maxLines: 4,
-                    decoration: _inputDeco(
-                        'Décrivez votre article : état, utilisation, taille exacte...'),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'La description est requise'
-                        : null,
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // ── Bouton Publier ──────────────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isPublishing ? null : _publish,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B7F4D),
-                        disabledBackgroundColor:
-                            const Color(0xFF6B7F4D).withOpacity(0.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: _isPublishing
-                          ? const CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2)
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.rocket_launch_outlined,
-                                    color: Colors.white, size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Publier gratuitement',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-                  const Center(
-                    child: Text(
-                      'Publication gratuite et immédiate',
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _sectionTitle('Photos (max 5)'),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Des photos de qualité augmentent vos chances de vente.',
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                    const SizedBox(height: 10),
+                    _buildImagePicker(),
+                    const SizedBox(height: 22),
+                    _sectionTitle('Titre *'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _titreController,
+                      decoration: _inputDeco('Ex: Robe longue bleue Zara'),
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Le titre est requis'
+                          : null,
+                    ),
+                    const SizedBox(height: 18),
+                    _sectionTitle('Catégorie *'),
+                    const SizedBox(height: 8),
+                    _dropdownContainer(
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<ProductCategory>(
+                          value: _selectedCategory,
+                          isExpanded: true,
+                          items: _categories.map((cat) {
+                            return DropdownMenuItem<ProductCategory>(
+                              value: cat['value'] as ProductCategory,
+                              child: Text(cat['label'] as String),
+                            );
+                          }).toList(),
+                          onChanged: (v) =>
+                              setState(() => _selectedCategory = v!),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _sectionTitle('État du vêtement *'),
+                    const SizedBox(height: 8),
+                    _buildConditionSelector(),
+                    const SizedBox(height: 18),
+                    _sectionTitle('Prix en FCFA *'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _prixController,
+                      keyboardType: TextInputType.number,
+                      decoration: _inputDeco('Ex: 5000').copyWith(
+                        suffixText: 'FCFA',
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Prix requis';
+                        final val = double.tryParse(v.replaceAll(' ', ''));
+                        if (val == null || val <= 0) return 'Prix invalide';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                    _sectionTitle('Marque'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _marqueController,
+                      decoration: _inputDeco('Ex: Zara, Nike, Adidas...'),
+                    ),
+                    const SizedBox(height: 18),
+                    _sectionTitle('Taille'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _tailleController,
+                      decoration: _inputDeco('Ex: M, 38, 42...'),
+                    ),
+                    const SizedBox(height: 18),
+                    _sectionTitle('Couleur'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _couleurController,
+                      decoration: _inputDeco('Ex: Bleu marine, Rouge, Noir...'),
+                    ),
+                    const SizedBox(height: 18),
+                    _sectionTitle('Localisation'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _localisationController,
+                      decoration:
+                          _inputDeco('Ex: Bamako, Hamdallaye ACI 2000...'),
+                    ),
+                    const SizedBox(height: 18),
+                    _sectionTitle('Description *'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _descriptionController,
+                      maxLines: 4,
+                      decoration: _inputDeco(
+                          'Décrivez votre article : état, utilisation, taille exacte...'),
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'La description est requise'
+                          : null,
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _isPublishing ? null : _publish,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B7F4D),
+                          disabledBackgroundColor:
+                              const Color(0xFF6B7F4D).withOpacity(0.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: _isPublishing
+                            ? const CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2)
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(Icons.rocket_launch_outlined,
+                                      color: Colors.white, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Publier gratuitement',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Center(
+                      child: Text(
+                        'Publication gratuite et immédiate',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ),
-          ),
-
-          // ── Overlay progression ─────────────────────────────────────────
-          if (_isPublishing)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.5),
-                child: Center(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 40),
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 20,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF6B7F4D).withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: _uploadProgress >= 1.0
-                              ? const Icon(Icons.check_circle,
-                                  color: Color(0xFF6B7F4D), size: 36)
-                              : const CircularProgressIndicator(
-                                  color: Color(0xFF6B7F4D), strokeWidth: 3),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          _publishStep,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Color(0xFF2B2B2B),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: LinearProgressIndicator(
-                            value: _uploadProgress,
-                            backgroundColor: Colors.grey.shade200,
-                            color: const Color(0xFF6B7F4D),
-                            minHeight: 8,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${(_uploadProgress * 100).toInt()}%',
-                          style: const TextStyle(
-                            color: Color(0xFF6B7F4D),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (_selectedImages.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            '${_selectedImages.length} photo(s)',
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 12),
+            if (_isPublishing)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 40),
+                      padding: const EdgeInsets.all(28),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 20,
                           ),
                         ],
-                      ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: _uploadProgress >= 1.0
+                                ? const Icon(Icons.check_circle,
+                                    color: Color(0xFF6B7F4D), size: 36)
+                                : const CircularProgressIndicator(
+                                    color: Color(0xFF6B7F4D), strokeWidth: 3),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            _publishStep,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Color(0xFF2B2B2B),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: _uploadProgress,
+                              backgroundColor: Colors.grey.shade200,
+                              color: const Color(0xFF6B7F4D),
+                              minHeight: 8,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${(_uploadProgress * 100).toInt()}%',
+                            style: const TextStyle(
+                              color: Color(0xFF6B7F4D),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (_selectedImages.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              '${_selectedImages.length} photo(s)',
+                              style: const TextStyle(
+                                  color: Colors.grey, fontSize: 12),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2,
-        onTap: _isPublishing
-            ? null
-            : (index) {
-                switch (index) {
-                  case 0:
-                    context.go(RouteNames.home);
-                    break;
-                  case 1:
-                    context.go(RouteNames.search);
-                    break;
-                  case 2:
-                    context.go(RouteNames.publish);
-                    break;
-                  case 3:
-                    context.go(RouteNames.messages);
-                    break;
-                  case 4:
-                    context.go(RouteNames.profile);
-                    break;
-                }
-              },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF6B7F4D),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined), label: 'Accueil'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle), label: 'Publier'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.message_outlined), label: 'Messages'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Profil'),
-        ],
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: 2,
+          onTap: _isPublishing
+              ? null
+              : (index) {
+                  switch (index) {
+                    case 0:
+                      context.go(RouteNames.home);
+                      break;
+                    case 1:
+                      context.go(RouteNames.search);
+                      break;
+                    case 2:
+                      context.go(RouteNames.publish);
+                      break;
+                    case 3:
+                      context.go(RouteNames.messages);
+                      break;
+                    case 4:
+                      context.go(RouteNames.profile);
+                      break;
+                  }
+                },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF6B7F4D),
+          unselectedItemColor: Colors.grey,
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined), label: 'Accueil'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.search), label: 'Chercher'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.add_circle), label: 'Publier'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.message_outlined), label: 'Messages'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline), label: 'Profil'),
+          ],
+        ),
       ),
     );
   }
@@ -531,7 +504,6 @@ class _PublishProductPageState extends State<PublishProductPage> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: const Color(0xFF6B7F4D).withOpacity(0.4),
-                  style: BorderStyle.solid,
                 ),
               ),
               child: Column(

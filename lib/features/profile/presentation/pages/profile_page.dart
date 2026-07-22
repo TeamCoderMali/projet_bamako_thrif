@@ -19,384 +19,388 @@ class ProfilePage extends StatelessWidget {
       builder: (context, state) {
         final user = state is AuthAuthenticated ? state.user : null;
 
-        return Scaffold(
-          backgroundColor: const Color(0xFFF7F4EE),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  // ── Header vert gradient ──────────────────────────────────
-                  Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF6B7F4D), Color(0xFF8FA85A)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) context.go(RouteNames.home);
+          },
+          child: Scaffold(
+            backgroundColor: const Color(0xFFF7F4EE),
+            body: SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // ── Header vert gradient ────────────────────────────
+                    Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF6B7F4D), Color(0xFF8FA85A)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                       ),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-                    child: Column(
-                      children: [
-                        // Avatar
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.5),
-                              width: 3,
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.5),
+                                width: 3,
+                              ),
                             ),
-                          ),
-                          child: user?.avatarUrl != null
-                              ? ClipOval(
-                                  child: CachedNetworkImage(
-                                    imageUrl: user!.avatarUrl!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Center(
-                                  child: Text(
-                                    user?.initials ?? '?',
-                                    style: const TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                            child: user?.avatarUrl != null
+                                ? ClipOval(
+                                    child: CachedNetworkImage(
+                                      imageUrl: user!.avatarUrl!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
+                                      user?.initials ?? '?',
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
-                                ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Nom
-                        Text(
-                          user?.fullName ?? 'Utilisateur',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-
-                        // Email
-                        Text(
-                          user?.email ?? '',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withOpacity(0.7),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Badge rôle
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
-                            ),
-                          ),
-                          child: Text(
-                            user?.isSeller == true
-                                ? '🏪 Vendeur'
-                                : '🛍️ Acheteur',
+                          const SizedBox(height: 12),
+                          Text(
+                            user?.fullName ?? 'Utilisateur',
                             style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                               color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Stats
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(16),
+                          const SizedBox(height: 4),
+                          Text(
+                            user?.email ?? '',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
                           ),
-                          child: Row(
-                            children: [
-                              _buildStat(
-                                  '${user?.totalListings ?? 0}', 'Annonces'),
-                              Container(
-                                  width: 1,
-                                  height: 40,
-                                  color: Colors.white.withOpacity(0.2)),
-                              _buildStat('${user?.totalSales ?? 0}', 'Ventes'),
-                              Container(
-                                  width: 1,
-                                  height: 40,
-                                  color: Colors.white.withOpacity(0.2)),
-                              _buildStat(
-                                user != null && user.reviewCount > 0
-                                    ? '${user.rating.toStringAsFixed(1)}★'
-                                    : '—',
-                                'Note',
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Bouton modifier
-                        GestureDetector(
-                          onTap: () => context.go('${RouteNames.profile}/edit'),
-                          child: Container(
+                          const SizedBox(height: 12),
+                          Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 8),
+                                horizontal: 14, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
+                              color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: Colors.white.withOpacity(0.4),
                               ),
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.edit_outlined,
-                                    color: Colors.white, size: 16),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Modifier le profil',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              user?.isSeller == true
+                                  ? '🏪 Vendeur'
+                                  : '🛍️ Acheteur',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        // ── Portefeuille terracotta ───────────────────────
-                        GestureDetector(
-                          onTap: () => context.push(RouteNames.wallet),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(18),
+                          const SizedBox(height: 16),
+                          Container(
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFC3653D), Color(0xFFE08A5E)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              color: Colors.white.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      const Color(0xFFC3653D).withOpacity(0.3),
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
                             ),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Mon Portefeuille',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'Voir le solde →',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const Icon(
-                                  Icons.account_balance_wallet,
-                                  color: Colors.white70,
-                                  size: 32,
+                                _buildStat(
+                                    '${user?.totalListings ?? 0}', 'Annonces'),
+                                Container(
+                                    width: 1,
+                                    height: 40,
+                                    color: Colors.white.withOpacity(0.2)),
+                                _buildStat(
+                                    '${user?.totalSales ?? 0}', 'Ventes'),
+                                Container(
+                                    width: 1,
+                                    height: 40,
+                                    color: Colors.white.withOpacity(0.2)),
+                                _buildStat(
+                                  user != null && user.reviewCount > 0
+                                      ? '${user.rating.toStringAsFixed(1)}★'
+                                      : '—',
+                                  'Note',
                                 ),
                               ],
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 16),
+                          GestureDetector(
+                            onTap: () =>
+                                context.push('${RouteNames.profile}/edit'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.4),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.edit_outlined,
+                                      color: Colors.white, size: 16),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Modifier le profil',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
-                        const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          // ── Portefeuille ──────────────────────────────
+                          GestureDetector(
+                            onTap: () => context.push(RouteNames.wallet),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFC3653D),
+                                    Color(0xFFE08A5E)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFC3653D)
+                                        .withOpacity(0.3),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: const Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Mon Portefeuille',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Voir le solde →',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Icon(
+                                    Icons.account_balance_wallet,
+                                    color: Colors.white70,
+                                    size: 32,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
 
-                        // ── Dashboard Admin ───────────────────────────────
-                        if (user != null && user.isAdmin) ...[
+                          const SizedBox(height: 12),
+
+                          // ── Dashboard Admin ───────────────────────────
+                          if (user != null && user.isAdmin) ...[
+                            _buildMenuSection([
+                              _buildMenuItem(
+                                context,
+                                icon: Icons.admin_panel_settings,
+                                iconBg:
+                                    const Color(0xFFC3653D).withOpacity(0.1),
+                                iconColor: const Color(0xFFC3653D),
+                                title: 'Dashboard Admin',
+                                titleColor: const Color(0xFFC3653D),
+                                onTap: () =>
+                                    context.push(RouteNames.adminDashboard),
+                              ),
+                            ]),
+                            const SizedBox(height: 12),
+                          ],
+
+                          // ── Menu principal ────────────────────────────
                           _buildMenuSection([
                             _buildMenuItem(
                               context,
-                              icon: Icons.admin_panel_settings,
-                              iconBg: const Color(0xFFC3653D).withOpacity(0.1),
-                              iconColor: const Color(0xFFC3653D),
-                              title: 'Dashboard Admin',
-                              titleColor: const Color(0xFFC3653D),
+                              icon: Icons.list_alt,
+                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                              iconColor: const Color(0xFF6B7F4D),
+                              title: 'Mes annonces',
+                              onTap: () => context.push(RouteNames.myListings),
+                            ),
+                            _buildMenuItem(
+                              context,
+                              icon: Icons.favorite_border,
+                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                              iconColor: const Color(0xFF6B7F4D),
+                              title: 'Mes favoris',
+                              onTap: () => context.push(RouteNames.favorites),
+                            ),
+                            _buildMenuItem(
+                              context,
+                              icon: Icons.shopping_bag_outlined,
+                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                              iconColor: const Color(0xFF6B7F4D),
+                              title: 'Mes commandes',
+                              onTap: () => context.push(RouteNames.orders),
+                            ),
+                            _buildMenuItem(
+                              context,
+                              icon: Icons.credit_card_outlined,
+                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                              iconColor: const Color(0xFF6B7F4D),
+                              title: 'Paiements',
+                              onTap: () => context.push(RouteNames.payment),
+                            ),
+                            _buildMenuItem(
+                              context,
+                              icon: Icons.notifications_outlined,
+                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                              iconColor: const Color(0xFF6B7F4D),
+                              title: 'Notifications',
                               onTap: () =>
-                                  context.push(RouteNames.adminDashboard),
+                                  context.push(RouteNames.notifications),
+                              isLast: true,
                             ),
                           ]),
+
                           const SizedBox(height: 12),
+
+                          // ── Menu secondaire ───────────────────────────
+                          _buildMenuSection([
+                            _buildMenuItem(
+                              context,
+                              icon: Icons.settings_outlined,
+                              iconBg: Colors.grey.withOpacity(0.1),
+                              iconColor: Colors.grey,
+                              title: 'Paramètres',
+                              onTap: () => context.push(RouteNames.settings),
+                            ),
+                            _buildMenuItem(
+                              context,
+                              icon: Icons.help_outline,
+                              iconBg: Colors.grey.withOpacity(0.1),
+                              iconColor: Colors.grey,
+                              title: 'Aide & Support',
+                              onTap: () => context.push(RouteNames.support),
+                              isLast: true,
+                            ),
+                          ]),
+
+                          const SizedBox(height: 12),
+
+                          // ── Déconnexion ───────────────────────────────
+                          _buildMenuSection([
+                            _buildMenuItem(
+                              context,
+                              icon: Icons.logout,
+                              iconBg: Colors.red.withOpacity(0.1),
+                              iconColor: Colors.red,
+                              title: 'Se déconnecter',
+                              titleColor: Colors.red,
+                              onTap: () => _confirmSignOut(context),
+                              isLast: true,
+                            ),
+                          ]),
+
+                          const SizedBox(height: 20),
                         ],
-
-                        // ── Menu principal ────────────────────────────────
-                        _buildMenuSection([
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.list_alt,
-                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                            iconColor: const Color(0xFF6B7F4D),
-                            title: 'Mes annonces',
-                            onTap: () => context.push(RouteNames.myListings),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.favorite_border,
-                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                            iconColor: const Color(0xFF6B7F4D),
-                            title: 'Mes favoris',
-                            onTap: () => context.push(RouteNames.favorites),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.shopping_bag_outlined,
-                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                            iconColor: const Color(0xFF6B7F4D),
-                            title: 'Mes commandes',
-                            onTap: () => context.push(RouteNames.orders),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.credit_card_outlined,
-                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                            iconColor: const Color(0xFF6B7F4D),
-                            title: 'Paiements',
-                            onTap: () => context.push(RouteNames.payment),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.notifications_outlined,
-                            iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                            iconColor: const Color(0xFF6B7F4D),
-                            title: 'Notifications',
-                            onTap: () => context.push(RouteNames.notifications),
-                            isLast: true,
-                          ),
-                        ]),
-
-                        const SizedBox(height: 12),
-
-                        // ── Menu secondaire ───────────────────────────────
-                        _buildMenuSection([
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.settings_outlined,
-                            iconBg: Colors.grey.withOpacity(0.1),
-                            iconColor: Colors.grey,
-                            title: 'Paramètres',
-                            onTap: () => context.push(RouteNames.settings),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.help_outline,
-                            iconBg: Colors.grey.withOpacity(0.1),
-                            iconColor: Colors.grey,
-                            title: 'Aide & Support',
-                            onTap: () => context.push(RouteNames.support),
-                            isLast: true,
-                          ),
-                        ]),
-
-                        const SizedBox(height: 12),
-
-                        // ── Déconnexion ───────────────────────────────────
-                        _buildMenuSection([
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.logout,
-                            iconBg: Colors.red.withOpacity(0.1),
-                            iconColor: Colors.red,
-                            title: 'Se déconnecter',
-                            titleColor: Colors.red,
-                            onTap: () => _confirmSignOut(context),
-                            isLast: true,
-                          ),
-                        ]),
-
-                        const SizedBox(height: 20),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: 4,
-            onTap: (index) {
-              switch (index) {
-                case 0:
-                  context.go(RouteNames.home);
-                  break;
-                case 1:
-                  context.go(RouteNames.search);
-                  break;
-                case 2:
-                  context.go(RouteNames.publish);
-                  break;
-                case 3:
-                  context.go(RouteNames.messages);
-                  break;
-                case 4:
-                  context.go(RouteNames.profile);
-                  break;
-              }
-            },
-            type: BottomNavigationBarType.fixed,
-            selectedItemColor: const Color(0xFF6B7F4D),
-            unselectedItemColor: Colors.grey,
-            backgroundColor: Colors.white,
-            elevation: 8,
-            items: const [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined),
-                  activeIcon: Icon(Icons.home),
-                  label: 'Accueil'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.search), label: 'Chercher'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.add_circle_outline),
-                  activeIcon: Icon(Icons.add_circle),
-                  label: 'Publier'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.message_outlined),
-                  activeIcon: Icon(Icons.message),
-                  label: 'Messages'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline),
-                  activeIcon: Icon(Icons.person),
-                  label: 'Profil'),
-            ],
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: 4,
+              onTap: (index) {
+                switch (index) {
+                  case 0:
+                    context.go(RouteNames.home);
+                    break;
+                  case 1:
+                    context.go(RouteNames.search);
+                    break;
+                  case 2:
+                    context.go(RouteNames.publish);
+                    break;
+                  case 3:
+                    context.go(RouteNames.messages);
+                    break;
+                  case 4:
+                    context.go(RouteNames.profile);
+                    break;
+                }
+              },
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: const Color(0xFF6B7F4D),
+              unselectedItemColor: Colors.grey,
+              backgroundColor: Colors.white,
+              elevation: 8,
+              items: const [
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.home_outlined),
+                    activeIcon: Icon(Icons.home),
+                    label: 'Accueil'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.search), label: 'Chercher'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.add_circle_outline),
+                    activeIcon: Icon(Icons.add_circle),
+                    label: 'Publier'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.message_outlined),
+                    activeIcon: Icon(Icons.message),
+                    label: 'Messages'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.person_outline),
+                    activeIcon: Icon(Icons.person),
+                    label: 'Profil'),
+              ],
+            ),
           ),
         );
       },

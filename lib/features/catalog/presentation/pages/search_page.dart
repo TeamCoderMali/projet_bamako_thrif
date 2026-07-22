@@ -75,173 +75,181 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) context.go(RouteNames.home);
+      },
+      child: Scaffold(
         backgroundColor: const Color(0xFFF7F4EE),
-        elevation: 0,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF2B2B2B)),
-          onPressed: () => context.go(RouteNames.home),
-        ),
-        title: Container(
-          margin: const EdgeInsets.only(right: 12),
-          child: TextField(
-            controller: _controller,
-            autofocus: true,
-            onChanged: _onQueryChanged,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (q) {
-              _debounce?.cancel();
-              if (q.trim().isNotEmpty) {
-                context.read<ProductCubit>().searchProducts(q.trim());
-              }
-            },
-            decoration: InputDecoration(
-              hintText: 'Robe, Nike, sac à main...',
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-              filled: true,
-              fillColor: Colors.white,
-              prefixIcon: _isSearching
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Color(0xFF6B7F4D)),
-                      ),
-                    )
-                  : const Icon(Icons.search, color: Color(0xFF6B7F4D)),
-              suffixIcon: _controller.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.close, color: Colors.grey),
-                      onPressed: () {
-                        _controller.clear();
-                        context
-                            .read<ProductCubit>()
-                            .loadProducts(refresh: true);
-                      },
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF7F4EE),
+          elevation: 0,
+          titleSpacing: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF2B2B2B)),
+            onPressed: () => context.go(RouteNames.home),
+          ),
+          title: Container(
+            margin: const EdgeInsets.only(right: 12),
+            child: TextField(
+              controller: _controller,
+              autofocus: true,
+              onChanged: _onQueryChanged,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (q) {
+                _debounce?.cancel();
+                if (q.trim().isNotEmpty) {
+                  context.read<ProductCubit>().searchProducts(q.trim());
+                }
+              },
+              decoration: InputDecoration(
+                hintText: 'Robe, Nike, sac à main...',
+                hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: _isSearching
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Color(0xFF6B7F4D)),
+                        ),
+                      )
+                    : const Icon(Icons.search, color: Color(0xFF6B7F4D)),
+                suffixIcon: _controller.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () {
+                          _controller.clear();
+                          context
+                              .read<ProductCubit>()
+                              .loadProducts(refresh: true);
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
               ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 0),
             ),
           ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(52),
+            child: _buildCategoryFilter(),
+          ),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(52),
-          child: _buildCategoryFilter(),
-        ),
-      ),
-      body: BlocBuilder<ProductCubit, ProductState>(
-        builder: (context, state) {
-          if (state is ProductLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
-            );
-          }
+        body: BlocBuilder<ProductCubit, ProductState>(
+          builder: (context, state) {
+            if (state is ProductLoading) {
+              return const Center(
+                child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+              );
+            }
 
-          if (state is ProductError) {
-            return _buildEmpty(
-              icon: Icons.error_outline,
-              title: 'Erreur de chargement',
-              subtitle: state.message,
-              iconColor: Colors.red.shade200,
-            );
-          }
+            if (state is ProductError) {
+              return _buildEmpty(
+                icon: Icons.error_outline,
+                title: 'Erreur de chargement',
+                subtitle: state.message,
+                iconColor: Colors.red.shade200,
+              );
+            }
 
-          List<ProductEntity> products = [];
-          if (state is ProductLoaded) products = state.products;
-          if (state is ProductSearchResult) products = state.results;
+            List<ProductEntity> products = [];
+            if (state is ProductLoaded) products = state.products;
+            if (state is ProductSearchResult) products = state.results;
 
-          if (_controller.text.isEmpty && state is! ProductSearchResult) {
-            return _buildSuggestionsView();
-          }
+            if (_controller.text.isEmpty && state is! ProductSearchResult) {
+              return _buildSuggestionsView();
+            }
 
-          if (products.isEmpty) {
-            return _buildEmpty(
-              icon: Icons.search_off,
-              title: 'Aucun résultat',
-              subtitle: 'Essayez un autre mot-clé ou changez les filtres',
-            );
-          }
+            if (products.isEmpty) {
+              return _buildEmpty(
+                icon: Icons.search_off,
+                title: 'Aucun résultat',
+                subtitle: 'Essayez un autre mot-clé ou changez les filtres',
+              );
+            }
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Row(
-                  children: [
-                    Text(
-                      '${products.length} résultat${products.length > 1 ? 's' : ''}',
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: _showConditionFilter,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _selectedCondition != null
-                              ? const Color(0xFF6B7F4D)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${products.length} résultat${products.length > 1 ? 's' : ''}',
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: _showConditionFilter,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
                             color: _selectedCondition != null
                                 ? const Color(0xFF6B7F4D)
-                                : Colors.grey.shade300,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.tune,
-                              size: 14,
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
                               color: _selectedCondition != null
-                                  ? Colors.white
-                                  : Colors.grey,
+                                  ? const Color(0xFF6B7F4D)
+                                  : Colors.grey.shade300,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _selectedCondition != null
-                                  ? _conditionLabel(_selectedCondition!)
-                                  : 'État',
-                              style: TextStyle(
-                                fontSize: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.tune,
+                                size: 14,
                                 color: _selectedCondition != null
                                     ? Colors.white
                                     : Colors.grey,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Text(
+                                _selectedCondition != null
+                                    ? _conditionLabel(_selectedCondition!)
+                                    : 'État',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _selectedCondition != null
+                                      ? Colors.white
+                                      : Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 0.68,
+                    ],
                   ),
-                  itemCount: products.length,
-                  itemBuilder: (ctx, i) => _ProductCard(product: products[i]),
                 ),
-              ),
-            ],
-          );
-        },
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(12),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 0.68,
+                    ),
+                    itemCount: products.length,
+                    itemBuilder: (ctx, i) => _ProductCard(product: products[i]),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
