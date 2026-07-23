@@ -27,7 +27,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
     if (user == null) return;
 
     try {
-      // Récupérer les favoris de l'utilisateur
       final favSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -39,7 +38,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
         return;
       }
 
-      // Récupérer les détails de chaque produit
       final List<Map<String, dynamic>> products = [];
       for (final doc in favSnapshot.docs) {
         final productId = doc.data()['productId'] as String?;
@@ -99,16 +97,16 @@ class _FavoritesPageState extends State<FavoritesPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF6B7F4D),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF2B2B2B)),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.go(RouteNames.profile),
         ),
         title: const Text(
           'Mes favoris',
           style: TextStyle(
-            color: Color(0xFF2B2B2B),
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -118,19 +116,33 @@ class _FavoritesPageState extends State<FavoritesPage> {
               child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
             )
           : _favorites.isEmpty
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.favorite_border,
-                          size: 80, color: Color(0xFF6B7F4D)),
-                      SizedBox(height: 16),
-                      Text(
-                        'Aucun favori pour l\'instant',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.favorite_border,
+                          size: 48,
+                          color: Color(0xFF6B7F4D),
+                        ),
                       ),
-                      SizedBox(height: 8),
-                      Text(
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Aucun favori pour l\'instant',
+                        style: TextStyle(
+                          color: Color(0xFF2B2B2B),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
                         'Ajoutez des articles à vos favoris\npour les retrouver ici.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey, fontSize: 13),
@@ -148,58 +160,93 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         ? images.first as String
                         : null;
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                    return GestureDetector(
+                      onTap: () => context.go(
+                        '/product/${product['productId']}',
                       ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: imageUrl != null
-                              ? CachedNetworkImage(
-                                  imageUrl: imageUrl,
-                                  width: 60,
-                                  height: 60,
-                                  fit: BoxFit.cover,
-                                  errorWidget: (_, __, ___) => Container(
-                                    width: 60,
-                                    height: 60,
-                                    color: const Color(0xFFF7F4EE),
-                                    child: const Icon(Icons.checkroom,
-                                        color: Color(0xFF6B7F4D)),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEF3E6),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFF6B7F4D).withOpacity(0.2),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            // Image
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: imageUrl != null
+                                  ? CachedNetworkImage(
+                                      imageUrl: imageUrl,
+                                      width: 70,
+                                      height: 70,
+                                      fit: BoxFit.cover,
+                                      errorWidget: (_, __, ___) => Container(
+                                        width: 70,
+                                        height: 70,
+                                        color: const Color(0xFF6B7F4D)
+                                            .withOpacity(0.1),
+                                        child: const Icon(Icons.checkroom,
+                                            color: Color(0xFF6B7F4D)),
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 70,
+                                      height: 70,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF6B7F4D)
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(Icons.checkroom,
+                                          color: Color(0xFF6B7F4D)),
+                                    ),
+                            ),
+                            const SizedBox(width: 14),
+                            // Infos
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    product['title'] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2B2B2B),
+                                      fontSize: 14,
+                                    ),
                                   ),
-                                )
-                              : Container(
-                                  width: 60,
-                                  height: 60,
-                                  color: const Color(0xFFF7F4EE),
-                                  child: const Icon(Icons.checkroom,
-                                      color: Color(0xFF6B7F4D)),
-                                ),
-                        ),
-                        title: Text(
-                          product['title'] ?? '',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2B2B2B),
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${((product['price'] ?? 0) as num).toStringAsFixed(0)} FCFA',
-                          style: const TextStyle(
-                            color: Color(0xFF6B7F4D),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.favorite, color: Colors.red),
-                          onPressed: () =>
-                              _removeFavorite(product['productId']),
-                        ),
-                        onTap: () => context.go(
-                          '/product/${product['productId']}',
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${((product['price'] ?? 0) as num).toStringAsFixed(0)} FCFA',
+                                    style: const TextStyle(
+                                      color: Color(0xFF6B7F4D),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Bouton supprimer
+                            IconButton(
+                              icon:
+                                  const Icon(Icons.favorite, color: Colors.red),
+                              onPressed: () =>
+                                  _removeFavorite(product['productId']),
+                            ),
+                          ],
                         ),
                       ),
                     );
