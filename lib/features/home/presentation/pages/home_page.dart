@@ -112,7 +112,7 @@ class _HomePageState extends State<HomePage> {
                     return _buildError(context, state.message);
                   }
                   if (state is ProductLoaded) {
-                    if (state.products.isEmpty) return _buildEmpty();
+                    if (state.products.isEmpty) return _buildEmpty(context);
                     return _buildProductGrid(context, state.products);
                   }
                   return const Center(
@@ -144,10 +144,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Text(
                     'Bonjour $name 👋',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const Text(
                     'DANAYA',
@@ -352,7 +349,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -389,9 +386,9 @@ class _HomePageState extends State<HomePage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6B7F4D),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(20),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
             ),
             child: const Text(
               'Publier un article',
@@ -507,7 +504,6 @@ class _ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Image ───────────────────────────────────────────────────
             Expanded(
               flex: 3,
               child: Stack(
@@ -546,7 +542,6 @@ class _ProductCard extends StatelessWidget {
                             ),
                           ),
                   ),
-                  // Badge état
                   Positioned(
                     top: 8,
                     left: 8,
@@ -570,8 +565,6 @@ class _ProductCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // ── Infos ────────────────────────────────────────────────────
             Expanded(
               flex: 2,
               child: Padding(
