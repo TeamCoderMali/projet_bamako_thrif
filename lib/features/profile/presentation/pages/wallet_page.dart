@@ -30,12 +30,17 @@ class WalletPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF6B7F4D),
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop() ? context.pop() : context.go(RouteNames.profile),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(RouteNames.profile),
         ),
-        title: const Text('Mon Portefeuille',
-            style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Mon Portefeuille',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
       ),
       body: uid == null
           ? const Center(child: Text('Connectez-vous'))
@@ -47,9 +52,9 @@ class WalletPage extends StatelessWidget {
               builder: (context, walletSnap) {
                 final walletData =
                     walletSnap.data?.data() as Map<String, dynamic>?;
-                final balance    = walletData?['balance']     ?? 0;
-                final earned     = walletData?['totalEarned'] ?? 0;
-                final spent      = walletData?['totalSpent']  ?? 0;
+                final balance = walletData?['balance'] ?? 0;
+                final earned = walletData?['totalEarned'] ?? 0;
+                final spent = walletData?['totalSpent'] ?? 0;
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
@@ -195,8 +200,7 @@ class WalletPage extends StatelessWidget {
                                 child: Column(
                                   children: [
                                     Icon(Icons.receipt_long_outlined,
-                                        size: 56,
-                                        color: Colors.grey.shade300),
+                                        size: 56, color: Colors.grey.shade300),
                                     const SizedBox(height: 12),
                                     const Text('Aucune transaction',
                                         style: TextStyle(color: Colors.grey)),
@@ -215,9 +219,9 @@ class WalletPage extends StatelessWidget {
                             itemBuilder: (_, i) {
                               final tx = txs[i].data() as Map<String, dynamic>;
                               final isCredit = tx['type'] == 'credit';
-                              final amount   = tx['amount'] ?? 0;
-                              final label    = tx['label'] as String? ?? '—';
-                              final date     = _fmtDate(tx['createdAt']);
+                              final amount = tx['amount'] ?? 0;
+                              final label = tx['label'] as String? ?? '—';
+                              final date = _fmtDate(tx['createdAt']);
 
                               return ListTile(
                                 contentPadding:
@@ -235,9 +239,7 @@ class WalletPage extends StatelessWidget {
                                     isCredit
                                         ? Icons.arrow_downward_rounded
                                         : Icons.arrow_upward_rounded,
-                                    color: isCredit
-                                        ? Colors.green
-                                        : Colors.red,
+                                    color: isCredit ? Colors.green : Colors.red,
                                     size: 20,
                                   ),
                                 ),
@@ -291,8 +293,7 @@ class _WalletStat extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   fontSize: 12)),
           Text(label,
-              style:
-                  const TextStyle(color: Colors.white54, fontSize: 10)),
+              style: const TextStyle(color: Colors.white54, fontSize: 10)),
         ],
       );
 }

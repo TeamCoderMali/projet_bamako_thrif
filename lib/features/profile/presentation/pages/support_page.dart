@@ -10,18 +10,15 @@ class SupportPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF6B7F4D),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF2B2B2B)),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.go(RouteNames.profile),
         ),
         title: const Text(
           'Aide & Support',
-          style: TextStyle(
-            color: Color(0xFF2B2B2B),
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(

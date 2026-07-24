@@ -18,30 +18,45 @@ class MyListingsPage extends StatelessWidget {
   // ── Statut ─────────────────────────────────────────────────────────────────
   String _statusLabel(String status) {
     switch (status) {
-      case 'available': return 'Disponible';
-      case 'sold':      return 'Vendu';
-      case 'inactive':  return 'Masqué';
-      case 'reserved':  return 'Réservé';
-      case 'pending':   return 'En attente';
-      case 'rejected':  return 'Rejeté';
-      default:          return status;
+      case 'available':
+        return 'Disponible';
+      case 'sold':
+        return 'Vendu';
+      case 'inactive':
+        return 'Masqué';
+      case 'reserved':
+        return 'Réservé';
+      case 'pending':
+        return 'En attente';
+      case 'rejected':
+        return 'Rejeté';
+      default:
+        return status;
     }
   }
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'available': return Colors.green;
-      case 'sold':      return Colors.blue;
-      case 'inactive':  return Colors.orange;
-      case 'reserved':  return Colors.purple;
-      case 'pending':   return Colors.amber;
-      case 'rejected':  return Colors.red;
-      default:          return Colors.grey;
+      case 'available':
+        return Colors.green;
+      case 'sold':
+        return Colors.blue;
+      case 'inactive':
+        return Colors.orange;
+      case 'reserved':
+        return Colors.purple;
+      case 'pending':
+        return Colors.amber;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
   // ── Actions Firestore ──────────────────────────────────────────────────────
-  Future<void> _toggleStatus(BuildContext context, String docId, String currentStatus) async {
+  Future<void> _toggleStatus(
+      BuildContext context, String docId, String currentStatus) async {
     final newStatus = currentStatus == 'available' ? 'inactive' : 'available';
     await FirebaseFirestore.instance
         .collection('product')
@@ -50,7 +65,8 @@ class MyListingsPage extends StatelessWidget {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(newStatus == 'available' ? 'Annonce publiée' : 'Annonce masquée'),
+          content: Text(
+              newStatus == 'available' ? 'Annonce publiée' : 'Annonce masquée'),
           backgroundColor: const Color(0xFF6B7F4D),
           duration: const Duration(seconds: 2),
         ),
@@ -73,15 +89,18 @@ class MyListingsPage extends StatelessWidget {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Supprimer',
-                style: TextStyle(color: Colors.white)),
+            child:
+                const Text('Supprimer', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
 
     if (confirm == true && context.mounted) {
-      await FirebaseFirestore.instance.collection('product').doc(docId).delete();
+      await FirebaseFirestore.instance
+          .collection('product')
+          .doc(docId)
+          .delete();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -100,15 +119,20 @@ class MyListingsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF6B7F4D),
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop() ? context.pop() : context.go(RouteNames.profile),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(RouteNames.profile),
         ),
-        title: const Text('Mes annonces',
-            style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Mes annonces',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline),
+            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
             tooltip: 'Publier une annonce',
             onPressed: () => context.go(RouteNames.publish),
           ),
@@ -206,8 +230,7 @@ class MyListingsPage extends StatelessWidget {
                                     width: 90,
                                     height: 90,
                                     fit: BoxFit.cover,
-                                    errorWidget: (_, __, ___) =>
-                                        _placeholder(),
+                                    errorWidget: (_, __, ___) => _placeholder(),
                                   )
                                 : _placeholder(),
                           ),
@@ -215,8 +238,7 @@ class MyListingsPage extends StatelessWidget {
                           // Infos
                           Expanded(
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 10),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -243,8 +265,8 @@ class MyListingsPage extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: _statusColor(status)
-                                          .withOpacity(0.1),
+                                      color:
+                                          _statusColor(status).withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
@@ -283,8 +305,7 @@ class MyListingsPage extends StatelessWidget {
                                 icon: const Icon(Icons.delete_outline,
                                     color: Colors.red, size: 20),
                                 tooltip: 'Supprimer',
-                                onPressed: () =>
-                                    _delete(context, docId, title),
+                                onPressed: () => _delete(context, docId, title),
                               ),
                             ],
                           ),
@@ -303,7 +324,6 @@ class MyListingsPage extends StatelessWidget {
         width: 90,
         height: 90,
         color: const Color(0xFFF7F4EE),
-        child: const Icon(Icons.checkroom,
-            size: 36, color: Color(0xFF6B7F4D)),
+        child: const Icon(Icons.checkroom, size: 36, color: Color(0xFF6B7F4D)),
       );
 }
