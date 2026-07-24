@@ -30,7 +30,7 @@ class ProfilePage extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // ── Header vert gradient ────────────────────────────
+                    // ── Header compact ──────────────────────────────────
                     Container(
                       width: double.infinity,
                       decoration: const BoxDecoration(
@@ -40,82 +40,120 @@ class ProfilePage extends StatelessWidget {
                           end: Alignment.bottomRight,
                         ),
                       ),
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                       child: Column(
                         children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.5),
-                                width: 3,
+                          // Avatar + infos en ligne
+                          Row(
+                            children: [
+                              // Avatar
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.5),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: user?.avatarUrl != null
+                                    ? ClipOval(
+                                        child: CachedNetworkImage(
+                                          imageUrl: user!.avatarUrl!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : Center(
+                                        child: Text(
+                                          user?.initials ?? '?',
+                                          style: const TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
                               ),
-                            ),
-                            child: user?.avatarUrl != null
-                                ? ClipOval(
-                                    child: CachedNetworkImage(
-                                      imageUrl: user!.avatarUrl!,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Center(
-                                    child: Text(
-                                      user?.initials ?? '?',
+                              const SizedBox(width: 14),
+                              // Nom + email + badge
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      user?.fullName ?? 'Utilisateur',
                                       style: const TextStyle(
-                                        fontSize: 28,
+                                        fontSize: 17,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),
                                     ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      user?.email ?? '',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.white.withOpacity(0.7),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.4),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        user?.isSeller == true
+                                            ? '🏪 Vendeur'
+                                            : '🛍️ Acheteur',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Bouton modifier
+                              GestureDetector(
+                                onTap: () =>
+                                    context.push('${RouteNames.profile}/edit'),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.4),
+                                    ),
                                   ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            user?.fullName ?? 'Utilisateur',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            user?.email ?? '',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white.withOpacity(0.7),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
+                                  child: const Icon(
+                                    Icons.edit_outlined,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              user?.isSeller == true
-                                  ? '🏪 Vendeur'
-                                  : '🛍️ Acheteur',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
+
+                          const SizedBox(height: 14),
+
+                          // Stats
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
@@ -123,13 +161,13 @@ class ProfilePage extends StatelessWidget {
                                     '${user?.totalListings ?? 0}', 'Annonces'),
                                 Container(
                                     width: 1,
-                                    height: 40,
+                                    height: 32,
                                     color: Colors.white.withOpacity(0.2)),
                                 _buildStat(
                                     '${user?.totalSales ?? 0}', 'Ventes'),
                                 Container(
                                     width: 1,
-                                    height: 40,
+                                    height: 32,
                                     color: Colors.white.withOpacity(0.2)),
                                 _buildStat(
                                   user != null && user.reviewCount > 0
@@ -138,38 +176,6 @@ class ProfilePage extends StatelessWidget {
                                   'Note',
                                 ),
                               ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          GestureDetector(
-                            onTap: () =>
-                                context.push('${RouteNames.profile}/edit'),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.4),
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.edit_outlined,
-                                      color: Colors.white, size: 16),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Modifier le profil',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
                         ],
@@ -185,7 +191,7 @@ class ProfilePage extends StatelessWidget {
                             onTap: () => context.push(RouteNames.wallet),
                             child: Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(18),
+                              padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [
@@ -225,7 +231,7 @@ class ProfilePage extends StatelessWidget {
                                         'Voir le solde →',
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: 16,
+                                          fontSize: 15,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -234,7 +240,7 @@ class ProfilePage extends StatelessWidget {
                                   Icon(
                                     Icons.account_balance_wallet,
                                     color: Colors.white70,
-                                    size: 32,
+                                    size: 28,
                                   ),
                                 ],
                               ),
@@ -410,13 +416,13 @@ class ProfilePage extends StatelessWidget {
   Widget _buildStat(String value, String label) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           children: [
             Text(
               value,
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -425,7 +431,7 @@ class ProfilePage extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 color: Colors.white.withOpacity(0.7),
               ),
             ),
