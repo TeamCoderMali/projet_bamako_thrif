@@ -24,7 +24,10 @@ class CatalogFilters {
   });
 
   bool get hasActiveFilters =>
-      category != null || condition != null || minPrice > 0 || maxPrice < 100000;
+      category != null ||
+      condition != null ||
+      minPrice > 0 ||
+      maxPrice < 100000;
 
   CatalogFilters copyWith({
     ProductCategory? Function()? category,
@@ -33,10 +36,10 @@ class CatalogFilters {
     double? maxPrice,
   }) {
     return CatalogFilters(
-      category:  category  != null ? category()  : this.category,
+      category: category != null ? category() : this.category,
       condition: condition != null ? condition() : this.condition,
-      minPrice:  minPrice  ?? this.minPrice,
-      maxPrice:  maxPrice  ?? this.maxPrice,
+      minPrice: minPrice ?? this.minPrice,
+      maxPrice: maxPrice ?? this.maxPrice,
     );
   }
 }
@@ -44,26 +47,41 @@ class CatalogFilters {
 // ── Labels ────────────────────────────────────────────────────────────────────
 String _categoryLabel(ProductCategory c) {
   switch (c) {
-    case ProductCategory.men:         return 'Homme';
-    case ProductCategory.women:       return 'Femme';
-    case ProductCategory.children:    return 'Enfant';
-    case ProductCategory.shoes:       return 'Chaussures';
-    case ProductCategory.accessories: return 'Accessoires';
-    case ProductCategory.bags:        return 'Sacs';
-    case ProductCategory.jewelry:     return 'Bijoux';
-    case ProductCategory.sportswear:  return 'Sport';
-    case ProductCategory.traditional: return 'Traditionnel';
-    case ProductCategory.other:       return 'Autre';
+    case ProductCategory.men:
+      return 'Homme';
+    case ProductCategory.women:
+      return 'Femme';
+    case ProductCategory.children:
+      return 'Enfant';
+    case ProductCategory.shoes:
+      return 'Chaussures';
+    case ProductCategory.accessories:
+      return 'Accessoires';
+    case ProductCategory.bags:
+      return 'Sacs';
+    case ProductCategory.jewelry:
+      return 'Bijoux';
+    case ProductCategory.sportswear:
+      return 'Sport';
+    case ProductCategory.traditional:
+      return 'Traditionnel';
+    case ProductCategory.other:
+      return 'Autre';
   }
 }
 
 String _conditionLabel(ProductCondition c) {
   switch (c) {
-    case ProductCondition.newWithTags:    return 'Neuf avec étiquette';
-    case ProductCondition.newWithoutTags: return 'Neuf sans étiquette';
-    case ProductCondition.veryGood:       return 'Très bon état';
-    case ProductCondition.good:           return 'Bon état';
-    case ProductCondition.fair:           return 'État correct';
+    case ProductCondition.neufAvecEtiquette:
+      return 'Neuf avec étiquette';
+    case ProductCondition.tresSatisfaisant:
+      return 'Neuf sans étiquette';
+    case ProductCondition.tresSatisfaisant:
+      return 'Très bon état';
+    case ProductCondition.bon:
+      return 'Bon état';
+    case ProductCondition.satisfaisant:
+      return 'État correct';
   }
 }
 
@@ -86,12 +104,12 @@ class _CatalogPageState extends State<CatalogPage> {
   // Catégories rapides dans la barre horizontale
   static const _quickCats = <_QuickCat>[
     _QuickCat(null, 'Tous', Icons.grid_view_rounded),
-    _QuickCat(ProductCategory.women,    'Femme',       Icons.woman_outlined),
-    _QuickCat(ProductCategory.men,      'Homme',       Icons.man_outlined),
-    _QuickCat(ProductCategory.children, 'Enfant',      Icons.child_care),
-    _QuickCat(ProductCategory.shoes,    'Chaussures',  Icons.do_not_step_outlined),
-    _QuickCat(ProductCategory.accessories, 'Accès.',   Icons.watch_outlined),
-    _QuickCat(ProductCategory.bags,     'Sacs',        Icons.shopping_bag_outlined),
+    _QuickCat(ProductCategory.women, 'Femme', Icons.woman_outlined),
+    _QuickCat(ProductCategory.men, 'Homme', Icons.man_outlined),
+    _QuickCat(ProductCategory.children, 'Enfant', Icons.child_care),
+    _QuickCat(ProductCategory.shoes, 'Chaussures', Icons.do_not_step_outlined),
+    _QuickCat(ProductCategory.accessories, 'Accès.', Icons.watch_outlined),
+    _QuickCat(ProductCategory.bags, 'Sacs', Icons.shopping_bag_outlined),
   ];
 
   @override
@@ -103,11 +121,11 @@ class _CatalogPageState extends State<CatalogPage> {
 
   void _load() {
     context.read<ProductCubit>().loadProductsWithFilters(
-      category: _filters.category,
-      condition: _filters.condition,
-      minPrice:  _filters.minPrice  > 0       ? _filters.minPrice  : null,
-      maxPrice:  _filters.maxPrice  < 100000  ? _filters.maxPrice  : null,
-    );
+          category: _filters.category,
+          condition: _filters.condition,
+          minPrice: _filters.minPrice > 0 ? _filters.minPrice : null,
+          maxPrice: _filters.maxPrice < 100000 ? _filters.maxPrice : null,
+        );
   }
 
   void _applyCategory(ProductCategory? cat) {
@@ -179,8 +197,7 @@ class _CatalogPageState extends State<CatalogPage> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 4)
+                        color: Colors.black.withOpacity(0.04), blurRadius: 4)
                   ],
                 ),
                 child: const Row(
@@ -214,12 +231,11 @@ class _CatalogPageState extends State<CatalogPage> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFF6B7F4D)
-                          : Colors.white,
+                      color:
+                          isSelected ? const Color(0xFF6B7F4D) : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected
@@ -261,8 +277,7 @@ class _CatalogPageState extends State<CatalogPage> {
                   const Spacer(),
                   GestureDetector(
                     onTap: () {
-                      setState(
-                          () => _filters = const CatalogFilters());
+                      setState(() => _filters = const CatalogFilters());
                       _load();
                     },
                     child: const Text(
@@ -286,8 +301,7 @@ class _CatalogPageState extends State<CatalogPage> {
               builder: (context, state) {
                 if (state is ProductLoading) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                        color: Color(0xFF6B7F4D)),
+                    child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
                   );
                 }
                 if (state is ProductError) {
@@ -310,9 +324,8 @@ class _CatalogPageState extends State<CatalogPage> {
                     ),
                   );
                 }
-                final products = state is ProductLoaded
-                    ? state.products
-                    : <ProductEntity>[];
+                final products =
+                    state is ProductLoaded ? state.products : <ProductEntity>[];
 
                 if (products.isEmpty) {
                   return Center(
@@ -351,8 +364,7 @@ class _CatalogPageState extends State<CatalogPage> {
                       mainAxisSpacing: 10,
                     ),
                     itemCount: products.length,
-                    itemBuilder: (_, i) =>
-                        _ProductCard(product: products[i]),
+                    itemBuilder: (_, i) => _ProductCard(product: products[i]),
                   ),
                 );
               },
@@ -486,11 +498,21 @@ class _BottomNav extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: (i) {
         switch (i) {
-          case 0: context.go(RouteNames.home);     break;
-          case 1: context.go(RouteNames.search);   break;
-          case 2: context.go(RouteNames.publish);  break;
-          case 3: context.go(RouteNames.messages); break;
-          case 4: context.go(RouteNames.profile);  break;
+          case 0:
+            context.go(RouteNames.home);
+            break;
+          case 1:
+            context.go(RouteNames.search);
+            break;
+          case 2:
+            context.go(RouteNames.publish);
+            break;
+          case 3:
+            context.go(RouteNames.messages);
+            break;
+          case 4:
+            context.go(RouteNames.profile);
+            break;
         }
       },
       type: BottomNavigationBarType.fixed,
@@ -499,8 +521,7 @@ class _BottomNav extends StatelessWidget {
       items: const [
         BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined), label: 'Accueil'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.search), label: 'Chercher'),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
         BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline), label: 'Publier'),
         BottomNavigationBarItem(

@@ -220,7 +220,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    product['title'] ?? '',
+                                    product['title']?.toString() ?? '',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFF2B2B2B),
@@ -243,8 +243,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
                             IconButton(
                               icon:
                                   const Icon(Icons.favorite, color: Colors.red),
-                              onPressed: () =>
-                                  _removeFavorite(product['productId']),
+                              onPressed: () => _removeFavorite(
+                                  product['productId'] as String),
                             ),
                           ],
                         ),

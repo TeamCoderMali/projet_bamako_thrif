@@ -32,15 +32,15 @@ class _PaymentPageState extends State<PaymentPage> {
 
   String _condition(ProductCondition c) {
     switch (c) {
-      case ProductCondition.newWithTags:
+      case ProductCondition.neufAvecEtiquette:
         return 'Neuf avec étiquette';
-      case ProductCondition.newWithoutTags:
+      case ProductCondition.tresSatisfaisant:
         return 'Neuf sans étiquette';
-      case ProductCondition.veryGood:
+      case ProductCondition.tresSatisfaisant:
         return 'Très bon état';
-      case ProductCondition.good:
+      case ProductCondition.bon:
         return 'Bon état';
-      case ProductCondition.fair:
+      case ProductCondition.satisfaisant:
         return 'État correct';
     }
   }

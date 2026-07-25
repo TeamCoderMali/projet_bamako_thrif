@@ -71,6 +71,7 @@ class ProductEntity extends Equatable {
         favoriteCount,
         rating,
         reviewCount,
+        isVerified,
         createdAt,
         updatedAt,
       ];
@@ -90,11 +91,10 @@ enum ProductCategory {
 }
 
 enum ProductCondition {
-  newWithTags, // Neuf avec étiquettes
-  newWithoutTags, // Neuf sans étiquettes
-  veryGood, // Très bon état
-  good, // Bon état
-  fair, // État correct
+  satisfaisant, // État satisfaisant — porté, quelques signes d'usure visibles
+  bon, // Bon état — légèrement porté, très bon aspect général
+  tresSatisfaisant, // Très satisfaisant — quasi neuf, porté très peu de fois
+  neufAvecEtiquette, // État 99 avec étiquette — jamais porté, étiquette d'origine présente
 }
 
 enum ProductStatus {

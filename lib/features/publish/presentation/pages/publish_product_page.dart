@@ -29,7 +29,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
   final _localisationController = TextEditingController();
 
   ProductCategory _selectedCategory = ProductCategory.women;
-  ProductCondition _selectedCondition = ProductCondition.good;
+  ProductCondition _selectedCondition = ProductCondition.bon;
 
   final List<File> _selectedImages = [];
   bool _isPublishing = false;
@@ -49,12 +49,15 @@ class _PublishProductPageState extends State<PublishProductPage> {
     {'label': 'Autre', 'value': ProductCategory.other},
   ];
 
+  // ── 4 états exacts du cahier des charges (section 4.3) ──────────────────
   final List<Map<String, dynamic>> _conditions = [
-    {'label': 'Neuf avec étiquette', 'value': ProductCondition.newWithTags},
-    {'label': 'Neuf sans étiquette', 'value': ProductCondition.newWithoutTags},
-    {'label': 'Très bon état', 'value': ProductCondition.veryGood},
-    {'label': 'Bon état', 'value': ProductCondition.good},
-    {'label': 'État correct', 'value': ProductCondition.fair},
+    {'label': 'État satisfaisant', 'value': ProductCondition.satisfaisant},
+    {'label': 'Bon état', 'value': ProductCondition.bon},
+    {'label': 'Très satisfaisant', 'value': ProductCondition.tresSatisfaisant},
+    {
+      'label': 'État 99 avec étiquette',
+      'value': ProductCondition.neufAvecEtiquette
+    },
   ];
 
   @override

@@ -92,9 +92,18 @@ class ProductModel extends ProductEntity {
   }
 
   static ProductCondition _parseCondition(String? value) {
+    // Compatibilité : anciens produits publiés avec l'ancien système à 5 états
+    const legacyMap = {
+      'newWithTags': ProductCondition.neufAvecEtiquette,
+      'newWithoutTags': ProductCondition.tresSatisfaisant,
+      'veryGood': ProductCondition.tresSatisfaisant,
+      'good': ProductCondition.bon,
+      'fair': ProductCondition.satisfaisant,
+    };
+    if (value != null && legacyMap.containsKey(value)) return legacyMap[value]!;
     return ProductCondition.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => ProductCondition.good,
+      orElse: () => ProductCondition.bon,
     );
   }
 

@@ -643,16 +643,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   String _conditionLabel(ProductCondition c) {
     switch (c) {
-      case ProductCondition.newWithTags:
-        return 'Neuf avec étiquette';
-      case ProductCondition.newWithoutTags:
-        return 'Neuf sans étiquette';
-      case ProductCondition.veryGood:
-        return 'Très bon état';
-      case ProductCondition.good:
+      case ProductCondition.neufAvecEtiquette:
+        return 'État 99 avec étiquette';
+      case ProductCondition.tresSatisfaisant:
+        return 'Très satisfaisant';
+      case ProductCondition.bon:
         return 'Bon état';
-      case ProductCondition.fair:
-        return 'État correct';
+      case ProductCondition.satisfaisant:
+        return 'État satisfaisant';
     }
   }
 }

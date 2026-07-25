@@ -498,15 +498,15 @@ class _SearchPageState extends State<SearchPage> {
 
   String _conditionLabel(ProductCondition c) {
     switch (c) {
-      case ProductCondition.newWithTags:
+      case ProductCondition.neufAvecEtiquette:
         return 'Neuf avec étiquette';
-      case ProductCondition.newWithoutTags:
+      case ProductCondition.tresSatisfaisant:
         return 'Neuf sans étiquette';
-      case ProductCondition.veryGood:
+      case ProductCondition.tresSatisfaisant:
         return 'Très bon état';
-      case ProductCondition.good:
+      case ProductCondition.bon:
         return 'Bon état';
-      case ProductCondition.fair:
+      case ProductCondition.satisfaisant:
         return 'État correct';
     }
   }
@@ -646,15 +646,15 @@ class _ProductCard extends StatelessWidget {
 
   String _conditionLabel(ProductCondition condition) {
     switch (condition) {
-      case ProductCondition.newWithTags:
+      case ProductCondition.neufAvecEtiquette:
         return 'Neuf ✓';
-      case ProductCondition.newWithoutTags:
+      case ProductCondition.tresSatisfaisant:
         return 'Neuf';
-      case ProductCondition.veryGood:
+      case ProductCondition.tresSatisfaisant:
         return 'Très bon';
-      case ProductCondition.good:
+      case ProductCondition.bon:
         return 'Bon état';
-      case ProductCondition.fair:
+      case ProductCondition.satisfaisant:
         return 'Correct';
     }
   }

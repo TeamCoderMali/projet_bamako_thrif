@@ -660,16 +660,14 @@ class _ProductCard extends StatelessWidget {
 
   String _conditionLabel(ProductCondition condition) {
     switch (condition) {
-      case ProductCondition.newWithTags:
-        return 'Neuf ✓';
-      case ProductCondition.newWithoutTags:
-        return 'Neuf';
-      case ProductCondition.veryGood:
-        return 'Très bon';
-      case ProductCondition.good:
+      case ProductCondition.neufAvecEtiquette:
+        return 'État 99 ✓';
+      case ProductCondition.tresSatisfaisant:
+        return 'Très satisfaisant';
+      case ProductCondition.bon:
         return 'Bon état';
-      case ProductCondition.fair:
-        return 'Correct';
+      case ProductCondition.satisfaisant:
+        return 'Satisfaisant';
     }
   }
 }
