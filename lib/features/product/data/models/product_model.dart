@@ -20,6 +20,8 @@ class ProductModel extends ProductEntity {
     super.viewCount,
     super.favoriteCount,
     super.location,
+    super.rating,
+    super.reviewCount,
     required super.createdAt,
     super.updatedAt,
   });
@@ -43,6 +45,8 @@ class ProductModel extends ProductEntity {
       viewCount: data['viewCount'] as int? ?? 0,
       favoriteCount: data['favoriteCount'] as int? ?? 0,
       location: data['location'] as String?,
+      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
+      reviewCount: data['reviewCount'] as int? ?? 0,
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         data['createdAt'] as int? ?? 0,
       ),
@@ -70,6 +74,8 @@ class ProductModel extends ProductEntity {
       'viewCount': viewCount,
       'favoriteCount': favoriteCount,
       'location': location,
+      'rating': rating,
+      'reviewCount': reviewCount,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt?.millisecondsSinceEpoch,
     };

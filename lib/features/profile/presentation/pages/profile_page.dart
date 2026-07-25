@@ -30,7 +30,7 @@ class ProfilePage extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // ── Header compact ──────────────────────────────────
+                    // ── Header : avatar + nom centrés ───────────────────
                     Container(
                       width: double.infinity,
                       decoration: const BoxDecoration(
@@ -40,140 +40,106 @@ class ProfilePage extends StatelessWidget {
                           end: Alignment.bottomRight,
                         ),
                       ),
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                      child: Column(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      child: Stack(
                         children: [
-                          // Avatar + infos en ligne
-                          Row(
-                            children: [
-                              // Avatar
-                              Container(
-                                width: 60,
-                                height: 60,
+                          // Bouton modifier en haut à droite
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: () =>
+                                  context.push('${RouteNames.profile}/edit'),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  shape: BoxShape.circle,
+                                  color: Colors.white.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.white.withOpacity(0.5),
-                                    width: 2,
+                                    color: Colors.white.withOpacity(0.4),
                                   ),
                                 ),
-                                child: user?.avatarUrl != null
-                                    ? ClipOval(
-                                        child: CachedNetworkImage(
-                                          imageUrl: user!.avatarUrl!,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                    : Center(
-                                        child: Text(
-                                          user?.initials ?? '?',
-                                          style: const TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                              ),
-                              const SizedBox(width: 14),
-                              // Nom + email + badge
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      user?.fullName ?? 'Utilisateur',
-                                      style: const TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      user?.email ?? '',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.white.withOpacity(0.7),
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.4),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        user?.isSeller == true
-                                            ? '🏪 Vendeur'
-                                            : '🛍️ Acheteur',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                child: const Icon(
+                                  Icons.edit_outlined,
+                                  color: Colors.white,
+                                  size: 18,
                                 ),
                               ),
-                              // Bouton modifier
-                              GestureDetector(
-                                onTap: () =>
-                                    context.push('${RouteNames.profile}/edit'),
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
+                            ),
+                          ),
+                          // Avatar + nom + email + badge, centrés
+                          Center(
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 8),
+                                Container(
+                                  width: 72,
+                                  height: 72,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(10),
+                                    color: Colors.white.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.5),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: user?.avatarUrl != null
+                                      ? ClipOval(
+                                          child: CachedNetworkImage(
+                                            imageUrl: user!.avatarUrl!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                      : Center(
+                                          child: Text(
+                                            user?.initials ?? '?',
+                                            style: const TextStyle(
+                                              fontSize: 26,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  user?.fullName ?? 'Utilisateur',
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user?.email ?? '',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                       color: Colors.white.withOpacity(0.4),
                                     ),
                                   ),
-                                  child: const Icon(
-                                    Icons.edit_outlined,
-                                    color: Colors.white,
-                                    size: 18,
+                                  child: Text(
+                                    user?.isSeller == true
+                                        ? '🏪 Vendeur'
+                                        : '🛍️ Acheteur',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          // Stats
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                _buildStat(
-                                    '${user?.totalListings ?? 0}', 'Annonces'),
-                                Container(
-                                    width: 1,
-                                    height: 32,
-                                    color: Colors.white.withOpacity(0.2)),
-                                _buildStat(
-                                    '${user?.totalSales ?? 0}', 'Ventes'),
-                                Container(
-                                    width: 1,
-                                    height: 32,
-                                    color: Colors.white.withOpacity(0.2)),
-                                _buildStat(
-                                  user != null && user.reviewCount > 0
-                                      ? '${user.rating.toStringAsFixed(1)}★'
-                                      : '—',
-                                  'Note',
                                 ),
                               ],
                             ),
@@ -186,6 +152,36 @@ class ProfilePage extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
+                          // ── Stats : 3 cartes séparées ─────────────────
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatCard(
+                                  '${user?.totalListings ?? 0}',
+                                  'Annonces',
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _buildStatCard(
+                                  '${user?.totalSales ?? 0}',
+                                  'Achats',
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _buildStatCard(
+                                  user != null && user.reviewCount > 0
+                                      ? '${user.rating.toStringAsFixed(1)}★'
+                                      : '—',
+                                  'Note',
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 12),
+
                           // ── Portefeuille ──────────────────────────────
                           GestureDetector(
                             onTap: () => context.push(RouteNames.wallet),
@@ -413,30 +409,29 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildStat(String value, String label) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+  Widget _buildStatCard(String value, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF6B7F4D).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF6B7F4D),
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.white.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
+          ),
+        ],
       ),
     );
   }

@@ -25,11 +25,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _isFavorite = false;
   bool _isFavoriteLoading = false;
 
+  // ── État de la note de l'utilisateur courant ───────────────────────────
+  int _myRating = 0;
+  bool _isRatingLoading = false;
+
   @override
   void initState() {
     super.initState();
     context.read<ProductCubit>().loadProductDetail(widget.productId);
     _checkIfFavorite();
+    _loadMyRating();
   }
 
   // ── Vérifier si déjà en favori ─────────────────────────────────────────
@@ -46,6 +51,23 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
     if (doc.exists && mounted) {
       setState(() => _isFavorite = true);
+    }
+  }
+
+  // ── Charger la note déjà donnée par l'utilisateur (le cas échéant) ────
+  Future<void> _loadMyRating() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('product')
+        .doc(widget.productId)
+        .collection('reviews')
+        .doc(user.uid)
+        .get();
+
+    if (doc.exists && mounted) {
+      setState(() => _myRating = (doc['rating'] as num).toInt());
     }
   }
 
@@ -106,6 +128,82 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       }
     } finally {
       if (mounted) setState(() => _isFavoriteLoading = false);
+    }
+  }
+
+  // ── Noter le produit (vendeur ou acheteur) ─────────────────────────────
+  Future<void> _rateProduct(int stars) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      context.go(RouteNames.login);
+      return;
+    }
+
+    if (_isRatingLoading) return;
+    setState(() => _isRatingLoading = true);
+
+    final productRef =
+        FirebaseFirestore.instance.collection('product').doc(widget.productId);
+    final reviewRef = productRef.collection('reviews').doc(user.uid);
+
+    try {
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final existingReview = await transaction.get(reviewRef);
+        final productSnap = await transaction.get(productRef);
+
+        final currentRating =
+            (productSnap['rating'] as num?)?.toDouble() ?? 0.0;
+        final currentCount = (productSnap['reviewCount'] as num?)?.toInt() ?? 0;
+
+        double newRating;
+        int newCount;
+
+        if (existingReview.exists) {
+          final oldStars = (existingReview['rating'] as num).toDouble();
+          final totalPoints = (currentRating * currentCount) - oldStars + stars;
+          newRating = currentCount == 0 ? 0 : totalPoints / currentCount;
+          newCount = currentCount;
+        } else {
+          final totalPoints = (currentRating * currentCount) + stars;
+          newCount = currentCount + 1;
+          newRating = totalPoints / newCount;
+        }
+
+        transaction.set(reviewRef, {
+          'userId': user.uid,
+          'rating': stars,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        transaction.update(productRef, {
+          'rating': newRating,
+          'reviewCount': newCount,
+        });
+      });
+
+      if (mounted) {
+        setState(() => _myRating = stars);
+        // Recharge le produit pour afficher la nouvelle moyenne
+        context.read<ProductCubit>().loadProductDetail(widget.productId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Merci pour votre note ⭐'),
+            backgroundColor: Color(0xFF6B7F4D),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur : ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRatingLoading = false);
     }
   }
 
@@ -286,6 +384,47 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  product.title,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2B2B2B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // ── Note moyenne + étoiles cliquables ──────────────────
+                Row(
+                  children: [
+                    if (product.reviewCount > 0) ...[
+                      const Icon(Icons.star, size: 16, color: Colors.amber),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${product.rating.toStringAsFixed(1)} (${product.reviewCount} avis)',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Color(0xFF2B2B2B),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ] else ...[
+                      const Text(
+                        'Pas encore noté',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    _RatingStars(
+                      currentRating: _myRating,
+                      isLoading: _isRatingLoading,
+                      onRate: _rateProduct,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
                 Row(
                   children: [
                     _Badge(
@@ -301,42 +440,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       _Badge(
                           label: 'Taille ${product.size}',
                           color: Colors.orange),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  product.title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B2B2B),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.remove_red_eye_outlined,
-                        size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text('${product.viewCount} vues',
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 12)),
-                    const SizedBox(width: 16),
-                    const Icon(Icons.favorite_border,
-                        size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text('${product.favoriteCount} favoris',
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 12)),
-                    if (product.location != null) ...[
-                      const SizedBox(width: 16),
-                      const Icon(Icons.location_on_outlined,
-                          size: 14, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(product.location!,
-                          style: const TextStyle(
-                              color: Colors.grey, fontSize: 12)),
                     ],
                   ],
                 ),
@@ -360,15 +463,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       color: Colors.grey, height: 1.6, fontSize: 14),
                 ),
                 const SizedBox(height: 24),
-                if (product.color != null) ...[
-                  const Text('Couleur',
-                      style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  Text(product.color!,
-                      style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 20),
-                ],
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -550,6 +644,50 @@ class _Badge extends StatelessWidget {
           fontSize: 11,
         ),
       ),
+    );
+  }
+}
+
+// ── Widget d'étoiles cliquables pour noter un produit ──────────────────────
+class _RatingStars extends StatelessWidget {
+  final int currentRating; // 0 si l'utilisateur n'a pas encore noté
+  final bool isLoading;
+  final ValueChanged<int> onRate;
+
+  const _RatingStars({
+    required this.currentRating,
+    required this.isLoading,
+    required this.onRate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Color(0xFF6B7F4D),
+        ),
+      );
+    }
+    return Row(
+      children: List.generate(5, (index) {
+        final starValue = index + 1;
+        final isFilled = starValue <= currentRating;
+        return GestureDetector(
+          onTap: () => onRate(starValue),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: Icon(
+              isFilled ? Icons.star : Icons.star_border,
+              size: 18,
+              color: isFilled ? Colors.amber : Colors.grey.shade400,
+            ),
+          ),
+        );
+      }),
     );
   }
 }

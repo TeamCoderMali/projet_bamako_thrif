@@ -584,17 +584,37 @@ class _ProductCard extends StatelessWidget {
                         height: 1.3,
                       ),
                     ),
+                    Text(
+                      '${product.price.toStringAsFixed(0)} FCFA',
+                      style: const TextStyle(
+                        color: Color(0xFF6B7F4D),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    // ── Note sous le prix, comme sur la maquette ───────
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '${product.price.toStringAsFixed(0)} FCFA',
-                          style: const TextStyle(
-                            color: Color(0xFF6B7F4D),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                        if (product.reviewCount > 0) ...[
+                          const Icon(Icons.star, size: 11, color: Colors.amber),
+                          const SizedBox(width: 2),
+                          Text(
+                            product.rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
+                        ] else
+                          const Text(
+                            'Pas encore noté',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 9,
+                            ),
+                          ),
+                        const Spacer(),
                         if (product.location != null)
                           Row(
                             children: [
