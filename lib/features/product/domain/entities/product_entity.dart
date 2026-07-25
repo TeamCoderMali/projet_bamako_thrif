@@ -21,6 +21,7 @@ class ProductEntity extends Equatable {
   final String? location;
   final double rating;
   final int reviewCount;
+  final bool isVerified;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -44,6 +45,7 @@ class ProductEntity extends Equatable {
     this.location,
     this.rating = 0,
     this.reviewCount = 0,
+    this.isVerified = false,
     required this.createdAt,
     this.updatedAt,
   });
