@@ -97,10 +97,21 @@ class MyListingsPage extends StatelessWidget {
     );
 
     if (confirm == true && context.mounted) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+
       await FirebaseFirestore.instance
           .collection('product')
           .doc(docId)
           .delete();
+
+      // Met à jour le compteur "Annonces" affiché sur le Profil
+      if (uid != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .update({'totalListings': FieldValue.increment(-1)});
+      }
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -152,32 +153,60 @@ class ProfilePage extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          // ── Stats : 3 cartes séparées ─────────────────
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildStatCard(
-                                  '${user?.totalListings ?? 0}',
-                                  'Annonces',
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildStatCard(
-                                  '${user?.totalSales ?? 0}',
-                                  'Achats',
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildStatCard(
-                                  user != null && user.reviewCount > 0
-                                      ? '${user.rating.toStringAsFixed(1)}★'
-                                      : '—',
-                                  'Note',
-                                ),
-                              ),
-                            ],
+                          // ── Stats : 3 cartes séparées, live depuis Firestore ──
+                          StreamBuilder<DocumentSnapshot>(
+                            stream: user != null
+                                ? FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(user.id)
+                                    .snapshots()
+                                : null,
+                            builder: (context, snap) {
+                              final data =
+                                  snap.data?.data() as Map<String, dynamic>?;
+                              final totalListings =
+                                  data?['totalListings'] as int? ??
+                                      user?.totalListings ??
+                                      0;
+                              final totalSales = data?['totalSales'] as int? ??
+                                  user?.totalSales ??
+                                  0;
+                              final rating =
+                                  (data?['rating'] as num?)?.toDouble() ??
+                                      user?.rating ??
+                                      0;
+                              final reviewCount =
+                                  data?['reviewCount'] as int? ??
+                                      user?.reviewCount ??
+                                      0;
+
+                              return Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildStatCard(
+                                      '$totalListings',
+                                      'Annonces',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildStatCard(
+                                      '$totalSales',
+                                      'Achats',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildStatCard(
+                                      reviewCount > 0
+                                          ? '${rating.toStringAsFixed(1)}★'
+                                          : '—',
+                                      'Note',
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
 
                           const SizedBox(height: 12),
