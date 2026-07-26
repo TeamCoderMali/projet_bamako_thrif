@@ -2,6 +2,7 @@
 // Implémentation complète Firebase Auth + Firestore
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -10,6 +11,7 @@ import '../models/user_model.dart';
 class FirebaseAuthRepositoryImpl implements AuthRepository {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   FirebaseAuthRepositoryImpl(this._auth, this._firestore);
 
@@ -140,13 +142,66 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
 
   // ── Connexion Google ─────────────────────────────────────────────────────
   @override
-  Future<UserEntity> signInWithGoogle() {
-    throw UnimplementedError('Google Sign-In pas encore implémenté.');
+  Future<UserEntity> signInWithGoogle() async {
+    try {
+      // 1. Ouvre le sélecteur de compte Google
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        // L'utilisateur a annulé la sélection du compte
+        throw Exception('Connexion Google annulée.');
+      }
+
+      // 2. Récupère les tokens d'authentification Google
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // 3. Connecte l'utilisateur à Firebase avec ces tokens
+      final userCredential = await _auth.signInWithCredential(credential);
+      final firebaseUser = userCredential.user!;
+      final uid = firebaseUser.uid;
+
+      // 4. Vérifie si un profil Firestore existe déjà pour cet utilisateur
+      UserModel? user = await _fetchUserFromFirestore(uid);
+
+      // 5. Première connexion Google → on crée le profil Firestore
+      if (user == null) {
+        final now = DateTime.now();
+        final newUser = UserModel(
+          id: uid,
+          email: firebaseUser.email ?? '',
+          fullName: firebaseUser.displayName ?? 'Utilisateur DANAYA',
+          avatarUrl: firebaseUser.photoURL,
+          role: UserRole.buyer,
+          isEmailVerified: firebaseUser.emailVerified,
+          isActive: true,
+          createdAt: now,
+        );
+        final data = newUser.toJson()..remove('id');
+        data['createdAt'] = FieldValue.serverTimestamp();
+        await _usersCol.doc(uid).set(data);
+        return newUser;
+      }
+
+      return user;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_mapFirebaseAuthError(e.code));
+    } catch (e) {
+      throw Exception('Connexion Google impossible : ${e.toString()}');
+    }
   }
 
   // ── Déconnexion ──────────────────────────────────────────────────────────
   @override
   Future<void> signOut() async {
+    // Déconnecte aussi de Google si l'utilisateur s'était connecté ainsi
+    // (sinon le sélecteur de compte Google réaffiche le même compte
+    // automatiquement à la prochaine tentative, sans laisser le choix).
+    if (await _googleSignIn.isSignedIn()) {
+      await _googleSignIn.signOut();
+    }
     await _auth.signOut();
   }
 

@@ -281,14 +281,25 @@ class _LoginPageState extends State<LoginPage> {
                               ],
                             ),
                             child: TextButton.icon(
-                              onPressed: () {
-                                // TODO collègue : Firebase Auth Google
-                              },
-                              icon: Image.asset(
-                                'assets/images/google_logo.png',
-                                width: 22,
-                                height: 22,
-                              ),
+                              onPressed: isLoading
+                                  ? null
+                                  : () => context
+                                      .read<AuthCubit>()
+                                      .signInWithGoogle(),
+                              icon: isLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xFF6B7F4D),
+                                      ),
+                                    )
+                                  : Image.asset(
+                                      'assets/images/google_logo.png',
+                                      width: 22,
+                                      height: 22,
+                                    ),
                               label: const Text(
                                 'Google',
                                 style: TextStyle(
@@ -322,7 +333,15 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             child: TextButton.icon(
                               onPressed: () {
-                                // TODO collègue : Firebase Auth Facebook
+                                // TODO : Facebook — pas encore configuré
+                                // (nécessite un compte Facebook Developer)
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Connexion Facebook bientôt disponible',
+                                    ),
+                                  ),
+                                );
                               },
                               icon: const Icon(
                                 Icons.facebook,
