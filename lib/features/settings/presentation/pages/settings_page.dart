@@ -45,8 +45,8 @@ class _SettingsPageState extends State<SettingsPage> {
           _card([
             _item(context, Icons.person_outline, 'Modifier le profil',
                 () => context.go(RouteNames.editProfile)),
-            _item(
-                context, Icons.lock_outline, 'Changer le mot de passe', () {}),
+            _item(context, Icons.lock_outline, 'Changer le mot de passe',
+                () => context.push(RouteNames.changePassword)),
             _item(context, Icons.privacy_tip_outlined, 'Confidentialité',
                 () => context.go(RouteNames.privacy)),
           ]),

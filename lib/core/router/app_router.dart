@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'route_names.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
-
 // ── Onboarding ────────────────────────────────────────────────────────────────────
 import '../../features/onboarding/presentation/pages/welcome_page.dart';
 import '../../features/onboarding/presentation/pages/intro_page.dart';
@@ -61,6 +60,7 @@ import '../../features/notification/presentation/pages/notifications_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/privacy_page.dart';
 import '../../features/settings/presentation/pages/about_page.dart';
+import 'package:bamako_thrift/features/settings/presentation/pages/change_password_page.dart';
 
 // ── Admin ──────────────────────────────────────────────────────────────────
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
@@ -312,6 +312,11 @@ final GoRouter appRouter = GoRouter(
           path: 'privacy',
           name: 'privacy',
           builder: (context, state) => const PrivacyPage(),
+        ),
+        GoRoute(
+          path: 'change-password',
+          name: 'change-password',
+          builder: (context, state) => const ChangePasswordPage(),
         ),
         GoRoute(
           path: 'about',
