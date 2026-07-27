@@ -33,15 +33,13 @@ class _PaymentPageState extends State<PaymentPage> {
   String _condition(ProductCondition c) {
     switch (c) {
       case ProductCondition.neufAvecEtiquette:
-        return 'Neuf avec étiquette';
+        return 'État 99 avec étiquette';
       case ProductCondition.tresSatisfaisant:
-        return 'Neuf sans étiquette';
-      case ProductCondition.tresSatisfaisant:
-        return 'Très bon état';
+        return 'Très satisfaisant';
       case ProductCondition.bon:
         return 'Bon état';
       case ProductCondition.satisfaisant:
-        return 'État correct';
+        return 'État satisfaisant';
     }
   }
 
@@ -104,8 +102,19 @@ class _PaymentPageState extends State<PaymentPage> {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
+    // L'article n'est plus disponible à l'achat dès que la vente est payée
+    // (évite qu'un autre acheteur le paie en même temps).
     await _markProductSold(product.id);
-    await _recordWalletTransactions(uid, product);
+
+    // ⚠️ Le crédit du portefeuille vendeur ne se fait PAS ici.
+    // Il est fait uniquement par le point relais, quand la commande passe
+    // au statut "completed" (récupérée) — c'est le principe du tiers de
+    // confiance : l'argent reste bloqué jusqu'à la remise effective de
+    // l'article (cahier des charges 1.2 et 2.1).
+    // Le portefeuille de l'acheteur n'est pas débité ici non plus, car il
+    // vient de payer via un moyen externe (Orange Money/Moov Money/Wave/
+    // carte) — le portefeuille DANAYA n'est utilisé que si l'acheteur choisit
+    // de payer avec son "avoir" (option pas encore proposée ci-dessous).
   }
 
   Future<void> _markProductSold(String productId) async {
@@ -113,41 +122,6 @@ class _PaymentPageState extends State<PaymentPage> {
         .collection('product')
         .doc(productId)
         .update({'status': 'sold'});
-  }
-
-  Future<void> _recordWalletTransactions(
-      String buyerId, ProductEntity product) async {
-    final db = FirebaseFirestore.instance;
-    final price = product.price;
-    final title = product.title;
-
-    final buyerWallet = db.collection('wallet').doc(buyerId);
-    await buyerWallet.set({
-      'balance': FieldValue.increment(-price),
-      'totalSpent': FieldValue.increment(price),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-    await buyerWallet.collection('transactions').add({
-      'type': 'debit',
-      'amount': price,
-      'label': 'Achat – $title',
-      'productId': product.id,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    final sellerWallet = db.collection('wallet').doc(product.sellerId);
-    await sellerWallet.set({
-      'balance': FieldValue.increment(price),
-      'totalEarned': FieldValue.increment(price),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-    await sellerWallet.collection('transactions').add({
-      'type': 'credit',
-      'amount': price,
-      'label': 'Vente – $title',
-      'productId': product.id,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
   }
 
   @override
@@ -225,7 +199,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     const SizedBox(height: 4),
                     Text(
                       [
-                        if (product.sellerName != null) product.sellerName!,
+                        product.sellerName,
                         if (product.size != null) 'Taille ${product.size}',
                         _condition(product.condition),
                       ].join(' · '),
