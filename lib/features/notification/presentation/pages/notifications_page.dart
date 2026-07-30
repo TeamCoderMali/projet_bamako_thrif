@@ -30,6 +30,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
     _notifRepo.markAllAsRead().catchError((_) {});
   }
 
+  // ── Ouvre la fiche de validation remise en état (montant + 24h) ──────────
+  void _openRepairValidation(NotificationEntity notif) {
+    final ncId = notif.data?['nonConformityId'] as String?;
+    if (ncId == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _RepairValidationSheet(nonConformityId: ncId),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,20 +121,186 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     color: Colors.red.shade400,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child:
-                      const Icon(Icons.delete_outline, color: Colors.white),
+                  child: const Icon(Icons.delete_outline, color: Colors.white),
                 ),
-                onDismissed: (_) =>
-                    _notifRepo.deleteNotification(notif.id),
+                onDismissed: (_) => _notifRepo.deleteNotification(notif.id),
                 child: _NotifCard(
                   notification: notif,
-                  onTap: () => _notifRepo.markAsRead(notif.id),
+                  onTap: () {
+                    _notifRepo.markAsRead(notif.id);
+                    if (notif.type == NotificationType.repairValidation) {
+                      _openRepairValidation(notif);
+                    }
+                  },
                 ),
               );
             },
           );
         },
       ),
+    );
+  }
+}
+
+// ── Fiche "Validation remise en état" (montant + 24h + Accepter) ───────────
+class _RepairValidationSheet extends StatelessWidget {
+  final String nonConformityId;
+  const _RepairValidationSheet({required this.nonConformityId});
+
+  String _fmt(dynamic amount) {
+    final v = (amount is num) ? amount.toDouble() : 0.0;
+    return '${v.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ')} FCFA';
+  }
+
+  Future<void> _accept(BuildContext context) async {
+    await FirebaseFirestore.instance
+        .collection('non_conformities')
+        .doc(nonConformityId)
+        .update({
+      'status': 'seller_accepted',
+      'sellerAcceptedAt': FieldValue.serverTimestamp(),
+    });
+    if (context.mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Montant accepté. L\'équipe procède à la remise en état.'),
+          backgroundColor: Color(0xFF6B7F4D),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('non_conformities')
+          .doc(nonConformityId)
+          .snapshots(),
+      builder: (context, snap) {
+        if (!snap.hasData || !snap.data!.exists) {
+          return const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(
+                child: CircularProgressIndicator(color: Color(0xFF6B7F4D))),
+          );
+        }
+
+        final data = snap.data!.data() as Map<String, dynamic>;
+        final status = data['status'] as String? ?? '';
+        final repairCost = data['repairCost'];
+        final productTitle = data['productTitle'] as String? ?? 'Article';
+        final deadline = (data['sellerDeadline'] as Timestamp?)?.toDate();
+        final alreadyAccepted = status == 'seller_accepted';
+        final expired = deadline != null &&
+            DateTime.now().isAfter(deadline) &&
+            !alreadyAccepted;
+
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const Text(
+                'Remise en état',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(productTitle,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F4EE),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  children: [
+                    const Text('Montant à votre charge',
+                        style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const SizedBox(height: 6),
+                    Text(
+                      _fmt(repairCost),
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6B7F4D),
+                      ),
+                    ),
+                    if (deadline != null && !alreadyAccepted) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        expired
+                            ? 'Délai expiré'
+                            : 'À accepter avant le ${DateFormat('dd/MM à HH:mm').format(deadline)}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: expired ? Colors.red : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (alreadyAccepted)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Center(
+                    child: Text('✓ Déjà accepté',
+                        style: TextStyle(
+                            color: Colors.green, fontWeight: FontWeight.bold)),
+                  ),
+                )
+              else
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () => _accept(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6B7F4D),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Accepter',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -161,7 +342,6 @@ class _NotifCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icône
             Container(
               width: 44,
               height: 44,
@@ -203,8 +383,8 @@ class _NotifCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     notification.body,
-                    style:
-                        const TextStyle(color: Colors.grey, fontSize: 12, height: 1.4),
+                    style: const TextStyle(
+                        color: Colors.grey, fontSize: 12, height: 1.4),
                   ),
                   if (!notification.isRead) ...[
                     const SizedBox(height: 4),
@@ -253,6 +433,8 @@ class _NotifCard extends StatelessWidget {
         return (Icons.star_outline, Colors.amber);
       case NotificationType.promotion:
         return (Icons.local_offer_outlined, Colors.orange);
+      case NotificationType.repairValidation:
+        return (Icons.build_outlined, Colors.deepOrange);
       case NotificationType.system:
         return (Icons.info_outline, Colors.grey);
     }
