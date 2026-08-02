@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
@@ -21,11 +22,189 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _isContactLoading = false;
+  bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
+
+  // ── État de la note de l'utilisateur courant ───────────────────────────
+  int _myRating = 0;
+  bool _isRatingLoading = false;
 
   @override
   void initState() {
     super.initState();
     context.read<ProductCubit>().loadProductDetail(widget.productId);
+    _checkIfFavorite();
+    _loadMyRating();
+  }
+
+  // ── Vérifier si déjà en favori ─────────────────────────────────────────
+  Future<void> _checkIfFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('favorites')
+        .doc(widget.productId)
+        .get();
+
+    if (doc.exists && mounted) {
+      setState(() => _isFavorite = true);
+    }
+  }
+
+  // ── Charger la note déjà donnée par l'utilisateur (le cas échéant) ────
+  Future<void> _loadMyRating() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('product')
+        .doc(widget.productId)
+        .collection('reviews')
+        .doc(user.uid)
+        .get();
+
+    if (doc.exists && mounted) {
+      setState(() => _myRating = (doc['rating'] as num).toInt());
+    }
+  }
+
+  // ── Ajouter/Retirer des favoris Firestore ──────────────────────────────
+  Future<void> _toggleFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      context.go(RouteNames.login);
+      return;
+    }
+
+    if (_isFavoriteLoading) return;
+    setState(() => _isFavoriteLoading = true);
+
+    final favRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('favorites')
+        .doc(widget.productId);
+
+    try {
+      if (_isFavorite) {
+        await favRef.delete();
+        if (mounted) {
+          setState(() => _isFavorite = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Retiré des favoris'),
+              backgroundColor: Color(0xFF6B7F4D),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      } else {
+        await favRef.set({
+          'productId': widget.productId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        if (mounted) {
+          setState(() => _isFavorite = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ajouté aux favoris ❤️'),
+              backgroundColor: Color(0xFF6B7F4D),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur : ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFavoriteLoading = false);
+    }
+  }
+
+  // ── Noter le produit (vendeur ou acheteur) ─────────────────────────────
+  Future<void> _rateProduct(int stars) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      context.go(RouteNames.login);
+      return;
+    }
+
+    if (_isRatingLoading) return;
+    setState(() => _isRatingLoading = true);
+
+    final productRef =
+        FirebaseFirestore.instance.collection('product').doc(widget.productId);
+    final reviewRef = productRef.collection('reviews').doc(user.uid);
+
+    try {
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final existingReview = await transaction.get(reviewRef);
+        final productSnap = await transaction.get(productRef);
+
+        final currentRating =
+            (productSnap['rating'] as num?)?.toDouble() ?? 0.0;
+        final currentCount = (productSnap['reviewCount'] as num?)?.toInt() ?? 0;
+
+        double newRating;
+        int newCount;
+
+        if (existingReview.exists) {
+          final oldStars = (existingReview['rating'] as num).toDouble();
+          final totalPoints = (currentRating * currentCount) - oldStars + stars;
+          newRating = currentCount == 0 ? 0 : totalPoints / currentCount;
+          newCount = currentCount;
+        } else {
+          final totalPoints = (currentRating * currentCount) + stars;
+          newCount = currentCount + 1;
+          newRating = totalPoints / newCount;
+        }
+
+        transaction.set(reviewRef, {
+          'userId': user.uid,
+          'rating': stars,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        transaction.update(productRef, {
+          'rating': newRating,
+          'reviewCount': newCount,
+        });
+      });
+
+      if (mounted) {
+        setState(() => _myRating = stars);
+        // Recharge le produit pour afficher la nouvelle moyenne
+        context.read<ProductCubit>().loadProductDetail(widget.productId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Merci pour votre note ⭐'),
+            backgroundColor: Color(0xFF6B7F4D),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur : ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRatingLoading = false);
+    }
   }
 
   // ── Ouvrir un chat avec le vendeur ─────────────────────────────────────
@@ -40,7 +219,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         return;
       }
 
-      // Empêcher de se contacter soi-même
       if (currentUser.id == product.sellerId) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -83,6 +261,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     } finally {
       if (mounted) setState(() => _isContactLoading = false);
     }
+  }
+
+  // ── Partager le produit ────────────────────────────────────────────────
+  void _shareProduct(ProductEntity product) {
+    Share.share(
+      '🛍️ ${product.title}\n'
+      '💰 ${product.price.toStringAsFixed(0)} FCFA\n\n'
+      'Disponible sur DANAYA – Seconde main, première confiance.',
+    );
   }
 
   @override
@@ -131,13 +318,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget _buildContent(BuildContext context, ProductEntity product) {
     return CustomScrollView(
       slivers: [
-        // ── Image en-tête ─────────────────────────────────────────────────
         SliverAppBar(
           expandedHeight: 320,
           pinned: true,
           backgroundColor: Colors.white,
           leading: GestureDetector(
-            onTap: () => context.canPop() ? context.pop() : context.go(RouteNames.home),
+            onTap: () =>
+                context.canPop() ? context.pop() : context.go(RouteNames.home),
             child: Container(
               margin: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
@@ -148,10 +335,34 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
           actions: [
+            // ── Favori ──────────────────────────────────────────────────
             GestureDetector(
-              onTap: () {
-                // TODO: Partager
-              },
+              onTap: _toggleFavorite,
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: _isFavoriteLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF6B7F4D),
+                        ),
+                      )
+                    : Icon(
+                        _isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: _isFavorite ? Colors.red : Colors.black,
+                      ),
+              ),
+            ),
+            // ── Partager ────────────────────────────────────────────────
+            GestureDetector(
+              onTap: () => _shareProduct(product),
               child: Container(
                 margin: const EdgeInsets.all(8),
                 padding: const EdgeInsets.all(8),
@@ -167,14 +378,88 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             background: _buildImageGallery(product),
           ),
         ),
-
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Badge état ─────────────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        product.title,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2B2B2B),
+                        ),
+                      ),
+                    ),
+                    if (product.isVerified) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: const Color(0xFF6B7F4D).withOpacity(0.3)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.verified,
+                                size: 14, color: Color(0xFF6B7F4D)),
+                            SizedBox(width: 4),
+                            Text(
+                              'Vérifié DANAYA',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF6B7F4D),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // ── Note moyenne + étoiles cliquables ──────────────────
+                Row(
+                  children: [
+                    if (product.reviewCount > 0) ...[
+                      const Icon(Icons.star, size: 16, color: Colors.amber),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${product.rating.toStringAsFixed(1)} (${product.reviewCount} avis)',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Color(0xFF2B2B2B),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ] else ...[
+                      const Text(
+                        'Pas encore noté',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    _RatingStars(
+                      currentRating: _myRating,
+                      isLoading: _isRatingLoading,
+                      onRate: _rateProduct,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
                 Row(
                   children: [
                     _Badge(
@@ -193,56 +478,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ],
                   ],
                 ),
-
-                const SizedBox(height: 12),
-
-                // ── Titre ─────────────────────────────────────────────────
-                Text(
-                  product.title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B2B2B),
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // ── Infos rapides (vues, favs) ─────────────────────────────
-                Row(
-                  children: [
-                    const Icon(Icons.remove_red_eye_outlined,
-                        size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${product.viewCount} vues',
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                    const SizedBox(width: 16),
-                    const Icon(Icons.favorite_border,
-                        size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${product.favoriteCount} favoris',
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                    if (product.location != null) ...[
-                      const SizedBox(width: 16),
-                      const Icon(Icons.location_on_outlined,
-                          size: 14, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        product.location!,
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
-                  ],
-                ),
-
                 const SizedBox(height: 14),
-
-                // ── Prix ──────────────────────────────────────────────────
                 Text(
                   '${product.price.toStringAsFixed(0)} FCFA',
                   style: const TextStyle(
@@ -251,39 +487,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     color: Color(0xFF6B7F4D),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
-                // ── Description ──────────────────────────────────────────
-                const Text(
-                  'Description',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                const Text('Description',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Text(
                   product.description,
                   style: const TextStyle(
-                    color: Colors.grey,
-                    height: 1.6,
-                    fontSize: 14,
-                  ),
+                      color: Colors.grey, height: 1.6, fontSize: 14),
                 ),
-
                 const SizedBox(height: 24),
-
-                // ── Couleur ───────────────────────────────────────────────
-                if (product.color != null) ...[
-                  const Text(
-                    'Couleur',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(product.color!,
-                      style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 20),
-                ],
-
-                // ── Vendeur ──────────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -325,10 +539,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ),
                             const Text(
                               'Vendeur vérifié ✓',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 12,
-                              ),
+                              style:
+                                  TextStyle(color: Colors.green, fontSize: 12),
                             ),
                           ],
                         ),
@@ -337,10 +549,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
-                // ── Boutons Contacter / Acheter ───────────────────────────
                 Row(
                   children: [
                     Expanded(
@@ -357,10 +566,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               )
                             : const Icon(Icons.chat_bubble_outline,
                                 color: Color(0xFF6B7F4D), size: 18),
-                        label: const Text(
-                          'Contacter',
-                          style: TextStyle(color: Color(0xFF6B7F4D)),
-                        ),
+                        label: const Text('Contacter',
+                            style: TextStyle(color: Color(0xFF6B7F4D))),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF6B7F4D)),
                           shape: RoundedRectangleBorder(
@@ -373,10 +580,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => context.go(
-                          '/payment',
-                          extra: product,
-                        ),
+                        onPressed: () => context.go('/payment', extra: product),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6B7F4D),
                           shape: RoundedRectangleBorder(
@@ -387,9 +591,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         child: const Text(
                           'Acheter',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -441,16 +643,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   String _conditionLabel(ProductCondition c) {
     switch (c) {
-      case ProductCondition.newWithTags:
-        return 'Neuf avec étiquette';
-      case ProductCondition.newWithoutTags:
-        return 'Neuf sans étiquette';
-      case ProductCondition.veryGood:
-        return 'Très bon état';
-      case ProductCondition.good:
+      case ProductCondition.neufAvecEtiquette:
+        return 'État 99 avec étiquette';
+      case ProductCondition.tresSatisfaisant:
+        return 'Très satisfaisant';
+      case ProductCondition.bon:
         return 'Bon état';
-      case ProductCondition.fair:
-        return 'État correct';
+      case ProductCondition.satisfaisant:
+        return 'État satisfaisant';
     }
   }
 }
@@ -477,6 +677,50 @@ class _Badge extends StatelessWidget {
           fontSize: 11,
         ),
       ),
+    );
+  }
+}
+
+// ── Widget d'étoiles cliquables pour noter un produit ──────────────────────
+class _RatingStars extends StatelessWidget {
+  final int currentRating; // 0 si l'utilisateur n'a pas encore noté
+  final bool isLoading;
+  final ValueChanged<int> onRate;
+
+  const _RatingStars({
+    required this.currentRating,
+    required this.isLoading,
+    required this.onRate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Color(0xFF6B7F4D),
+        ),
+      );
+    }
+    return Row(
+      children: List.generate(5, (index) {
+        final starValue = index + 1;
+        final isFilled = starValue <= currentRating;
+        return GestureDetector(
+          onTap: () => onRate(starValue),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: Icon(
+              isFilled ? Icons.star : Icons.star_border,
+              size: 18,
+              color: isFilled ? Colors.amber : Colors.grey.shade400,
+            ),
+          ),
+        );
+      }),
     );
   }
 }

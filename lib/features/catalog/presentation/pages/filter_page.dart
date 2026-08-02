@@ -25,25 +25,25 @@ class _FilterPageState extends State<FilterPage> {
   void initState() {
     super.initState();
     final f = widget.currentFilters ?? const CatalogFilters();
-    _category   = f.category;
-    _condition  = f.condition;
+    _category = f.category;
+    _condition = f.condition;
     _priceRange = RangeValues(f.minPrice, f.maxPrice);
   }
 
   void _reset() {
     setState(() {
-      _category   = null;
-      _condition  = null;
+      _category = null;
+      _condition = null;
       _priceRange = const RangeValues(0, _maxPrice);
     });
   }
 
   void _apply() {
     final filters = CatalogFilters(
-      category:  _category,
+      category: _category,
       condition: _condition,
-      minPrice:  _priceRange.start,
-      maxPrice:  _priceRange.end,
+      minPrice: _priceRange.start,
+      maxPrice: _priceRange.end,
     );
     context.pop(filters);
   }
@@ -79,7 +79,6 @@ class _FilterPageState extends State<FilterPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // ── Catégorie ───────────────────────────────────────────────────
             _SectionTitle('Catégorie'),
             const SizedBox(height: 10),
@@ -95,8 +94,7 @@ class _FilterPageState extends State<FilterPage> {
                 ..._catItems.map((e) => _FilterChip(
                       label: e.label,
                       selected: _category == e.value,
-                      onTap: () =>
-                          setState(() => _category = e.value),
+                      onTap: () => setState(() => _category = e.value),
                     )),
               ],
             ),
@@ -118,8 +116,7 @@ class _FilterPageState extends State<FilterPage> {
                 ..._condItems.map((e) => _FilterChip(
                       label: e.label,
                       selected: _condition == e.value,
-                      onTap: () =>
-                          setState(() => _condition = e.value),
+                      onTap: () => setState(() => _condition = e.value),
                     )),
               ],
             ),
@@ -202,23 +199,23 @@ class _Item<T> {
 }
 
 const _catItems = [
-  _Item(ProductCategory.women,       'Femme'),
-  _Item(ProductCategory.men,         'Homme'),
-  _Item(ProductCategory.children,    'Enfant'),
-  _Item(ProductCategory.shoes,       'Chaussures'),
+  _Item(ProductCategory.women, 'Femme'),
+  _Item(ProductCategory.men, 'Homme'),
+  _Item(ProductCategory.children, 'Enfant'),
+  _Item(ProductCategory.shoes, 'Chaussures'),
   _Item(ProductCategory.accessories, 'Accessoires'),
-  _Item(ProductCategory.bags,        'Sacs'),
-  _Item(ProductCategory.jewelry,     'Bijoux'),
-  _Item(ProductCategory.sportswear,  'Sport'),
+  _Item(ProductCategory.bags, 'Sacs'),
+  _Item(ProductCategory.jewelry, 'Bijoux'),
+  _Item(ProductCategory.sportswear, 'Sport'),
   _Item(ProductCategory.traditional, 'Traditionnel'),
 ];
 
 const _condItems = [
-  _Item(ProductCondition.newWithTags,    'Neuf avec étiquette'),
-  _Item(ProductCondition.newWithoutTags, 'Neuf sans étiquette'),
-  _Item(ProductCondition.veryGood,       'Très bon état'),
-  _Item(ProductCondition.good,           'Bon état'),
-  _Item(ProductCondition.fair,           'État correct'),
+  _Item(ProductCondition.neufAvecEtiquette, 'Neuf avec étiquette'),
+  _Item(ProductCondition.tresSatisfaisant, 'Neuf sans étiquette'),
+  _Item(ProductCondition.tresSatisfaisant, 'Très bon état'),
+  _Item(ProductCondition.bon, 'Bon état'),
+  _Item(ProductCondition.satisfaisant, 'État correct'),
 ];
 
 // ── Widgets utilitaires ───────────────────────────────────────────────────────
@@ -247,15 +244,12 @@ class _FilterChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? const Color(0xFF6B7F4D) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected
-                ? const Color(0xFF6B7F4D)
-                : Colors.grey.shade200,
+            color: selected ? const Color(0xFF6B7F4D) : Colors.grey.shade200,
           ),
         ),
         child: Text(

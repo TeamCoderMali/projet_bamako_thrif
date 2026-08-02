@@ -21,33 +21,41 @@ class _SettingsPageState extends State<SettingsPage> {
     final isDark = context.watch<ThemeCubit>().isDark;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
+        backgroundColor: const Color(0xFF6B7F4D),
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop() ? context.pop() : context.go(RouteNames.profile),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(RouteNames.profile),
         ),
-        title: const Text('Paramètres', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Paramètres',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
-          // ── Compte ──────────────────────────────────────────────────────────
           _sectionLabel('Compte'),
           _card([
             _item(context, Icons.person_outline, 'Modifier le profil',
                 () => context.go(RouteNames.editProfile)),
-            _item(context, Icons.lock_outline, 'Changer le mot de passe', () {}),
+            _item(context, Icons.lock_outline, 'Changer le mot de passe',
+                () => context.push(RouteNames.changePassword)),
             _item(context, Icons.privacy_tip_outlined, 'Confidentialité',
                 () => context.go(RouteNames.privacy)),
           ]),
-
           const SizedBox(height: 22),
-
-          // ── Préférences ───────────────────────────────────────────────────
           _sectionLabel('Préférences'),
           _card([
             SwitchListTile(
-              secondary: const Icon(Icons.notifications_outlined),
+              secondary: const Icon(Icons.notifications_outlined,
+                  color: Color(0xFF6B7F4D)),
               title: const Text('Notifications'),
               subtitle: const Text('Push et alertes en temps réel'),
               value: _notifications,
@@ -58,6 +66,7 @@ class _SettingsPageState extends State<SettingsPage> {
             SwitchListTile(
               secondary: Icon(
                 isDark ? Icons.dark_mode : Icons.light_mode_outlined,
+                color: const Color(0xFF6B7F4D),
               ),
               title: const Text('Mode sombre'),
               subtitle: Text(isDark ? 'Activé' : 'Désactivé'),
@@ -66,21 +75,24 @@ class _SettingsPageState extends State<SettingsPage> {
               onChanged: (_) => context.read<ThemeCubit>().toggle(),
             ),
           ]),
-
           const SizedBox(height: 22),
-
-          // ── À propos ──────────────────────────────────────────────────────
           _sectionLabel('À propos'),
           _card([
             _item(context, Icons.info_outline, 'À propos de l\'app',
                 () => context.go(RouteNames.about)),
-            _item(context, Icons.help_outline, 'Aide & Support', () {}),
-            _item(context, Icons.star_outline, 'Noter l\'application', () {}),
+            _item(context, Icons.help_outline, 'Aide & Support',
+                () => context.push(RouteNames.support)),
+            _item(context, Icons.star_outline, 'Noter l\'application', () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content:
+                      Text('Disponible après publication sur le Play Store'),
+                  backgroundColor: Color(0xFF6B7F4D),
+                ),
+              );
+            }),
           ]),
-
           const SizedBox(height: 22),
-
-          // ── Déconnexion ───────────────────────────────────────────────────
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -114,13 +126,16 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Text(
           text.toUpperCase(),
           style: const TextStyle(
-              color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 11),
+            color: Color(0xFF6B7F4D),
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
         ),
       );
 
   Widget _card(List<Widget> children) => Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -133,8 +148,8 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(children: children),
       );
 
-  Widget _item(BuildContext context, IconData icon, String title,
-      VoidCallback onTap) {
+  Widget _item(
+      BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFF6B7F4D), size: 22),
       title: Text(title, style: const TextStyle(fontSize: 14)),

@@ -182,8 +182,9 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton.icon(
-                        onPressed: () => context.go(RouteNames.orders),
-                        icon: const Icon(Icons.receipt_long, color: Colors.white),
+                        onPressed: () => context.push(RouteNames.orders),
+                        icon:
+                            const Icon(Icons.receipt_long, color: Colors.white),
                         label: const Text(
                           'Suivre ma commande',
                           style: TextStyle(
@@ -270,8 +271,7 @@ class _StepRow extends StatelessWidget {
               color: Color(0xFF6B7F4D),
               shape: BoxShape.circle,
             ),
-            child:
-                const Icon(Icons.check, color: Colors.white, size: 13),
+            child: const Icon(Icons.check, color: Colors.white, size: 13),
           )
         else
           Container(

@@ -38,4 +38,6 @@ enum NotificationType {
   newReview,
   promotion,
   system,
+  // Demande de validation d'un coût de remise en état (cahier 2.2 / 4.8)
+  repairValidation,
 }

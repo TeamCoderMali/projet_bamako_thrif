@@ -1,5 +1,4 @@
 // ─── Bamako Thrift — Orders Page ─────────────────────────────────────────────
-// Liste des commandes de l'utilisateur connecté (Firestore)
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -11,25 +10,39 @@ class OrdersPage extends StatelessWidget {
 
   String _statusLabel(String s) {
     switch (s) {
-      case 'pending':     return 'En attente';
-      case 'confirmed':   return 'Confirmée';
-      case 'in_transit':  return 'En livraison';
-      case 'delivered':   return 'Livré';
-      case 'completed':   return 'Terminé';
-      case 'cancelled':   return 'Annulée';
-      default:            return s;
+      case 'pending':
+        return 'En attente';
+      case 'confirmed':
+        return 'Confirmée';
+      case 'in_transit':
+        return 'En livraison';
+      case 'delivered':
+        return 'Livré';
+      case 'completed':
+        return 'Terminé';
+      case 'cancelled':
+        return 'Annulée';
+      default:
+        return s;
     }
   }
 
   Color _statusColor(String s) {
     switch (s) {
-      case 'pending':     return Colors.orange;
-      case 'confirmed':   return Colors.blue;
-      case 'in_transit':  return const Color(0xFF6B7F4D);
-      case 'delivered':   return Colors.teal;
-      case 'completed':   return Colors.green;
-      case 'cancelled':   return Colors.red;
-      default:            return Colors.grey;
+      case 'pending':
+        return Colors.orange;
+      case 'confirmed':
+        return Colors.blue;
+      case 'in_transit':
+        return const Color(0xFF6B7F4D);
+      case 'delivered':
+        return Colors.teal;
+      case 'completed':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -48,7 +61,20 @@ class OrdersPage extends StatelessWidget {
     } else {
       return '';
     }
-    final months = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+    final months = [
+      'jan',
+      'fév',
+      'mar',
+      'avr',
+      'mai',
+      'jun',
+      'jul',
+      'aoû',
+      'sep',
+      'oct',
+      'nov',
+      'déc'
+    ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 
@@ -59,15 +85,15 @@ class OrdersPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF6B7F4D),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.go(RouteNames.home),
         ),
         title: const Text(
           'Mes commandes',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
       body: uid.isEmpty
@@ -84,13 +110,10 @@ class OrdersPage extends StatelessWidget {
                     child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
                   );
                 }
-
                 if (snapshot.hasError) {
                   return _buildEmpty('Erreur : ${snapshot.error}');
                 }
-
                 final docs = snapshot.data?.docs ?? [];
-
                 if (docs.isEmpty) {
                   return _buildEmpty('Aucune commande pour l\'instant');
                 }
@@ -99,8 +122,7 @@ class OrdersPage extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   itemCount: docs.length,
                   itemBuilder: (ctx, i) {
-                    final data =
-                        docs[i].data() as Map<String, dynamic>;
+                    final data = docs[i].data() as Map<String, dynamic>;
                     final orderId = docs[i].id;
                     final status = data['status'] as String? ?? 'pending';
                     final productTitle =
@@ -126,24 +148,20 @@ class OrdersPage extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            // Icône
                             Container(
                               width: 52,
                               height: 52,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF7F4EE),
+                                color: const Color(0xFF6B7F4D).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(Icons.checkroom,
                                   color: Color(0xFF6B7F4D), size: 26),
                             ),
                             const SizedBox(width: 12),
-
-                            // Info
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     productTitle,
@@ -167,13 +185,12 @@ class OrdersPage extends StatelessWidget {
                                       ),
                                       if (date != null) ...[
                                         const Text(' · ',
-                                            style: TextStyle(
-                                                color: Colors.grey)),
+                                            style:
+                                                TextStyle(color: Colors.grey)),
                                         Text(
                                           _formatDate(date),
                                           style: const TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 11),
+                                              color: Colors.grey, fontSize: 11),
                                         ),
                                       ],
                                     ],
@@ -181,8 +198,6 @@ class OrdersPage extends StatelessWidget {
                                 ],
                               ),
                             ),
-
-                            // Badge statut
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
@@ -190,10 +205,9 @@ class OrdersPage extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: _statusColor(status)
-                                        .withOpacity(0.1),
-                                    borderRadius:
-                                        BorderRadius.circular(8),
+                                    color:
+                                        _statusColor(status).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
                                     _statusLabel(status),
@@ -225,8 +239,15 @@ class OrdersPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_outlined,
-              size: 72, color: Colors.grey.shade300),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6B7F4D).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.receipt_long_outlined,
+                size: 48, color: Color(0xFF6B7F4D)),
+          ),
           const SizedBox(height: 16),
           Text(
             msg,

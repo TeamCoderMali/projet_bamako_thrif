@@ -21,7 +21,7 @@ abstract class RouteNames {
   static const String profile = '/profile';
 
   // ── Catalog ───────────────────────────────────────────────────────────
-  static const String search = '/search';
+  static const String search = '/catalog/search';
   static const String filters = '/filters';
   static const String productDetail = '/product/:id';
 
@@ -30,6 +30,8 @@ abstract class RouteNames {
   static const String wallet = '/profile/wallet';
   static const String myListings = '/profile/listings';
   static const String history = '/profile/history';
+  static const String favorites = '/profile/favorites';
+  static const String support = '/profile/support';
 
   // ── Payment ───────────────────────────────────────────────────────────
   static const String payment = '/payment';
@@ -51,6 +53,7 @@ abstract class RouteNames {
   static const String settings = '/settings';
   static const String privacy = '/settings/privacy';
   static const String about = '/settings/about';
+  static const String changePassword = '/settings/change-password';
 
   // ── Admin ─────────────────────────────────────────────────────────────
   static const String adminDashboard = '/admin/dashboard';

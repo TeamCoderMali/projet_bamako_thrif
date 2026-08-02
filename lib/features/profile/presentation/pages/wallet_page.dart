@@ -1,5 +1,6 @@
 // ─── Bamako Thrift — Wallet Page ─────────────────────────────────────────────
-// Portefeuille complet avec solde Firestore et historique des transactions
+// Portefeuille complet : solde live (crédits expirés à 3 mois exclus),
+// gains/dépenses historiques, et historique des transactions.
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -30,26 +31,69 @@ class WalletPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF6B7F4D),
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop() ? context.pop() : context.go(RouteNames.profile),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(RouteNames.profile),
         ),
-        title: const Text('Mon Portefeuille',
-            style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Mon Portefeuille',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
       ),
       body: uid == null
           ? const Center(child: Text('Connectez-vous'))
-          : StreamBuilder<DocumentSnapshot>(
+          : StreamBuilder<QuerySnapshot>(
+              // Toutes les transactions pilotent l'affichage : le solde
+              // disponible est recalculé en direct en excluant les crédits
+              // dont la date d'expiration (3 mois) est dépassée.
               stream: FirebaseFirestore.instance
                   .collection('wallet')
                   .doc(uid)
+                  .collection('transactions')
+                  .orderBy('createdAt', descending: true)
+                  .limit(100)
                   .snapshots(),
-              builder: (context, walletSnap) {
-                final walletData =
-                    walletSnap.data?.data() as Map<String, dynamic>?;
-                final balance    = walletData?['balance']     ?? 0;
-                final earned     = walletData?['totalEarned'] ?? 0;
-                final spent      = walletData?['totalSpent']  ?? 0;
+              builder: (context, txSnap) {
+                if (txSnap.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                  );
+                }
+
+                final txs = txSnap.data?.docs ?? [];
+                final now = DateTime.now();
+
+                double availableBalance = 0;
+                double totalEarned = 0;
+                double totalSpent = 0;
+                DateTime? nextExpiry;
+
+                for (final doc in txs) {
+                  final tx = doc.data() as Map<String, dynamic>;
+                  final amount = (tx['amount'] as num?)?.toDouble() ?? 0;
+                  final isCredit = tx['type'] == 'credit';
+                  final expiresAt = tx['expiresAt'] as Timestamp?;
+                  final isExpired =
+                      expiresAt != null && expiresAt.toDate().isBefore(now);
+
+                  if (isCredit) {
+                    totalEarned += amount; // historique, jamais affecté
+                    if (!isExpired) {
+                      availableBalance += amount;
+                      if (expiresAt != null &&
+                          (nextExpiry == null ||
+                              expiresAt.toDate().isBefore(nextExpiry))) {
+                        nextExpiry = expiresAt.toDate();
+                      }
+                    }
+                  } else {
+                    totalSpent += amount;
+                    availableBalance -= amount;
+                  }
+                }
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
@@ -102,7 +146,7 @@ class WalletPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              _fmt(balance),
+                              _fmt(availableBalance),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 34,
@@ -115,7 +159,7 @@ class WalletPage extends StatelessWidget {
                               children: [
                                 _WalletStat(
                                     label: 'Gains totaux',
-                                    value: _fmt(earned),
+                                    value: _fmt(totalEarned),
                                     icon: Icons.trending_up),
                                 Container(
                                     height: 32,
@@ -123,7 +167,7 @@ class WalletPage extends StatelessWidget {
                                     color: Colors.white30),
                                 _WalletStat(
                                     label: 'Dépenses totales',
-                                    value: _fmt(spent),
+                                    value: _fmt(totalSpent),
                                     icon: Icons.trending_down),
                               ],
                             ),
@@ -156,6 +200,33 @@ class WalletPage extends StatelessWidget {
                         ),
                       ),
 
+                      // ── Alerte expiration prochaine ─────────────────────────
+                      if (nextExpiry != null) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7E6),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFF0D999)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.timer_outlined,
+                                  color: Color(0xFFB8860B), size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Une partie de votre solde expire le ${_fmtDate(Timestamp.fromDate(nextExpiry!))} si non utilisée (validité 3 mois).',
+                                  style: const TextStyle(
+                                      color: Color(0xFF8A6A1A), fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
                       const SizedBox(height: 20),
 
                       // ── Historique ─────────────────────────────────────────
@@ -166,103 +237,96 @@ class WalletPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
 
-                      StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('wallet')
-                            .doc(uid)
-                            .collection('transactions')
-                            .orderBy('createdAt', descending: true)
-                            .limit(50)
-                            .snapshots(),
-                        builder: (context, txSnap) {
-                          if (txSnap.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(20),
-                                child: CircularProgressIndicator(
-                                    color: Color(0xFF6B7F4D)),
-                              ),
-                            );
-                          }
-                          final txs = txSnap.data?.docs ?? [];
+                      if (txs.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Column(
+                              children: [
+                                Icon(Icons.receipt_long_outlined,
+                                    size: 56, color: Colors.grey.shade300),
+                                const SizedBox(height: 12),
+                                const Text('Aucune transaction',
+                                    style: TextStyle(color: Colors.grey)),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: txs.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (_, i) {
+                            final tx = txs[i].data() as Map<String, dynamic>;
+                            final isCredit = tx['type'] == 'credit';
+                            final amount = tx['amount'] ?? 0;
+                            final label = tx['label'] as String? ?? '—';
+                            final date = _fmtDate(tx['createdAt']);
+                            final expiresAt = tx['expiresAt'] as Timestamp?;
+                            final isExpired = isCredit &&
+                                expiresAt != null &&
+                                expiresAt.toDate().isBefore(now);
 
-                          if (txs.isEmpty) {
-                            return Center(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 32),
-                                child: Column(
-                                  children: [
-                                    Icon(Icons.receipt_long_outlined,
-                                        size: 56,
-                                        color: Colors.grey.shade300),
-                                    const SizedBox(height: 12),
-                                    const Text('Aucune transaction',
-                                        style: TextStyle(color: Colors.grey)),
-                                  ],
+                            return ListTile(
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 4),
+                              leading: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: isExpired
+                                      ? Colors.grey.shade100
+                                      : isCredit
+                                          ? Colors.green.shade50
+                                          : Colors.red.shade50,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isCredit
+                                      ? Icons.arrow_downward_rounded
+                                      : Icons.arrow_upward_rounded,
+                                  color: isExpired
+                                      ? Colors.grey
+                                      : isCredit
+                                          ? Colors.green
+                                          : Colors.red,
+                                  size: 20,
                                 ),
                               ),
-                            );
-                          }
-
-                          return ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: txs.length,
-                            separatorBuilder: (_, __) =>
-                                const Divider(height: 1),
-                            itemBuilder: (_, i) {
-                              final tx = txs[i].data() as Map<String, dynamic>;
-                              final isCredit = tx['type'] == 'credit';
-                              final amount   = tx['amount'] ?? 0;
-                              final label    = tx['label'] as String? ?? '—';
-                              final date     = _fmtDate(tx['createdAt']);
-
-                              return ListTile(
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                leading: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: isCredit
-                                        ? Colors.green.shade50
-                                        : Colors.red.shade50,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    isCredit
-                                        ? Icons.arrow_downward_rounded
-                                        : Icons.arrow_upward_rounded,
-                                    color: isCredit
-                                        ? Colors.green
-                                        : Colors.red,
-                                    size: 20,
-                                  ),
-                                ),
-                                title: Text(label,
-                                    style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600)),
-                                subtitle: Text(date,
-                                    style: const TextStyle(
-                                        fontSize: 11, color: Colors.grey)),
-                                trailing: Text(
-                                  '${isCredit ? '+' : '-'}${_fmt(amount)}',
+                              title: Text(label,
                                   style: TextStyle(
-                                    color: isCredit
-                                        ? Colors.green.shade700
-                                        : Colors.red.shade700,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: isExpired ? Colors.grey : null)),
+                              subtitle: Text(
+                                isExpired ? '$date · Expiré' : date,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isExpired
+                                      ? Colors.orange.shade700
+                                      : Colors.grey,
                                 ),
-                              );
-                            },
-                          );
-                        },
-                      ),
+                              ),
+                              trailing: Text(
+                                '${isCredit ? '+' : '-'}${_fmt(amount)}',
+                                style: TextStyle(
+                                  color: isExpired
+                                      ? Colors.grey
+                                      : isCredit
+                                          ? Colors.green.shade700
+                                          : Colors.red.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  decoration: isExpired
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -291,8 +355,7 @@ class _WalletStat extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   fontSize: 12)),
           Text(label,
-              style:
-                  const TextStyle(color: Colors.white54, fontSize: 10)),
+              style: const TextStyle(color: Colors.white54, fontSize: 10)),
         ],
       );
 }

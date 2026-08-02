@@ -20,6 +20,9 @@ class ProductModel extends ProductEntity {
     super.viewCount,
     super.favoriteCount,
     super.location,
+    super.rating,
+    super.reviewCount,
+    super.isVerified,
     required super.createdAt,
     super.updatedAt,
   });
@@ -43,6 +46,9 @@ class ProductModel extends ProductEntity {
       viewCount: data['viewCount'] as int? ?? 0,
       favoriteCount: data['favoriteCount'] as int? ?? 0,
       location: data['location'] as String?,
+      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
+      reviewCount: data['reviewCount'] as int? ?? 0,
+      isVerified: data['isVerified'] as bool? ?? false,
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         data['createdAt'] as int? ?? 0,
       ),
@@ -70,6 +76,9 @@ class ProductModel extends ProductEntity {
       'viewCount': viewCount,
       'favoriteCount': favoriteCount,
       'location': location,
+      'rating': rating,
+      'reviewCount': reviewCount,
+      'isVerified': isVerified,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt?.millisecondsSinceEpoch,
     };
@@ -83,9 +92,18 @@ class ProductModel extends ProductEntity {
   }
 
   static ProductCondition _parseCondition(String? value) {
+    // Compatibilité : anciens produits publiés avec l'ancien système à 5 états
+    const legacyMap = {
+      'newWithTags': ProductCondition.neufAvecEtiquette,
+      'newWithoutTags': ProductCondition.tresSatisfaisant,
+      'veryGood': ProductCondition.tresSatisfaisant,
+      'good': ProductCondition.bon,
+      'fair': ProductCondition.satisfaisant,
+    };
+    if (value != null && legacyMap.containsKey(value)) return legacyMap[value]!;
     return ProductCondition.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => ProductCondition.good,
+      orElse: () => ProductCondition.bon,
     );
   }
 

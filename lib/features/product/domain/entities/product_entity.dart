@@ -19,6 +19,9 @@ class ProductEntity extends Equatable {
   final int viewCount;
   final int favoriteCount;
   final String? location;
+  final double rating;
+  final int reviewCount;
+  final bool isVerified;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -40,6 +43,9 @@ class ProductEntity extends Equatable {
     this.viewCount = 0,
     this.favoriteCount = 0,
     this.location,
+    this.rating = 0,
+    this.reviewCount = 0,
+    this.isVerified = false,
     required this.createdAt,
     this.updatedAt,
   });
@@ -49,9 +55,25 @@ class ProductEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id, sellerId, title, description, price, imageUrls,
-        category, condition, brand, size, color, status,
-        viewCount, favoriteCount, createdAt, updatedAt,
+        id,
+        sellerId,
+        title,
+        description,
+        price,
+        imageUrls,
+        category,
+        condition,
+        brand,
+        size,
+        color,
+        status,
+        viewCount,
+        favoriteCount,
+        rating,
+        reviewCount,
+        isVerified,
+        createdAt,
+        updatedAt,
       ];
 }
 
@@ -69,18 +91,17 @@ enum ProductCategory {
 }
 
 enum ProductCondition {
-  newWithTags,    // Neuf avec étiquettes
-  newWithoutTags, // Neuf sans étiquettes
-  veryGood,       // Très bon état
-  good,           // Bon état
-  fair,           // État correct
+  satisfaisant, // État satisfaisant — porté, quelques signes d'usure visibles
+  bon, // Bon état — légèrement porté, très bon aspect général
+  tresSatisfaisant, // Très satisfaisant — quasi neuf, porté très peu de fois
+  neufAvecEtiquette, // État 99 avec étiquette — jamais porté, étiquette d'origine présente
 }
 
 enum ProductStatus {
-  available,   // Disponible
-  reserved,    // Réservé
-  sold,        // Vendu
-  inactive,    // Inactif (masqué par le vendeur)
-  pending,     // En attente de validation admin
-  rejected,    // Rejeté par l'admin
+  available, // Disponible
+  reserved, // Réservé
+  sold, // Vendu
+  inactive, // Inactif (masqué par le vendeur)
+  pending, // En attente de validation admin
+  rejected, // Rejeté par l'admin
 }

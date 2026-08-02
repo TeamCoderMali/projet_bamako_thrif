@@ -37,6 +37,7 @@ class UserEntity extends Equatable {
   });
 
   bool get isSeller => role == UserRole.seller || role == UserRole.admin;
+  bool get isRelayManager => role == UserRole.relay_manager;
   bool get isAdmin => role == UserRole.admin;
   String get initials {
     final parts = fullName.trim().split(' ');
@@ -47,10 +48,22 @@ class UserEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id, email, fullName, phoneNumber, avatarUrl, bio,
-        role, isEmailVerified, isActive, createdAt, updatedAt,
-        totalListings, totalSales, rating, reviewCount,
+        id,
+        email,
+        fullName,
+        phoneNumber,
+        avatarUrl,
+        bio,
+        role,
+        isEmailVerified,
+        isActive,
+        createdAt,
+        updatedAt,
+        totalListings,
+        totalSales,
+        rating,
+        reviewCount,
       ];
 }
 
-enum UserRole { buyer, seller, admin }
+enum UserRole { buyer, seller, admin, relay_manager }

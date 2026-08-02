@@ -14,7 +14,7 @@ class AboutPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF2B2B2B)),
-          onPressed: () => context.go(RouteNames.settings),
+          onPressed: () => context.push(RouteNames.settings),
         ),
         title: const Text(
           'À propos',

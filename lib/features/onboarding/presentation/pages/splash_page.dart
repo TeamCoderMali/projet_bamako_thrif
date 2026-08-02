@@ -1,8 +1,7 @@
 // ─── Bamako Thrift — Splash Page ─────────────────────────────────────────────
-// Page de chargement affichée au démarrage pendant la vérification auth
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:go_router/go_router.dart';
@@ -39,17 +38,28 @@ class _SplashPageState extends State<SplashPage>
 
     _controller.forward();
 
-    // Délai minimal pour que l'animation se joue, puis vérifier l'auth
     Future.delayed(const Duration(milliseconds: 1500), _checkAuth);
   }
 
-  void _checkAuth() {
+  Future<void> _checkAuth() async {
+    if (!mounted) return;
+
+    // ── Vérifier si c'est la première fois ──────────────────────────────
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+
+    if (!hasSeenOnboarding) {
+      await prefs.setBool('has_seen_onboarding', true);
+      if (mounted) context.go(RouteNames.welcome);
+      return;
+    }
+
+    // ── Vérifier l'état auth ─────────────────────────────────────────────
     if (!mounted) return;
     final state = context.read<AuthCubit>().state;
     if (state is AuthAuthenticated) {
       context.go(RouteNames.home);
     } else if (state is AuthLoading || state is AuthInitial) {
-      // Encore en chargement → on réécoute
       _listenUntilResolved();
     } else {
       context.go(RouteNames.login);
@@ -58,7 +68,9 @@ class _SplashPageState extends State<SplashPage>
 
   void _listenUntilResolved() {
     final cubit = context.read<AuthCubit>();
-    cubit.stream.firstWhere((s) => s is! AuthLoading && s is! AuthInitial).then((state) {
+    cubit.stream
+        .firstWhere((s) => s is! AuthLoading && s is! AuthInitial)
+        .then((state) {
       if (!mounted) return;
       if (state is AuthAuthenticated) {
         context.go(RouteNames.home);
@@ -76,88 +88,56 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        // Si l'état change pendant le splash (ex: auth très rapide)
-        if (state is AuthAuthenticated) {
-          context.go(RouteNames.home);
-        } else if (state is AuthUnauthenticated || state is AuthError) {
-          context.go(RouteNames.login);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFF2B2B2B),
-        body: Center(
-          child: FadeTransition(
-            opacity: _fadeAnim,
-            child: ScaleTransition(
-              scale: _scaleAnim,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Logo / Icône ─────────────────────────────────────────
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF8FA85A), Color(0xFF6B7F4D)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF6B7F4D).withOpacity(0.4),
-                          blurRadius: 30,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '👗',
-                        style: TextStyle(fontSize: 48),
-                      ),
-                    ),
+    return Scaffold(
+      backgroundColor: const Color(0xFF2B2B2B),
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: ScaleTransition(
+            scale: _scaleAnim,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Logo ─────────────────────────────────────────────────
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Image.asset(
+                    'assets/images/logo_danaya.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.cover,
                   ),
-
-                  const SizedBox(height: 28),
-
-                  // ── Nom app ───────────────────────────────────────────────
-                  const Text(
-                    'DANAYA',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 4,
-                    ),
+                ),
+                const SizedBox(height: 28),
+                const Text(
+                  'DANAYA',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 4,
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'La mode malienne d\'occasion',
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 14,
-                      letterSpacing: 1,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'La mode malienne d\'occasion',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 14,
+                    letterSpacing: 1,
                   ),
-
-                  const SizedBox(height: 60),
-
-                  // ── Spinner ───────────────────────────────────────────────
-                  SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      color: const Color(0xFF6B7F4D),
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      strokeWidth: 2.5,
-                    ),
+                ),
+                const SizedBox(height: 60),
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    color: const Color(0xFF6B7F4D),
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    strokeWidth: 2.5,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

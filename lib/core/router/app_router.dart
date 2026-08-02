@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'route_names.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
-
 // ── Onboarding ────────────────────────────────────────────────────────────────────
 import '../../features/onboarding/presentation/pages/welcome_page.dart';
 import '../../features/onboarding/presentation/pages/intro_page.dart';
@@ -51,6 +50,8 @@ import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/wallet_page.dart';
 import '../../features/profile/presentation/pages/history_page.dart';
 import '../../features/profile/presentation/pages/my_listings_page.dart';
+import '../../features/profile/presentation/pages/favorites_page.dart';
+import '../../features/profile/presentation/pages/support_page.dart';
 
 // ── Notifications ──────────────────────────────────────────────────────────
 import '../../features/notification/presentation/pages/notifications_page.dart';
@@ -59,6 +60,7 @@ import '../../features/notification/presentation/pages/notifications_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/privacy_page.dart';
 import '../../features/settings/presentation/pages/about_page.dart';
+import 'package:bamako_thrift/features/settings/presentation/pages/change_password_page.dart';
 
 // ── Admin ──────────────────────────────────────────────────────────────────
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
@@ -78,9 +80,8 @@ final GoRouter appRouter = GoRouter(
       RouteNames.intro,
     ];
 
-    final isPublicRoute =
-        publicRoutes.any((r) => state.matchedLocation == r ||
-            state.matchedLocation.startsWith('$r/'));
+    final isPublicRoute = publicRoutes.any((r) =>
+        state.matchedLocation == r || state.matchedLocation.startsWith('$r/'));
 
     // Le splash gère lui-même la redirection, on ne l'intercepte pas
     if (state.matchedLocation == RouteNames.splash) return null;
@@ -105,7 +106,6 @@ final GoRouter appRouter = GoRouter(
     return null;
   },
   routes: [
-
     // ── Splash ──────────────────────────────────────────────────────────────────
     GoRoute(
       path: RouteNames.splash,
@@ -217,7 +217,6 @@ final GoRouter appRouter = GoRouter(
       ],
     ),
 
-
     // ── Orders ─────────────────────────────────────────────────────────
     GoRoute(
       path: RouteNames.orders,
@@ -264,6 +263,16 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const ProfilePage(),
       routes: [
         GoRoute(
+          path: 'favorites',
+          name: 'favorites',
+          builder: (context, state) => const FavoritesPage(),
+        ),
+        GoRoute(
+          path: 'support',
+          name: 'support',
+          builder: (context, state) => const SupportPage(),
+        ),
+        GoRoute(
           path: 'edit',
           name: 'editProfile',
           builder: (context, state) => const EditProfilePage(),
@@ -303,6 +312,11 @@ final GoRouter appRouter = GoRouter(
           path: 'privacy',
           name: 'privacy',
           builder: (context, state) => const PrivacyPage(),
+        ),
+        GoRoute(
+          path: 'change-password',
+          name: 'change-password',
+          builder: (context, state) => const ChangePasswordPage(),
         ),
         GoRoute(
           path: 'about',

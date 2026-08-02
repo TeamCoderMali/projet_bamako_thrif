@@ -131,29 +131,29 @@ class _ConditionBadge extends StatelessWidget {
 
   Color get _conditionColor {
     switch (condition) {
-      case ProductCondition.newWithTags:
-      case ProductCondition.newWithoutTags:
+      case ProductCondition.neufAvecEtiquette:
+      case ProductCondition.tresSatisfaisant:
         return AppColors.success;
-      case ProductCondition.veryGood:
+      case ProductCondition.tresSatisfaisant:
         return AppColors.primary;
-      case ProductCondition.good:
+      case ProductCondition.bon:
         return AppColors.secondary;
-      case ProductCondition.fair:
+      case ProductCondition.satisfaisant:
         return AppColors.warning;
     }
   }
 
   String get _conditionLabel {
     switch (condition) {
-      case ProductCondition.newWithTags:
+      case ProductCondition.neufAvecEtiquette:
         return 'Neuf';
-      case ProductCondition.newWithoutTags:
+      case ProductCondition.tresSatisfaisant:
         return 'Neuf';
-      case ProductCondition.veryGood:
+      case ProductCondition.tresSatisfaisant:
         return 'Très bon';
-      case ProductCondition.good:
+      case ProductCondition.bon:
         return 'Bon';
-      case ProductCondition.fair:
+      case ProductCondition.satisfaisant:
         return 'Correct';
     }
   }

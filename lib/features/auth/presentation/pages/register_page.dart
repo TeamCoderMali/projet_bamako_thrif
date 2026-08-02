@@ -81,7 +81,7 @@ class _RegisterPageState extends State<RegisterPage> {
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF7F4EE),
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -91,58 +91,61 @@ class _RegisterPageState extends State<RegisterPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 20),
-                    // Logo
+
+                    // ── Logo ─────────────────────────────────────────────
                     Center(
                       child: Image.asset(
                         'assets/images/logo_danaya.png',
-                        width: 110,
-                        height: 110,
+                        width: 120,
+                        height: 120,
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Créer un compte',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2B2B2B),
+
+                    // ── Titre ─────────────────────────────────────────────
+                    const Center(
+                      child: Text(
+                        'Créer un compte',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2B2B2B),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Rejoins DANAYA',
-                      style: TextStyle(color: Colors.grey),
+                    const Center(
+                      child: Text(
+                        'Rejoins DANAYA',
+                        style: TextStyle(
+                          color: Color(0xFF888888),
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
 
-                    // ── Nom complet ──────────────────────────────────────
+                    // ── Nom complet ───────────────────────────────────────
                     TextFormField(
                       controller: _nomController,
                       textCapitalization: TextCapitalization.words,
-                      decoration: InputDecoration(
-                        labelText: 'Nom complet *',
-                        prefixIcon: const Icon(Icons.person_outline),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      style: const TextStyle(
+                          fontSize: 15, color: Color(0xFF2B2B2B)),
+                      decoration:
+                          _inputDeco('Nom complet *', Icons.person_outline),
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Le nom est requis'
                           : null,
                     ),
                     const SizedBox(height: 14),
 
-                    // ── Email ────────────────────────────────────────────
+                    // ── Email ─────────────────────────────────────────────
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        labelText: 'Email *',
-                        prefixIcon: const Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      style: const TextStyle(
+                          fontSize: 15, color: Color(0xFF2B2B2B)),
+                      decoration: _inputDeco('Email *', Icons.email_outlined),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
                           return 'L\'email est requis';
@@ -153,41 +156,41 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 14),
 
-                    // ── Téléphone (optionnel) ────────────────────────────
+                    // ── Téléphone ─────────────────────────────────────────
                     TextFormField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: 'Téléphone (optionnel)',
-                        hintText: '+223 70 00 00 00',
-                        prefixIcon: const Icon(Icons.phone_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      style: const TextStyle(
+                          fontSize: 15, color: Color(0xFF2B2B2B)),
+                      decoration: _inputDeco(
+                          'Téléphone (optionnel)', Icons.phone_outlined),
                     ),
                     const SizedBox(height: 14),
 
-                    // ── Mot de passe ─────────────────────────────────────
+                    // ── Mot de passe ──────────────────────────────────────
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Mot de passe *',
-                        prefixIcon: const Icon(Icons.lock_outline),
+                      style: const TextStyle(
+                          fontSize: 15, color: Color(0xFF2B2B2B)),
+                      decoration:
+                          _inputDeco('Mot de passe *', Icons.lock_outline)
+                              .copyWith(
                         suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility),
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: const Color(0xFF6B7F4D),
+                          ),
                           onPressed: () => setState(
                               () => _obscurePassword = !_obscurePassword),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
                       ),
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Mot de passe requis';
+                        if (v == null || v.isEmpty) {
+                          return 'Mot de passe requis';
+                        }
                         if (v.length < 6) {
                           return 'Au moins 6 caractères requis';
                         }
@@ -196,32 +199,31 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 14),
 
-                    // ── Confirmer mot de passe ───────────────────────────
+                    // ── Confirmer mot de passe ────────────────────────────
                     TextFormField(
                       controller: _confirmPasswordController,
                       obscureText: _obscureConfirm,
-                      decoration: InputDecoration(
-                        labelText: 'Confirmer le mot de passe *',
-                        prefixIcon: const Icon(Icons.lock_outline),
+                      style: const TextStyle(
+                          fontSize: 15, color: Color(0xFF2B2B2B)),
+                      decoration: _inputDeco(
+                              'Confirmer le mot de passe *', Icons.lock_outline)
+                          .copyWith(
                         suffixIcon: IconButton(
-                          icon: Icon(_obscureConfirm
-                              ? Icons.visibility_off
-                              : Icons.visibility),
-                          onPressed: () =>
-                              setState(() => _obscureConfirm = !_obscureConfirm),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          icon: Icon(
+                            _obscureConfirm
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: const Color(0xFF6B7F4D),
+                          ),
+                          onPressed: () => setState(
+                              () => _obscureConfirm = !_obscureConfirm),
                         ),
                       ),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) {
-                          return 'Confirmation requise';
-                        }
-                        return null;
-                      },
+                      validator: (v) => (v == null || v.isEmpty)
+                          ? 'Confirmation requise'
+                          : null,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
                     // ── Rôle ─────────────────────────────────────────────
                     const Text(
@@ -263,11 +265,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     // ── Bouton S'inscrire ─────────────────────────────────
                     SizedBox(
                       width: double.infinity,
-                      height: 56,
+                      height: 58,
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _register,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6B7F4D),
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -278,20 +281,26 @@ class _RegisterPageState extends State<RegisterPage> {
                             : const Text(
                                 "S'inscrire",
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 17,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
                     // ── Lien Login ────────────────────────────────────────
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('Déjà un compte ? '),
+                        const Text(
+                          'Déjà un compte ? ',
+                          style: TextStyle(
+                            color: Color(0xFF666666),
+                            fontSize: 14,
+                          ),
+                        ),
                         GestureDetector(
                           onTap: () => context.go(RouteNames.login),
                           child: const Text(
@@ -299,12 +308,13 @@ class _RegisterPageState extends State<RegisterPage> {
                             style: TextStyle(
                               color: Color(0xFF6B7F4D),
                               fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -314,6 +324,26 @@ class _RegisterPageState extends State<RegisterPage> {
       },
     );
   }
+
+  InputDecoration _inputDeco(String label, IconData icon) => InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Color(0xFF888888)),
+        prefixIcon: Icon(icon, color: const Color(0xFF6B7F4D)),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF6B7F4D), width: 2),
+        ),
+      );
 }
 
 class _RoleCard extends StatelessWidget {
@@ -341,7 +371,7 @@ class _RoleCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF6B7F4D).withOpacity(0.08)
-              : Colors.grey.shade50,
+              : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? const Color(0xFF6B7F4D) : Colors.grey.shade300,

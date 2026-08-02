@@ -14,7 +14,7 @@ class PrivacyPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.go(RouteNames.settings),
+          onPressed: () => context.push(RouteNames.settings),
         ),
         title: const Text(
           'Confidentialité',
