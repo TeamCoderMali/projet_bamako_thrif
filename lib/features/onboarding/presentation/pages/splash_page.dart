@@ -88,8 +88,10 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    // ── Fond crème identique à celui du logo : aucune bordure visible,
+    // le logo "fait partie" de l'écran au lieu d'être posé dessus.
     return Scaffold(
-      backgroundColor: const Color(0xFF2B2B2B),
+      backgroundColor: const Color(0xFFF7F4EE),
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnim,
@@ -98,42 +100,19 @@ class _SplashPageState extends State<SplashPage>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Logo ─────────────────────────────────────────────────
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: Image.asset(
-                    'assets/images/logo_danaya.png',
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.cover,
-                  ),
+                // ── Logo (contient déjà le mot "DANAYA" + la signature) ──
+                Image.asset(
+                  'assets/images/logo_danaya.png',
+                  width: 260,
+                  fit: BoxFit.contain,
                 ),
-                const SizedBox(height: 28),
-                const Text(
-                  'DANAYA',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 4,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'La mode malienne d\'occasion',
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 14,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 60),
+                const SizedBox(height: 56),
                 SizedBox(
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   child: CircularProgressIndicator(
                     color: const Color(0xFF6B7F4D),
-                    backgroundColor: Colors.white.withOpacity(0.1),
+                    backgroundColor: const Color(0xFF6B7F4D).withOpacity(0.12),
                     strokeWidth: 2.5,
                   ),
                 ),

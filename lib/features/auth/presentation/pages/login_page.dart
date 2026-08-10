@@ -65,11 +65,11 @@ class _LoginPageState extends State<LoginPage> {
                     Center(
                       child: Image.asset(
                         'assets/images/logo_danaya.png',
-                        width: 140,
-                        height: 140,
+                        width: 200,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
 
                     // ── Titre ─────────────────────────────────────────────
                     const Center(

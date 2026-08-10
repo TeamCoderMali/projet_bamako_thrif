@@ -146,14 +146,25 @@ class _HomePageState extends State<HomePage> {
                     'Bonjour $name 👋',
                     style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
-                  const Text(
-                    'DANAYA',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF6B7F4D),
-                      letterSpacing: 1,
-                    ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/logo_danaya_icon.png',
+                        height: 22,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'DANAYA',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF6B7F4D),
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               );
@@ -624,28 +635,32 @@ class _ProductCard extends StatelessWidget {
                             ),
                           ),
                         ] else
-                          const Text(
-                            'Pas encore noté',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 9,
+                          const Flexible(
+                            child: Text(
+                              'Pas encore noté',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 9,
+                              ),
                             ),
                           ),
-                        const Spacer(),
-                        if (product.location != null)
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_outlined,
-                                  size: 10, color: Colors.grey),
-                              Text(
-                                product.location!,
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 9,
-                                ),
+                        if (product.location != null) ...[
+                          const SizedBox(width: 4),
+                          const Icon(Icons.location_on_outlined,
+                              size: 10, color: Colors.grey),
+                          Flexible(
+                            child: Text(
+                              product.location!,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 9,
                               ),
-                            ],
+                            ),
                           ),
+                        ],
                       ],
                     ),
                   ],
