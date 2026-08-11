@@ -96,11 +96,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     Center(
                       child: Image.asset(
                         'assets/images/logo_danaya.png',
-                        width: 120,
-                        height: 120,
+                        width: 170,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
 
                     // ── Titre ─────────────────────────────────────────────
                     const Center(

@@ -46,8 +46,11 @@ class _WelcomePageState extends State<WelcomePage>
 
   @override
   Widget build(BuildContext context) {
+    // ── Fond crème identique à celui du logo (même teinte que Splash,
+    // Login, Register) : identité visuelle homogène sur tout le parcours
+    // d'entrée dans l'app, comme demandé (cohérence type DeliverMeat).
     return Scaffold(
-      backgroundColor: const Color(0xFF6B7F4D),
+      backgroundColor: const Color(0xFFF7F4EE),
       body: SafeArea(
         child: Center(
           child: FadeTransition(
@@ -59,16 +62,17 @@ class _WelcomePageState extends State<WelcomePage>
                 children: [
                   Image.asset(
                     'assets/images/logo_danaya.png',
-                    width: 220,
-                    height: 220,
+                    width: 240,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 60),
-                  const SizedBox(
-                    width: 30,
-                    height: 30,
+                  const SizedBox(height: 56),
+                  SizedBox(
+                    width: 28,
+                    height: 28,
                     child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
+                      color: const Color(0xFF6B7F4D),
+                      backgroundColor: const Color(0xFF6B7F4D).withOpacity(0.12),
+                      strokeWidth: 2.5,
                     ),
                   ),
                 ],

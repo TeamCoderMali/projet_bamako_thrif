@@ -39,15 +39,25 @@ class _IntroPageState extends State<IntroPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Bouton Passer
-            Align(
-              alignment: Alignment.topRight,
-              child: TextButton(
-                onPressed: () {},
-                child: const Text(
-                  'Passer',
-                  style: TextStyle(color: Colors.grey),
-                ),
+            // Icône de marque + Bouton Passer
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Image.asset(
+                    'assets/images/logo_danaya_icon.png',
+                    height: 28,
+                    fit: BoxFit.contain,
+                  ),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      'Passer',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                ],
               ),
             ),
 
