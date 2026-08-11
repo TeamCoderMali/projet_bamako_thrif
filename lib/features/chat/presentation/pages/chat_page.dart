@@ -64,6 +64,23 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  Future<void> _deleteMessage(String messageId) async {
+    try {
+      await _chatRepo.deleteMessage(
+        chatId: widget.chatId,
+        messageId: messageId,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Erreur suppression : $e'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUid = context.read<AuthCubit>().currentUser?.id ?? '';
@@ -101,7 +118,8 @@ class _ChatPageState extends State<ChatPage> {
                     fontSize: 14,
                   ),
                 ),
-                Text('En ligne', style: TextStyle(color: Colors.green, fontSize: 11)),
+                Text('En ligne',
+                    style: TextStyle(color: Colors.green, fontSize: 11)),
               ],
             ),
           ],
@@ -142,7 +160,11 @@ class _ChatPageState extends State<ChatPage> {
                   itemBuilder: (context, index) {
                     final message = messages[index];
                     final isMe = message.senderId == currentUid;
-                    return _MessageBubble(message: message, isMe: isMe);
+                    return _MessageBubble(
+                      message: message,
+                      isMe: isMe,
+                      onDelete: isMe ? () => _deleteMessage(message.id) : null,
+                    );
                   },
                 );
               },
@@ -186,7 +208,8 @@ class _ChatPageState extends State<ChatPage> {
                         color: Color(0xFF6B7F4D),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.send, color: Colors.white, size: 20),
+                      child:
+                          const Icon(Icons.send, color: Colors.white, size: 20),
                     ),
                   ),
                 ],
@@ -203,57 +226,93 @@ class _ChatPageState extends State<ChatPage> {
 class _MessageBubble extends StatelessWidget {
   final MessageEntity message;
   final bool isMe;
+  final VoidCallback? onDelete;
 
-  const _MessageBubble({required this.message, required this.isMe});
+  const _MessageBubble({
+    required this.message,
+    required this.isMe,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isMe ? const Color(0xFF6B7F4D) : Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(18),
-            topRight: const Radius.circular(18),
-            bottomLeft: Radius.circular(isMe ? 18 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 18),
+    return GestureDetector(
+      onLongPress: isMe && onDelete != null
+          ? () => _showDeleteConfirmation(context)
+          : null,
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: isMe ? const Color(0xFF6B7F4D) : Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(18),
+              topRight: const Radius.circular(18),
+              bottomLeft: Radius.circular(isMe ? 18 : 4),
+              bottomRight: Radius.circular(isMe ? 4 : 18),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Text(
-              message.content,
-              style: TextStyle(
-                color: isMe ? Colors.white : Colors.black87,
-                fontSize: 14,
-                height: 1.4,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(message.createdAt),
-              style: TextStyle(
-                color: isMe ? Colors.white70 : Colors.grey,
-                fontSize: 10,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment:
+                isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              Text(
+                message.content,
+                style: TextStyle(
+                  color: isMe ? Colors.white : Colors.black87,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                _formatTime(message.createdAt),
+                style: TextStyle(
+                  color: isMe ? Colors.white70 : Colors.grey,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer le message ?'),
+        content: const Text('Cette action est irréversible.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx);
+              onDelete?.call();
+            },
+            child:
+                const Text('Supprimer', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }
