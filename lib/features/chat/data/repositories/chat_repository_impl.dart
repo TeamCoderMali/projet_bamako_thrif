@@ -52,7 +52,8 @@ class ChatRepositoryImpl implements ChatRepository {
         .get();
 
     for (final doc in existing.docs) {
-      final ids = List<String>.from(doc.data()['participantIds'] as List? ?? []);
+      final ids =
+          List<String>.from(doc.data()['participantIds'] as List? ?? []);
       final pid = doc.data()['productId'] as String?;
       if (ids.contains(otherUserId) &&
           (productId == null || pid == productId)) {
@@ -95,9 +96,8 @@ class ChatRepositoryImpl implements ChatRepository {
     String? productTitle,
   }) async {
     // Vérifier si un chat existe déjà entre ces participants
-    final otherUid = participantIds.firstWhere(
-        (id) => id != _currentUid,
-        orElse: () => '');
+    final otherUid =
+        participantIds.firstWhere((id) => id != _currentUid, orElse: () => '');
 
     if (otherUid.isNotEmpty) {
       final existing = await _chatsCol
@@ -105,11 +105,10 @@ class ChatRepositoryImpl implements ChatRepository {
           .get();
 
       for (final doc in existing.docs) {
-        final ids = List<String>.from(
-            doc.data()['participantIds'] as List? ?? []);
+        final ids =
+            List<String>.from(doc.data()['participantIds'] as List? ?? []);
         final pid = doc.data()['productId'] as String?;
-        if (ids.contains(otherUid) &&
-            (productId == null || pid == productId)) {
+        if (ids.contains(otherUid) && (productId == null || pid == productId)) {
           return doc.id;
         }
       }
@@ -123,10 +122,8 @@ class ChatRepositoryImpl implements ChatRepository {
 
     final docRef = await _chatsCol.add({
       'participantIds': participantIds,
-      'participantNames':
-          participantNames.map((k, v) => MapEntry(k, v)),
-      'participantAvatars':
-          participantAvatars.map((k, v) => MapEntry(k, v)),
+      'participantNames': participantNames.map((k, v) => MapEntry(k, v)),
+      'participantAvatars': participantAvatars.map((k, v) => MapEntry(k, v)),
       'lastMessage': null,
       'lastMessageAt': FieldValue.serverTimestamp(),
       'productId': productId,
@@ -169,9 +166,18 @@ class ChatRepositoryImpl implements ChatRepository {
     final msgDoc = await msgRef.get();
     final data = Map<String, dynamic>.from(msgDoc.data()!);
     if (data['createdAt'] is Timestamp) {
-      data['createdAt'] = (data['createdAt'] as Timestamp).millisecondsSinceEpoch;
+      data['createdAt'] =
+          (data['createdAt'] as Timestamp).millisecondsSinceEpoch;
     }
     return MessageModel.fromFirestore(data, msgRef.id);
+  }
+
+  // ── Supprimer un message ─────────────────────────────────────────────────
+  Future<void> deleteMessage({
+    required String chatId,
+    required String messageId,
+  }) async {
+    await _chatsCol.doc(chatId).collection('message').doc(messageId).delete();
   }
 
   // ── Marquer comme lu ─────────────────────────────────────────────────────
@@ -224,8 +230,7 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<void> deleteChat(String chatId) async {
     // Supprimer les messages d'abord
-    final msgs =
-        await _chatsCol.doc(chatId).collection('message').get();
+    final msgs = await _chatsCol.doc(chatId).collection('message').get();
     final batch = _firestore.batch();
     for (final doc in msgs.docs) {
       batch.delete(doc.reference);
