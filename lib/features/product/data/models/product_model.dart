@@ -22,7 +22,6 @@ class ProductModel extends ProductEntity {
     super.location,
     super.rating,
     super.reviewCount,
-    super.isVerified,
     required super.createdAt,
     super.updatedAt,
   });
@@ -48,7 +47,6 @@ class ProductModel extends ProductEntity {
       location: data['location'] as String?,
       rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
       reviewCount: data['reviewCount'] as int? ?? 0,
-      isVerified: data['isVerified'] as bool? ?? false,
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         data['createdAt'] as int? ?? 0,
       ),
@@ -78,7 +76,6 @@ class ProductModel extends ProductEntity {
       'location': location,
       'rating': rating,
       'reviewCount': reviewCount,
-      'isVerified': isVerified,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt?.millisecondsSinceEpoch,
     };
