@@ -86,8 +86,8 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
           'amount': totalAmount,
           'orderId': widget.orderId,
           'createdAt': Timestamp.now(),
-          'expiresAt':
-              Timestamp.fromDate(DateTime.now().add(const Duration(days: 90))),
+          'expiresAt': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 90))),
         });
       }
 
@@ -230,7 +230,9 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                               ),
                             ),
                             Text(
-                              isCancelled ? 'Annulée' : _statusLabel(status),
+                              isCancelled
+                                  ? 'Annulée'
+                                  : _statusLabel(status),
                               style: const TextStyle(
                                   color: Colors.grey, fontSize: 12),
                             ),
@@ -343,8 +345,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
                         'Disponible pendant 24h après la réception',
-                        style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 11),
+                        style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
                       ),
                     ),
                   ],
@@ -515,8 +516,9 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
 
       final db = FirebaseFirestore.instance;
       final uid = FirebaseAuth.instance.currentUser?.uid;
-      final amount = (widget.orderData['totalAmount'] as num?)?.toDouble() ?? 0;
-      final productId = widget.orderData['productId'] as String?;
+      final amount =
+          (widget.orderData['totalAmount'] as num?)?.toDouble() ?? 0;
+            final productId = widget.orderData['productId'] as String?;
 
       // La vente est annulée, l'article redevient disponible
       await db.collection('order').doc(widget.orderId).update({
@@ -542,8 +544,8 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
           'amount': amount,
           'orderId': widget.orderId,
           'createdAt': Timestamp.now(),
-          'expiresAt':
-              Timestamp.fromDate(DateTime.now().add(const Duration(days: 90))),
+          'expiresAt': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 90))),
         });
       } else if (choice == 'remboursement') {
         await db.collection('refund_requests').add({
@@ -609,8 +611,7 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
             ? [widget.orderData['productImageUrl'] as String]
             : <String>[];
 
-    final doc =
-        await FirebaseFirestore.instance.collection('non_conformities').add({
+    final doc = await FirebaseFirestore.instance.collection('non_conformities').add({
       'orderId': widget.orderId,
       'productId': widget.orderData['productId'],
       'productTitle': widget.orderData['productTitle'],
