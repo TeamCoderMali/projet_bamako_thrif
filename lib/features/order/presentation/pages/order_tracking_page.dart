@@ -6,7 +6,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -28,11 +27,6 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
   String _fmtPrice(dynamic p) {
     final price = (p is num) ? p.toDouble() : 0.0;
     return '${price.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ')} FCFA';
-  }
-
-  bool get _isSeller {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    return uid != null;
   }
 
   // ── Vendeur : "Marquer collecté" (le livreur externe est passé) ─────────
@@ -92,8 +86,8 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
           'amount': totalAmount,
           'orderId': widget.orderId,
           'createdAt': Timestamp.now(),
-          'expiresAt': Timestamp.fromDate(
-              DateTime.now().add(const Duration(days: 90))),
+          'expiresAt':
+              Timestamp.fromDate(DateTime.now().add(const Duration(days: 90))),
         });
       }
 
@@ -236,9 +230,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                               ),
                             ),
                             Text(
-                              isCancelled
-                                  ? 'Annulée'
-                                  : _statusLabel(status),
+                              isCancelled ? 'Annulée' : _statusLabel(status),
                               style: const TextStyle(
                                   color: Colors.grey, fontSize: 12),
                             ),
@@ -351,7 +343,8 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
                         'Disponible pendant 24h après la réception',
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 11),
                       ),
                     ),
                   ],
@@ -468,13 +461,115 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
     }
   }
 
-  Future<void> _submit() async {
+  Future<void> _submitKeepWithCompensation() async {
+    if (!_validateBeforeSubmit()) return;
+    setState(() => _isSending = true);
+    try {
+      final ncId = await _createNonConformity(status: 'buyer_continue');
+      if (mounted) Navigator.pop(context, true);
+      // La suite (évaluation du coût par l'équipe, acceptation vendeur)
+      // est gérée côté admin, comme avant.
+    } catch (e) {
+      _showError(e);
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  Future<void> _submitCancelSale() async {
+    if (!_validateBeforeSubmit()) return;
+
+    final choice = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Annulation de la vente'),
+        content: const Text(
+          'Comment souhaites-tu être remboursé ?\n\n'
+          '(les frais de service de 1 000 FCFA restent acquis à la plateforme)',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'avoir'),
+            child: const Text('Avoir (3 mois)',
+                style: TextStyle(color: Color(0xFF6B7F4D))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6B7F4D)),
+            onPressed: () => Navigator.pop(ctx, 'remboursement'),
+            child: const Text('Remboursement',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (choice == null) return;
+
+    setState(() => _isSending = true);
+    try {
+      final ncStatus =
+          choice == 'avoir' ? 'buyer_refused_avoir' : 'buyer_refused_refund';
+      await _createNonConformity(status: ncStatus);
+
+      final db = FirebaseFirestore.instance;
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      final amount = (widget.orderData['totalAmount'] as num?)?.toDouble() ?? 0;
+      final productId = widget.orderData['productId'] as String?;
+
+      // La vente est annulée, l'article redevient disponible
+      await db.collection('order').doc(widget.orderId).update({
+        'status': 'cancelled',
+        'updatedAt': Timestamp.now(),
+      });
+      if (productId != null) {
+        await db
+            .collection('product')
+            .doc(productId)
+            .update({'status': 'available'});
+      }
+
+      if (choice == 'avoir' && uid != null) {
+        final walletRef = db.collection('wallet').doc(uid);
+        await walletRef.set({
+          'balance': FieldValue.increment(amount),
+          'totalEarned': FieldValue.increment(amount),
+        }, SetOptions(merge: true));
+        await walletRef.collection('transactions').add({
+          'type': 'credit',
+          'label': 'Avoir — vente annulée (signalement)',
+          'amount': amount,
+          'orderId': widget.orderId,
+          'createdAt': Timestamp.now(),
+          'expiresAt':
+              Timestamp.fromDate(DateTime.now().add(const Duration(days: 90))),
+        });
+      } else if (choice == 'remboursement') {
+        await db.collection('refund_requests').add({
+          'orderId': widget.orderId,
+          'buyerId': uid,
+          'amount': amount,
+          'status': 'pending',
+          'createdAt': Timestamp.now(),
+        });
+      }
+
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      _showError(e);
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  bool _validateBeforeSubmit() {
     if (_reason.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Choisis un motif'), backgroundColor: Colors.orange),
       );
-      return;
+      return false;
     }
     if (_photos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -482,53 +577,53 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
             content: Text('Au moins une photo est requise'),
             backgroundColor: Colors.orange),
       );
-      return;
+      return false;
+    }
+    return true;
+  }
+
+  void _showError(Object e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<String> _createNonConformity({required String status}) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final storage = FirebaseStorage.instance;
+
+    final photoUrls = <String>[];
+    for (int i = 0; i < _photos.length; i++) {
+      final ref = storage.ref(
+          'non_conformities/$uid/${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
+      await ref.putFile(_photos[i]);
+      photoUrls.add(await ref.getDownloadURL());
     }
 
-    setState(() => _isSending = true);
-    try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      final storage = FirebaseStorage.instance;
+    // Photos de l'annonce initiale (déjà en ligne), pour comparaison par
+    // l'équipe — plus besoin d'un relais pour les prendre séparément.
+    final listingPhotoUrls =
+        (widget.orderData['productImageUrl'] as String?) != null
+            ? [widget.orderData['productImageUrl'] as String]
+            : <String>[];
 
-      final photoUrls = <String>[];
-      for (int i = 0; i < _photos.length; i++) {
-        final ref = storage.ref(
-            'non_conformities/$uid/${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
-        await ref.putFile(_photos[i]);
-        photoUrls.add(await ref.getDownloadURL());
-      }
-
-      // Photos de l'annonce initiale (déjà en ligne), pour comparaison par
-      // l'équipe — plus besoin d'un relais pour les prendre séparément.
-      final listingPhotoUrls =
-          (widget.orderData['productImageUrl'] as String?) != null
-              ? [widget.orderData['productImageUrl'] as String]
-              : <String>[];
-
-      await FirebaseFirestore.instance.collection('non_conformities').add({
-        'orderId': widget.orderId,
-        'productId': widget.orderData['productId'],
-        'productTitle': widget.orderData['productTitle'],
-        'buyerId': uid,
-        'sellerId': widget.orderData['sellerId'],
-        'reason': _reason,
-        'description': _descCtrl.text.trim(),
-        'photoUrls': photoUrls,
-        'listingPhotoUrls': listingPhotoUrls,
-        'status': 'awaiting_buyer_choice',
-        'createdAt': Timestamp.now(),
-      });
-
-      if (mounted) Navigator.pop(context, true);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSending = false);
-    }
+    final doc =
+        await FirebaseFirestore.instance.collection('non_conformities').add({
+      'orderId': widget.orderId,
+      'productId': widget.orderData['productId'],
+      'productTitle': widget.orderData['productTitle'],
+      'buyerId': uid,
+      'sellerId': widget.orderData['sellerId'],
+      'reason': _reason,
+      'description': _descCtrl.text.trim(),
+      'photoUrls': photoUrls,
+      'listingPhotoUrls': listingPhotoUrls,
+      'status': status,
+      'createdAt': Timestamp.now(),
+    });
+    return doc.id;
   }
 
   @override
@@ -646,11 +741,14 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
               ],
             ),
             const SizedBox(height: 24),
+            const Text('Que souhaites-tu faire ?',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: _isSending ? null : _submit,
+                onPressed: _isSending ? null : _submitKeepWithCompensation,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6B7F4D),
                   shape: RoundedRectangleBorder(
@@ -664,9 +762,27 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2),
                       )
-                    : const Text('Envoyer',
+                    : const Text('Garder avec dédommagement',
                         style: TextStyle(
                             color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton(
+                onPressed: _isSending ? null : _submitCancelSale,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.red.shade300),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text('Annuler et être remboursé',
+                    style: TextStyle(
+                        color: Colors.red.shade600,
+                        fontWeight: FontWeight.bold)),
               ),
             ),
           ],
