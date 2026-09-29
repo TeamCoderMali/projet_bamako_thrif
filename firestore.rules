@@ -35,7 +35,10 @@ service cloud.firestore {
       allow update: if isAuthenticated()
         && (resource.data.sellerId == request.auth.uid
             || request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['viewCount', 'favoriteCount']));
+               .hasOnly(['viewCount', 'favoriteCount', 'rating', 'reviewCount'])
+            || (request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['status', 'updatedAt'])
+                && request.resource.data.status in ['sold', 'available']));
       allow delete: if isAuthenticated()
         && resource.data.sellerId == request.auth.uid;
     }
@@ -80,6 +83,39 @@ service cloud.firestore {
         && (resource.data.buyerId == request.auth.uid
             || resource.data.sellerId == request.auth.uid);
       allow delete: if false;
+    }
+
+    // ── Collection wallet ──────────────────────────────────────────────────
+    // ⚠️ allow write volontairement large : le crédit vendeur se fait côté
+    // client (app mobile) faute de Cloud Functions. À restreindre à une
+    // Cloud Function déclenchée sur le changement de statut de commande
+    // avant un vrai lancement.
+    match /wallet/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if isAuthenticated();
+
+      match /transactions/{txId} {
+        allow read: if isOwner(uid);
+        allow create: if isAuthenticated();
+      }
+    }
+
+    // ── Collection non_conformities ────────────────────────────────────────
+    // Signalement acheteur (remplace l'ancienne inspection relais).
+    match /non_conformities/{ncId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid;
+      allow read, update: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid);
+    }
+
+    // ── Collection refund_requests ─────────────────────────────────────────
+    match /refund_requests/{id} {
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid;
+      allow read: if isAuthenticated()
+        && resource.data.buyerId == request.auth.uid;
     }
   }
 }

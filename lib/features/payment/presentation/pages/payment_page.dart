@@ -258,6 +258,31 @@ class _PaymentPageState extends State<PaymentPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7E6),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.local_shipping_outlined,
+                            size: 14, color: Color(0xFFB8860B)),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Livraison (à payer au livreur) : ~1 000-2 000 FCFA selon la zone',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF8A6A1A),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
