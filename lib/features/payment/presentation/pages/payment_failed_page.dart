@@ -33,6 +33,7 @@ class PaymentFailedPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFF2B2B2B),
                 ),
               ),
               const SizedBox(height: 8),

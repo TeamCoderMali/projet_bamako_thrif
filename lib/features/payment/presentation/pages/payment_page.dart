@@ -195,14 +195,19 @@ class _PaymentPageState extends State<PaymentPage> {
                 children: [
                   const Text(
                     'Récapitulatif',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Colors.black87),
                   ),
                   const SizedBox(height: 12),
                   if (product != null) ...[
                     Text(
                       product.title,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold),
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -215,7 +220,9 @@ class _PaymentPageState extends State<PaymentPage> {
                     ),
                   ] else
                     const Text('Article',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87)),
                   const Divider(height: 20),
                   _PriceLine(label: 'Prix', value: fmtPrice),
                   const SizedBox(height: 6),
@@ -230,7 +237,9 @@ class _PaymentPageState extends State<PaymentPage> {
                     children: [
                       const Text('Total',
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 15)),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: Colors.black87)),
                       Text(
                         _fmt(price + 1000),
                         style: const TextStyle(
@@ -300,7 +309,10 @@ class _PaymentPageState extends State<PaymentPage> {
             // ── Moyens de paiement ─────────────────────────────────────────
             const Text(
               'Moyen de paiement',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: Colors.black87),
             ),
             const SizedBox(height: 10),
 
@@ -349,11 +361,15 @@ class _PaymentPageState extends State<PaymentPage> {
             // ── Saisie selon le moyen ──────────────────────────────────────
             if (_method == 'orange_money' || _method == 'moov_money') ...[
               const Text('Numéro de téléphone',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: Colors.black87)),
               const SizedBox(height: 8),
               _SectionCard(
                 child: TextField(
                   controller: _phoneCtrl,
+                  style: const TextStyle(color: Colors.black87),
                   keyboardType: TextInputType.phone,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   maxLength: 8,
@@ -364,6 +380,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     prefixStyle: const TextStyle(
                         color: Colors.black87, fontWeight: FontWeight.w600),
                     counterText: '',
+                    filled: false,
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -402,8 +419,10 @@ class _PaymentPageState extends State<PaymentPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
+                      style: const TextStyle(color: Colors.black87),
                       decoration: const InputDecoration(
                         hintText: 'Numéro de carte',
+                        filled: false,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -417,8 +436,10 @@ class _PaymentPageState extends State<PaymentPage> {
                       children: [
                         Expanded(
                           child: TextField(
+                            style: const TextStyle(color: Colors.black87),
                             decoration: const InputDecoration(
                               hintText: 'MM/AA',
+                              filled: false,
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
@@ -429,8 +450,10 @@ class _PaymentPageState extends State<PaymentPage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
+                            style: const TextStyle(color: Colors.black87),
                             decoration: const InputDecoration(
                               hintText: 'CVV',
+                              filled: false,
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,

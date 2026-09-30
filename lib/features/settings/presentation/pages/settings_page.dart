@@ -56,8 +56,10 @@ class _SettingsPageState extends State<SettingsPage> {
             SwitchListTile(
               secondary: const Icon(Icons.notifications_outlined,
                   color: Color(0xFF6B7F4D)),
-              title: const Text('Notifications'),
-              subtitle: const Text('Push et alertes en temps réel'),
+              title: const Text('Notifications',
+                  style: TextStyle(color: Color(0xFF2B2B2B))),
+              subtitle: const Text('Push et alertes en temps réel',
+                  style: TextStyle(color: Colors.grey)),
               value: _notifications,
               activeColor: const Color(0xFF6B7F4D),
               onChanged: (val) => setState(() => _notifications = val),
@@ -72,8 +74,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
                 color: const Color(0xFF6B7F4D),
               ),
-              title: const Text('Apparence'),
-              subtitle: Text(_themeModeLabel(themeMode)),
+              title: const Text('Apparence',
+                  style: TextStyle(color: Color(0xFF2B2B2B))),
+              subtitle: Text(_themeModeLabel(themeMode),
+                  style: const TextStyle(color: Colors.grey)),
               trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
               onTap: () => _showThemeModeSheet(context, themeMode),
             ),
@@ -155,7 +159,8 @@ class _SettingsPageState extends State<SettingsPage> {
       BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFF6B7F4D), size: 22),
-      title: Text(title, style: const TextStyle(fontSize: 14)),
+      title: Text(title,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF2B2B2B))),
       trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
       onTap: onTap,
     );

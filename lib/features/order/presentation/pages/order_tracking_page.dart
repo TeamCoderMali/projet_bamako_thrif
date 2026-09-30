@@ -238,8 +238,9 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                           children: [
                             Text(
                               productTitle,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2B2B2B)),
                             ),
                             Text(
                               _fmtPrice(totalAmount),
@@ -268,7 +269,10 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Étapes de votre commande',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF2B2B2B)),
                   ),
                 ),
 
@@ -711,6 +715,7 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
             TextField(
               controller: _descCtrl,
               maxLines: 3,
+              style: const TextStyle(color: Colors.black87),
               decoration: InputDecoration(
                 hintText: 'Décris le problème...',
                 filled: true,

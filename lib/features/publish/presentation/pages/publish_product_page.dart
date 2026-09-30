@@ -240,6 +240,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _titreController,
+                      style: const TextStyle(color: Colors.black87),
                       decoration: _inputDeco('Ex: Robe longue bleue Zara'),
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Le titre est requis'
@@ -256,7 +257,9 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           items: _categories.map((cat) {
                             return DropdownMenuItem<ProductCategory>(
                               value: cat['value'] as ProductCategory,
-                              child: Text(cat['label'] as String),
+                              child: Text(cat['label'] as String,
+                                  style:
+                                      const TextStyle(color: Colors.black87)),
                             );
                           }).toList(),
                           onChanged: (v) =>
@@ -274,6 +277,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     TextFormField(
                       controller: _prixController,
                       keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.black87),
                       decoration: _inputDeco('Ex: 5000').copyWith(
                         suffixText: 'FCFA',
                       ),
@@ -289,6 +293,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _marqueController,
+                      style: const TextStyle(color: Colors.black87),
                       decoration: _inputDeco('Ex: Zara, Nike, Adidas...'),
                     ),
                     const SizedBox(height: 18),
@@ -296,6 +301,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _tailleController,
+                      style: const TextStyle(color: Colors.black87),
                       decoration: _inputDeco('Ex: M, 38, 42...'),
                     ),
                     const SizedBox(height: 18),
@@ -303,6 +309,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _couleurController,
+                      style: const TextStyle(color: Colors.black87),
                       decoration: _inputDeco('Ex: Bleu marine, Rouge, Noir...'),
                     ),
                     const SizedBox(height: 18),
@@ -310,6 +317,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _localisationController,
+                      style: const TextStyle(color: Colors.black87),
                       decoration:
                           _inputDeco('Ex: Bamako, Hamdallaye ACI 2000...'),
                     ),
@@ -319,6 +327,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     TextFormField(
                       controller: _descriptionController,
                       maxLines: 4,
+                      style: const TextStyle(color: Colors.black87),
                       decoration: _inputDeco(
                           'Décrivez votre article : état, utilisation, taille exacte...'),
                       validator: (v) => (v == null || v.trim().isEmpty)
@@ -683,7 +692,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   Widget _sectionTitle(String title) => Text(
         title,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: Color(0xFF2B2B2B)),
       );
 
   InputDecoration _inputDeco(String hint) => InputDecoration(

@@ -69,7 +69,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
             decoration: InputDecoration(
               hintText: widget.hint ?? 'Rechercher des articles…',
               prefixIcon: Icon(Icons.search_rounded,
-                  color: Theme.of(context).colorScheme.outline),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
               suffixIcon: _hasText
                   ? IconButton(
                       icon: const Icon(Icons.clear_rounded, size: AppSizes.iconSm),

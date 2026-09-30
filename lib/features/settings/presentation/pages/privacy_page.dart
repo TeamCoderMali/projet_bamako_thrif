@@ -28,7 +28,10 @@ class PrivacyPage extends StatelessWidget {
           children: [
             const Text(
               'Politique de confidentialité',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2B2B2B)),
             ),
             const SizedBox(height: 16),
             _buildSection(
@@ -75,7 +78,10 @@ class PrivacyPage extends StatelessWidget {
         children: [
           Text(
             titre,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Color(0xFF2B2B2B)),
           ),
           const SizedBox(height: 8),
           Text(

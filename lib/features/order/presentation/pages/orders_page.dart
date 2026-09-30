@@ -169,6 +169,7 @@ class OrdersPage extends StatelessWidget {
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
+                                      color: Color(0xFF2B2B2B),
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,

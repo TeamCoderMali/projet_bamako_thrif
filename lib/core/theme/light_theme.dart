@@ -126,7 +126,7 @@ ThemeData buildLightTheme() {
         borderRadius: AppRadius.md,
         borderSide: const BorderSide(color: AppColors.error, width: 2),
       ),
-      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.outline),
+      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textHint),
       labelStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
       errorStyle: AppTextStyles.labelSmall.copyWith(color: AppColors.error),
     ),
@@ -135,7 +135,7 @@ ThemeData buildLightTheme() {
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: AppColors.surface,
       selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.outline,
+      unselectedItemColor: AppColors.onSurfaceVariant,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
       showUnselectedLabels: true,
@@ -149,13 +149,13 @@ ThemeData buildLightTheme() {
         if (states.contains(WidgetState.selected)) {
           return const IconThemeData(color: AppColors.primary);
         }
-        return const IconThemeData(color: AppColors.outline);
+        return const IconThemeData(color: AppColors.onSurfaceVariant);
       }),
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
           return AppTextStyles.labelSmall.copyWith(color: AppColors.primary);
         }
-        return AppTextStyles.labelSmall.copyWith(color: AppColors.outline);
+        return AppTextStyles.labelSmall.copyWith(color: AppColors.onSurfaceVariant);
       }),
     ),
 

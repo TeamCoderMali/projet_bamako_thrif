@@ -178,7 +178,7 @@ class _FavoriteButton extends StatelessWidget {
         ),
         child: Icon(
           isFavorited ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-          color: isFavorited ? AppColors.error : AppColors.outline,
+          color: isFavorited ? AppColors.error : AppColors.onSurfaceVariant,
           size: 18,
         ),
       ),

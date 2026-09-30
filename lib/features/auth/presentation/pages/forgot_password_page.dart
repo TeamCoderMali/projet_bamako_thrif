@@ -52,6 +52,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFF2B2B2B),
                 ),
               ),
               const SizedBox(height: 8),
@@ -63,6 +64,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Email ou téléphone',
                   prefixIcon: const Icon(Icons.email_outlined),

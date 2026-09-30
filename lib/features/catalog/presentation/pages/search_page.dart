@@ -81,13 +81,12 @@ class _SearchPageState extends State<SearchPage> {
         if (!didPop) context.go(RouteNames.home);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F4EE),
         appBar: AppBar(
-          backgroundColor: const Color(0xFFF7F4EE),
           elevation: 0,
           titleSpacing: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF2B2B2B)),
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => context.go(RouteNames.home),
           ),
           title: Container(
@@ -105,9 +104,11 @@ class _SearchPageState extends State<SearchPage> {
               },
               decoration: InputDecoration(
                 hintText: 'Robe, Nike, sac à main...',
-                hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                hintStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 14),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).colorScheme.surface,
                 prefixIcon: _isSearching
                     ? const Padding(
                         padding: EdgeInsets.all(12),
@@ -121,7 +122,8 @@ class _SearchPageState extends State<SearchPage> {
                     : const Icon(Icons.search, color: Color(0xFF6B7F4D)),
                 suffixIcon: _controller.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close, color: Colors.grey),
+                        icon: Icon(Icons.close,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant),
                         onPressed: () {
                           _controller.clear();
                           context
@@ -184,8 +186,9 @@ class _SearchPageState extends State<SearchPage> {
                     children: [
                       Text(
                         '${products.length} résultat${products.length > 1 ? 's' : ''}',
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 13),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 13),
                       ),
                       const Spacer(),
                       GestureDetector(
@@ -196,12 +199,12 @@ class _SearchPageState extends State<SearchPage> {
                           decoration: BoxDecoration(
                             color: _selectedCondition != null
                                 ? const Color(0xFF6B7F4D)
-                                : Colors.white,
+                                : Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: _selectedCondition != null
                                   ? const Color(0xFF6B7F4D)
-                                  : Colors.grey.shade300,
+                                  : Theme.of(context).colorScheme.outlineVariant,
                             ),
                           ),
                           child: Row(
@@ -211,7 +214,7 @@ class _SearchPageState extends State<SearchPage> {
                                 size: 14,
                                 color: _selectedCondition != null
                                     ? Colors.white
-                                    : Colors.grey,
+                                    : Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -222,7 +225,9 @@ class _SearchPageState extends State<SearchPage> {
                                   fontSize: 12,
                                   color: _selectedCondition != null
                                       ? Colors.white
-                                      : Colors.grey,
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -294,10 +299,12 @@ class _SearchPageState extends State<SearchPage> {
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: selected ? const Color(0xFF6B7F4D) : Colors.white,
+        color: selected ? const Color(0xFF6B7F4D) : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: selected ? const Color(0xFF6B7F4D) : Colors.grey.shade200,
+          color: selected
+              ? const Color(0xFF6B7F4D)
+              : Theme.of(context).colorScheme.outlineVariant,
         ),
         boxShadow: [
           BoxShadow(
@@ -315,7 +322,9 @@ class _SearchPageState extends State<SearchPage> {
           Text(
             label,
             style: TextStyle(
-              color: selected ? Colors.white : Colors.grey.shade700,
+              color: selected
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
               fontWeight: selected ? FontWeight.bold : FontWeight.normal,
             ),
@@ -346,10 +355,10 @@ class _SearchPageState extends State<SearchPage> {
           const SizedBox(height: 16),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2B2B2B),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           if (subtitle != null) ...[
@@ -358,7 +367,9 @@ class _SearchPageState extends State<SearchPage> {
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Text(
                 subtitle,
-                style: const TextStyle(color: Colors.grey, fontSize: 13),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 13),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -384,12 +395,12 @@ class _SearchPageState extends State<SearchPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Suggestions populaires',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              color: Color(0xFF2B2B2B),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -407,9 +418,10 @@ class _SearchPageState extends State<SearchPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.04),
@@ -420,9 +432,9 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                   child: Text(
                     s,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF2B2B2B),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -452,7 +464,7 @@ class _SearchPageState extends State<SearchPage> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: Theme.of(ctx).colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -522,7 +534,7 @@ class _ProductCard extends StatelessWidget {
       onTap: () => context.go('/product/${product.id}'),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -549,14 +561,18 @@ class _ProductCard extends StatelessWidget {
                             width: double.infinity,
                             height: double.infinity,
                             placeholder: (_, __) => Container(
-                              color: const Color(0xFFF7F4EE),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                               child: const Center(
                                 child: CircularProgressIndicator(
                                     color: Color(0xFF6B7F4D), strokeWidth: 2),
                               ),
                             ),
                             errorWidget: (_, __, ___) => Container(
-                              color: const Color(0xFFF7F4EE),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                               child: const Center(
                                 child: Icon(Icons.checkroom,
                                     color: Color(0xFFB8C9A0), size: 40),
@@ -564,7 +580,8 @@ class _ProductCard extends StatelessWidget {
                             ),
                           )
                         : Container(
-                            color: const Color(0xFFF7F4EE),
+                            color:
+                                Theme.of(context).colorScheme.surfaceContainerHighest,
                             child: const Center(
                               child: Icon(Icons.checkroom,
                                   color: Color(0xFFB8C9A0), size: 40),
@@ -606,10 +623,10 @@ class _ProductCard extends StatelessWidget {
                       product.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
-                        color: Color(0xFF2B2B2B),
+                        color: Theme.of(context).colorScheme.onSurface,
                         height: 1.3,
                       ),
                     ),
@@ -627,8 +644,8 @@ class _ProductCard extends StatelessWidget {
                         if (product.brand != null)
                           Text(
                             product.brand!,
-                            style: const TextStyle(
-                              color: Colors.grey,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 10,
                             ),
                           ),

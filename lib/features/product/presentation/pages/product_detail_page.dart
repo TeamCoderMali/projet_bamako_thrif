@@ -350,7 +350,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: BlocConsumer<ProductCubit, ProductState>(
         listener: (context, state) {
           if (state is ProductDetailLoaded && !_proStatusRequested) {
@@ -369,10 +368,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  Icon(Icons.error_outline,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(height: 12),
                   Text(state.message,
-                      style: const TextStyle(color: Colors.grey)),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -402,7 +404,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         SliverAppBar(
           expandedHeight: 320,
           pinned: true,
-          backgroundColor: Colors.white,
           leading: GestureDetector(
             onTap: () =>
                 context.canPop() ? context.pop() : context.go(RouteNames.home),
@@ -467,10 +468,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               children: [
                 Text(
                   product.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B2B2B),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -483,17 +484,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       const SizedBox(width: 4),
                       Text(
                         '${product.rating.toStringAsFixed(1)} (${product.reviewCount} avis)',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
-                          color: Color(0xFF2B2B2B),
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(width: 12),
                     ] else ...[
-                      const Text(
+                      Text(
                         'Pas encore noté',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 12),
                       ),
                       const SizedBox(width: 12),
                     ],
@@ -509,9 +512,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 // ── Avis texte (réservé aux Vendeurs Pro) ──────────────
                 if (_sellerIsVendeurPro) ...[
                   if (_myRating == 0)
-                    const Text(
+                    Text(
                       'Notez d\'abord l\'article avec les étoiles pour pouvoir laisser un avis.',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12),
                     )
                   else
                     Column(
@@ -524,10 +529,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           decoration: InputDecoration(
                             hintText: 'Laissez un avis sur ce vendeur Pro...',
                             filled: true,
-                            fillColor: Colors.grey.shade50,
+                            fillColor:
+                                Theme.of(context).colorScheme.surfaceContainerHighest,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.outlineVariant),
                             ),
                           ),
                         ),
@@ -593,8 +600,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 const SizedBox(height: 8),
                 Text(
                   product.description,
-                  style: const TextStyle(
-                      color: Colors.grey, height: 1.6, fontSize: 14),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.6,
+                      fontSize: 14),
                 ),
                 const SizedBox(height: 24),
                 if (_sellerIsVendeurPro) ...[
@@ -608,9 +617,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                   child: Row(
                     children: [
@@ -639,9 +649,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           children: [
                             Text(
                               product.sellerName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF2B2B2B),
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const Text(
@@ -652,7 +662,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: Colors.grey),
+                      Icon(Icons.chevron_right,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ],
                   ),
                 ),
@@ -716,7 +727,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget _buildImageGallery(ProductEntity product) {
     if (product.imageUrls.isEmpty) {
       return Container(
-        color: const Color(0xFFF7F4EE),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: const Center(
           child: Icon(Icons.checkroom, size: 100, color: Color(0xFF6B7F4D)),
         ),
@@ -729,7 +740,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           imageUrl: product.imageUrls[index],
           fit: BoxFit.cover,
           placeholder: (_, __) => Container(
-            color: const Color(0xFFF7F4EE),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: const Center(
               child: CircularProgressIndicator(
                 color: Color(0xFF6B7F4D),
@@ -738,7 +749,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
           errorWidget: (_, __, ___) => Container(
-            color: const Color(0xFFF7F4EE),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: const Center(
               child: Icon(Icons.checkroom, size: 100, color: Color(0xFF6B7F4D)),
             ),
@@ -823,7 +834,9 @@ class _RatingStars extends StatelessWidget {
             child: Icon(
               isFilled ? Icons.star : Icons.star_border,
               size: 18,
-              color: isFilled ? Colors.amber : Colors.grey.shade400,
+              color: isFilled
+                  ? Colors.amber
+                  : Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
         );
@@ -870,9 +883,11 @@ class _ReviewsList extends StatelessWidget {
             .toList();
 
         if (reviews.isEmpty) {
-          return const Text(
+          return Text(
             'Aucun avis pour le moment.',
-            style: TextStyle(color: Colors.grey, fontSize: 13),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13),
           );
         }
 
@@ -902,7 +917,7 @@ class _ReviewsList extends StatelessWidget {
                             size: 12,
                             color: i < rating
                                 ? Colors.amber
-                                : Colors.grey.shade400,
+                                : Theme.of(context).colorScheme.outlineVariant,
                           ),
                         ),
                       ),
@@ -910,8 +925,10 @@ class _ReviewsList extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(comment,
-                      style: const TextStyle(
-                          color: Colors.grey, fontSize: 13, height: 1.4)),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 13,
+                          height: 1.4)),
                 ],
               ),
             );

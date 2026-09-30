@@ -51,18 +51,18 @@ class _FilterPageState extends State<FilterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black87),
+          icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Filtres',
           style: TextStyle(
-              color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 17),
+              color: Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+              fontSize: 17),
         ),
         actions: [
           TextButton(
@@ -131,13 +131,15 @@ class _FilterPageState extends State<FilterPage> {
               children: [
                 Text(
                   _fmt(_priceRange.start),
-                  style: const TextStyle(
-                      color: Color(0xFF5A6B3E), fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600),
                 ),
                 Text(
                   _fmt(_priceRange.end),
-                  style: const TextStyle(
-                      color: Color(0xFF5A6B3E), fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -147,7 +149,7 @@ class _FilterPageState extends State<FilterPage> {
               max: _maxPrice,
               divisions: 100,
               activeColor: const Color(0xFF6B7F4D),
-              inactiveColor: const Color(0xFFD6E4BE),
+              inactiveColor: Theme.of(context).colorScheme.primaryContainer,
               labels: RangeLabels(
                 _fmt(_priceRange.start),
                 _fmt(_priceRange.end),
@@ -226,8 +228,10 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: const TextStyle(
-            fontWeight: FontWeight.w700, fontSize: 15, color: Colors.black87),
+        style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            color: Theme.of(context).colorScheme.onSurface),
       );
 }
 
@@ -246,10 +250,14 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF6B7F4D) : Colors.white,
+          color: selected
+              ? const Color(0xFF6B7F4D)
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? const Color(0xFF6B7F4D) : Colors.grey.shade200,
+            color: selected
+                ? const Color(0xFF6B7F4D)
+                : Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
         child: Text(
@@ -257,7 +265,9 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : Colors.grey.shade700,
+            color: selected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ),

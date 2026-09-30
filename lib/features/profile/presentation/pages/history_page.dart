@@ -82,7 +82,8 @@ class HistoryPage extends StatelessWidget {
               children: [
                 Text(
                   titre,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Color(0xFF2B2B2B)),
                 ),
                 Text(
                   prix,

@@ -80,13 +80,13 @@ class _CustomTextFieldState extends State<CustomTextField> {
         hintText: widget.hint,
         prefixIcon: widget.prefixIcon != null
             ? Icon(widget.prefixIcon,
-                color: Theme.of(context).colorScheme.outline)
+                color: Theme.of(context).colorScheme.onSurfaceVariant)
             : null,
         suffixIcon: widget.obscureText
             ? IconButton(
                 icon: Icon(
                   _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: Theme.of(context).colorScheme.outline,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () => setState(() => _obscure = !_obscure),
               )

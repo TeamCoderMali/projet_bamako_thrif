@@ -29,7 +29,10 @@ class AdminDashboardPage extends StatelessWidget {
             // Stats du jour
             const Text(
               'Aujourd\'hui',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Color(0xFF2B2B2B)),
             ),
             const SizedBox(height: 12),
             GridView.count(
@@ -53,7 +56,10 @@ class AdminDashboardPage extends StatelessWidget {
             // Actions rapides
             const Text(
               'Actions rapides',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Color(0xFF2B2B2B)),
             ),
             const SizedBox(height: 12),
             Container(
@@ -96,7 +102,10 @@ class AdminDashboardPage extends StatelessWidget {
             // Commandes en attente
             const Text(
               'Commandes en attente',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Color(0xFF2B2B2B)),
             ),
             const SizedBox(height: 12),
             _buildCommande(
@@ -156,8 +165,11 @@ class AdminDashboardPage extends StatelessWidget {
         ),
         child: Icon(icon, color: color, size: 22),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+      title: Text(title,
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, color: Color(0xFF2B2B2B))),
+      subtitle: Text(subtitle,
+          style: const TextStyle(fontSize: 12, color: Colors.grey)),
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
       onTap: () {},
     );
@@ -174,7 +186,9 @@ class AdminDashboardPage extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(titre, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(titre,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, color: Color(0xFF2B2B2B))),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(

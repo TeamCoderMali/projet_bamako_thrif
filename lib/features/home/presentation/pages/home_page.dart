@@ -60,7 +60,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       body: SafeArea(
         child: Column(
           children: [
@@ -75,12 +74,12 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Recommandés pour vous',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2B2B2B),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   TextButton(
@@ -144,7 +143,9 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Text(
                     'Bonjour $name 👋',
-                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13),
                   ),
                   const SizedBox(height: 2),
                   Row(
@@ -178,7 +179,7 @@ class _HomePageState extends State<HomePage> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -244,7 +245,7 @@ class _HomePageState extends State<HomePage> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
@@ -258,10 +259,12 @@ class _HomePageState extends State<HomePage> {
             children: [
               const Icon(Icons.search, color: Color(0xFF6B7F4D), size: 20),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Rechercher un article...',
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 14),
                 ),
               ),
               Container(
@@ -306,7 +309,9 @@ class _HomePageState extends State<HomePage> {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF6B7F4D) : Colors.white,
+                color: isSelected
+                    ? const Color(0xFF6B7F4D)
+                    : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -318,13 +323,15 @@ class _HomePageState extends State<HomePage> {
                 border: Border.all(
                   color: isSelected
                       ? const Color(0xFF6B7F4D)
-                      : Colors.grey.shade200,
+                      : Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
               child: Text(
                 filter['label'] as String,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.grey.shade700,
+                  color: isSelected
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 13,
                 ),
@@ -379,18 +386,20 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Aucun article disponible',
             style: TextStyle(
-              color: Color(0xFF2B2B2B),
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w600,
               fontSize: 16,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Soyez le premier à publier !',
-            style: TextStyle(color: Colors.grey, fontSize: 13),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -418,9 +427,12 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
+          Icon(Icons.wifi_off,
+              size: 48, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(height: 12),
-          Text(message, style: const TextStyle(color: Colors.grey)),
+          Text(message,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 12),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -460,8 +472,8 @@ class _HomePageState extends State<HomePage> {
       },
       type: BottomNavigationBarType.fixed,
       selectedItemColor: const Color(0xFF6B7F4D),
-      unselectedItemColor: Colors.grey,
-      backgroundColor: Colors.white,
+      unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 8,
       items: const [
         BottomNavigationBarItem(
@@ -503,7 +515,7 @@ class _ProductCard extends StatelessWidget {
       onTap: () => context.go('/product/${product.id}'),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -530,7 +542,9 @@ class _ProductCard extends StatelessWidget {
                             width: double.infinity,
                             height: double.infinity,
                             placeholder: (_, __) => Container(
-                              color: const Color(0xFFF7F4EE),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                               child: const Center(
                                 child: CircularProgressIndicator(
                                   color: Color(0xFF6B7F4D),
@@ -539,7 +553,9 @@ class _ProductCard extends StatelessWidget {
                               ),
                             ),
                             errorWidget: (_, __, ___) => Container(
-                              color: const Color(0xFFF7F4EE),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                               child: const Center(
                                 child: Icon(Icons.checkroom,
                                     size: 48, color: Color(0xFF6B7F4D)),
@@ -547,7 +563,9 @@ class _ProductCard extends StatelessWidget {
                             ),
                           )
                         : Container(
-                            color: const Color(0xFFF7F4EE),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                             child: const Center(
                               child: Icon(Icons.checkroom,
                                   size: 48, color: Color(0xFF6B7F4D)),
@@ -589,10 +607,10 @@ class _ProductCard extends StatelessWidget {
                       product.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
-                        color: Color(0xFF2B2B2B),
+                        color: Theme.of(context).colorScheme.onSurface,
                         height: 1.3,
                       ),
                     ),
@@ -612,34 +630,40 @@ class _ProductCard extends StatelessWidget {
                           const SizedBox(width: 2),
                           Text(
                             product.rating.toStringAsFixed(1),
-                            style: const TextStyle(
-                              color: Colors.grey,
+                            style: TextStyle(
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ] else
-                          const Flexible(
+                          Flexible(
                             child: Text(
                               'Pas encore noté',
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                                 fontSize: 9,
                               ),
                             ),
                           ),
                         if (product.location != null) ...[
                           const SizedBox(width: 4),
-                          const Icon(Icons.location_on_outlined,
-                              size: 10, color: Colors.grey),
+                          Icon(Icons.location_on_outlined,
+                              size: 10,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant),
                           Flexible(
                             child: Text(
                               product.location!,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
-                              style: const TextStyle(
-                                color: Colors.grey,
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                                 fontSize: 9,
                               ),
                             ),

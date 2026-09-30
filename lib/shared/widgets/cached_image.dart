@@ -68,7 +68,7 @@ class CachedImage extends StatelessWidget {
           Center(
             child: Icon(
               Icons.image_not_supported_outlined,
-              color: Theme.of(context).colorScheme.outline,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               size: 32,
             ),
           ),

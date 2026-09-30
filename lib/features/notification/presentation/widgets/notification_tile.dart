@@ -73,7 +73,7 @@ class NotificationTile extends StatelessWidget {
                     Text(
                       _formatDate(notification.createdAt),
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.outline,
+                        color: AppColors.onSurfaceVariant,
                         fontSize: 11,
                       ),
                     ),
@@ -111,7 +111,7 @@ class NotificationTile extends StatelessWidget {
       case NotificationType.offerRejected:
         return AppColors.error;
       default:
-        return AppColors.outline;
+        return AppColors.onSurfaceVariant;
     }
   }
 

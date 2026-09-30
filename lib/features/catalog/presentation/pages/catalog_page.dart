@@ -147,14 +147,14 @@ class _CatalogPageState extends State<CatalogPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Catalogue',
           style: TextStyle(
-              color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 17),
+              color: Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+              fontSize: 17),
         ),
         actions: [
           // Badge si filtres actifs
@@ -162,7 +162,8 @@ class _CatalogPageState extends State<CatalogPage> {
             alignment: Alignment.topRight,
             children: [
               IconButton(
-                icon: const Icon(Icons.tune_rounded, color: Colors.black87),
+                icon: Icon(Icons.tune_rounded,
+                    color: Theme.of(context).colorScheme.onSurface),
                 onPressed: _openFilters,
               ),
               if (_filters.hasActiveFilters)
@@ -193,20 +194,22 @@ class _CatalogPageState extends State<CatalogPage> {
                 height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                         color: Colors.black.withOpacity(0.04), blurRadius: 4)
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.search, color: Color(0xFF6B7F4D), size: 20),
-                    SizedBox(width: 10),
+                    const Icon(Icons.search, color: Color(0xFF6B7F4D), size: 20),
+                    const SizedBox(width: 10),
                     Text(
                       'Rechercher un article...',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 14),
                     ),
                   ],
                 ),
@@ -234,13 +237,14 @@ class _CatalogPageState extends State<CatalogPage> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color:
-                          isSelected ? const Color(0xFF6B7F4D) : Colors.white,
+                      color: isSelected
+                          ? const Color(0xFF6B7F4D)
+                          : Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected
                             ? const Color(0xFF6B7F4D)
-                            : Colors.grey.shade200,
+                            : Theme.of(context).colorScheme.outlineVariant,
                       ),
                     ),
                     child: Text(
@@ -248,7 +252,9 @@ class _CatalogPageState extends State<CatalogPage> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : Colors.grey.shade700,
+                        color: isSelected
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -280,10 +286,10 @@ class _CatalogPageState extends State<CatalogPage> {
                       setState(() => _filters = const CatalogFilters());
                       _load();
                     },
-                    child: const Text(
+                    child: Text(
                       'Effacer',
                       style: TextStyle(
-                          color: Colors.grey,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 12,
                           decoration: TextDecoration.underline),
                     ),
@@ -310,10 +316,14 @@ class _CatalogPageState extends State<CatalogPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.wifi_off_rounded,
-                            size: 48, color: Colors.grey.shade300),
+                            size: 48,
+                            color: Theme.of(context).colorScheme.outlineVariant),
                         const SizedBox(height: 12),
                         Text(state.message,
-                            style: const TextStyle(color: Colors.grey)),
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant)),
                         const SizedBox(height: 12),
                         TextButton(
                           onPressed: _load,
@@ -333,10 +343,14 @@ class _CatalogPageState extends State<CatalogPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.search_off_rounded,
-                            size: 56, color: Colors.grey.shade300),
+                            size: 56,
+                            color: Theme.of(context).colorScheme.outlineVariant),
                         const SizedBox(height: 12),
-                        const Text('Aucun article trouvé',
-                            style: TextStyle(color: Colors.grey)),
+                        Text('Aucun article trouvé',
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant)),
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: () {
@@ -388,7 +402,7 @@ class _ProductCard extends StatelessWidget {
       onTap: () => context.push('/product/${product.id}'),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -412,14 +426,18 @@ class _ProductCard extends StatelessWidget {
                         width: double.infinity,
                         fit: BoxFit.cover,
                         placeholder: (_, __) => Container(
-                          color: const Color(0xFFF7F4EE),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                           child: const Center(
                             child: Icon(Icons.checkroom,
                                 size: 40, color: Color(0xFF6B7F4D)),
                           ),
                         ),
                         errorWidget: (_, __, ___) => Container(
-                          color: const Color(0xFFF7F4EE),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                           child: const Center(
                             child: Icon(Icons.checkroom,
                                 size: 40, color: Color(0xFF6B7F4D)),
@@ -427,7 +445,8 @@ class _ProductCard extends StatelessWidget {
                         ),
                       )
                     : Container(
-                        color: const Color(0xFFF7F4EE),
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
                         child: const Center(
                           child: Icon(Icons.checkroom,
                               size: 40, color: Color(0xFF6B7F4D)),
@@ -445,8 +464,10 @@ class _ProductCard extends StatelessWidget {
                     product.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 12),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -464,14 +485,15 @@ class _ProductCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEEF3E6),
+                          color: Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           _conditionLabel(product.condition),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 9,
-                              color: Color(0xFF5A6B3E),
+                              color:
+                                  Theme.of(context).colorScheme.onPrimaryContainer,
                               fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -517,7 +539,7 @@ class _BottomNav extends StatelessWidget {
       },
       type: BottomNavigationBarType.fixed,
       selectedItemColor: const Color(0xFF6B7F4D),
-      unselectedItemColor: Colors.grey,
+      unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
       items: const [
         BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined), label: 'Accueil'),
@@ -551,11 +573,13 @@ class _Chip extends StatelessWidget {
       margin: const EdgeInsets.only(right: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF3E6),
+        color: Theme.of(context).colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(label,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF5A6B3E))),
+          style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onPrimaryContainer)),
     );
   }
 }

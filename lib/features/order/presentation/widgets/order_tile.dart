@@ -65,7 +65,7 @@ class OrderTile extends StatelessWidget {
             ),
             const Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.outline,
+              color: AppColors.onSurfaceVariant,
             ),
           ],
         ),
