@@ -1,4 +1,8 @@
 /// ─── Bamako Thrift — Styles typographiques ────────────────────────────────
+// Les styles neutres (display/headline/title/body/label/caption/overline)
+// n'imposent pas de couleur : ils héritent du TextTheme ambiant (donc du
+// thème clair/sombre actif). Seuls les styles d'accent (price, badge, link)
+// gardent une couleur de marque explicite.
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
@@ -16,7 +20,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w700,
     letterSpacing: -1.5,
     height: 1.1,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle displayMedium = TextStyle(
@@ -25,7 +28,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w700,
     letterSpacing: -0.5,
     height: 1.2,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle displaySmall = TextStyle(
@@ -34,7 +36,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w600,
     letterSpacing: -0.25,
     height: 1.2,
-    color: AppColors.onSurface,
   );
 
   // ── Headline ───────────────────────────────────────────────────────────
@@ -44,7 +45,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w700,
     letterSpacing: 0,
     height: 1.3,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle headlineMedium = TextStyle(
@@ -53,7 +53,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w600,
     letterSpacing: 0,
     height: 1.3,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle headlineSmall = TextStyle(
@@ -62,7 +61,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w600,
     letterSpacing: 0,
     height: 1.3,
-    color: AppColors.onSurface,
   );
 
   // ── Title ──────────────────────────────────────────────────────────────
@@ -72,7 +70,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w600,
     letterSpacing: 0.15,
     height: 1.4,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle titleMedium = TextStyle(
@@ -81,7 +78,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
     height: 1.4,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle titleSmall = TextStyle(
@@ -90,7 +86,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
     height: 1.4,
-    color: AppColors.onSurface,
   );
 
   // ── Body ───────────────────────────────────────────────────────────────
@@ -100,7 +95,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w400,
     letterSpacing: 0.5,
     height: 1.5,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle bodyMedium = TextStyle(
@@ -109,7 +103,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w400,
     letterSpacing: 0.25,
     height: 1.5,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle bodySmall = TextStyle(
@@ -118,7 +111,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w400,
     letterSpacing: 0.4,
     height: 1.5,
-    color: AppColors.onSurface,
   );
 
   // ── Label ──────────────────────────────────────────────────────────────
@@ -128,7 +120,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w500,
     letterSpacing: 0.1,
     height: 1.4,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle labelMedium = TextStyle(
@@ -137,7 +128,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w500,
     letterSpacing: 0.5,
     height: 1.4,
-    color: AppColors.onSurface,
   );
 
   static const TextStyle labelSmall = TextStyle(
@@ -146,7 +136,6 @@ abstract class AppTextStyles {
     fontWeight: FontWeight.w500,
     letterSpacing: 0.5,
     height: 1.4,
-    color: AppColors.onSurface,
   );
 
   // ── Special ────────────────────────────────────────────────────────────
@@ -187,7 +176,6 @@ abstract class AppTextStyles {
     fontSize: 11.0,
     fontWeight: FontWeight.w400,
     letterSpacing: 0.4,
-    color: AppColors.onSurfaceVariant,
   );
 
   static const TextStyle overline = TextStyle(
@@ -195,7 +183,6 @@ abstract class AppTextStyles {
     fontSize: 10.0,
     fontWeight: FontWeight.w500,
     letterSpacing: 1.5,
-    color: AppColors.onSurfaceVariant,
   );
 
   static const TextStyle link = TextStyle(

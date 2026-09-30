@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 
 /// Widget d'état vide réutilisable.
@@ -33,7 +32,10 @@ class EmptyState extends StatelessWidget {
                 Icon(
                   icon,
                   size: 80,
-                  color: AppColors.outline.withValues(alpha: 0.5),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withValues(alpha: 0.5),
                 ),
             const SizedBox(height: 24),
             Text(
@@ -46,7 +48,7 @@ class EmptyState extends StatelessWidget {
               Text(
                 subtitle!,
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),

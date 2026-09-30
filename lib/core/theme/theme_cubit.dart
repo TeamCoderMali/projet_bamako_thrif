@@ -4,24 +4,54 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeCubit extends Cubit<ThemeMode> {
-  static const _key = 'dark_mode';
+  static const _key = 'theme_mode';
+  // Ancienne clé booléenne (avant le mode "automatique") — migrée puis
+  // supprimée au premier lancement suivant cette mise à jour.
+  static const _legacyKey = 'dark_mode';
 
-  ThemeCubit() : super(ThemeMode.light) {
+  ThemeCubit() : super(ThemeMode.system) {
     _load();
   }
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final isDark = prefs.getBool(_key) ?? false;
-    emit(isDark ? ThemeMode.dark : ThemeMode.light);
+    final stored = prefs.getString(_key);
+
+    if (stored == null) {
+      // Migration : un choix explicite clair/sombre existant prime sur le
+      // nouveau défaut "automatique".
+      final legacyIsDark = prefs.getBool(_legacyKey);
+      if (legacyIsDark != null) {
+        final mode = legacyIsDark ? ThemeMode.dark : ThemeMode.light;
+        await prefs.remove(_legacyKey);
+        await prefs.setString(_key, _encode(mode));
+        emit(mode);
+        return;
+      }
+      emit(ThemeMode.system);
+      return;
+    }
+
+    emit(_decode(stored));
   }
 
-  Future<void> toggle() async {
-    final isDark = state == ThemeMode.dark;
+  Future<void> setMode(ThemeMode mode) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_key, !isDark);
-    emit(isDark ? ThemeMode.light : ThemeMode.dark);
+    await prefs.setString(_key, _encode(mode));
+    emit(mode);
   }
 
   bool get isDark => state == ThemeMode.dark;
+
+  String _encode(ThemeMode mode) => switch (mode) {
+        ThemeMode.light => 'light',
+        ThemeMode.dark => 'dark',
+        ThemeMode.system => 'system',
+      };
+
+  ThemeMode _decode(String value) => switch (value) {
+        'light' => ThemeMode.light,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.system,
+      };
 }

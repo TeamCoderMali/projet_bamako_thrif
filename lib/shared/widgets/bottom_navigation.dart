@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_keys.dart';
 
 enum BottomNavItem { home, catalog, publish, messages, profile }
@@ -18,8 +17,13 @@ class BottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider, width: 1)),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).dividerTheme.color ?? Colors.transparent,
+            width: 1,
+          ),
+        ),
       ),
       child: NavigationBar(
         selectedIndex: currentItem.index,

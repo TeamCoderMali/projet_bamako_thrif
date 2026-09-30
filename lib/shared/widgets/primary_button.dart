@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
-import '../../core/constants/app_radius.dart';
 import '../../core/constants/app_duration.dart';
 
 /// Bouton principal de l'application (ElevatedButton stylisé).
@@ -37,19 +35,15 @@ class PrimaryButton extends StatelessWidget {
         width: width ?? double.infinity,
         height: height,
         child: ElevatedButton(
+          // Style delegue au theme (elevatedButtonTheme deja defini pour
+          // clair/sombre) - pas de couleur figee ici.
           onPressed: isActive ? onPressed : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.onPrimary,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.md),
-            elevation: 0,
-          ),
           child: isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 22,
                   height: 22,
                   child: CircularProgressIndicator(
-                    color: AppColors.onPrimary,
+                    color: Theme.of(context).colorScheme.onPrimary,
                     strokeWidth: 2.5,
                   ),
                 )

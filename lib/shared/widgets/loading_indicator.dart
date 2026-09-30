@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 
 /// Indicateur de chargement global réutilisable.
 class LoadingIndicator extends StatelessWidget {
@@ -43,7 +42,7 @@ class LoadingIndicator extends StatelessWidget {
       width: size,
       height: size,
       child: CircularProgressIndicator(
-        color: color ?? AppColors.primary,
+        color: color ?? Theme.of(context).colorScheme.primary,
         strokeWidth: strokeWidth,
         strokeCap: StrokeCap.round,
       ),

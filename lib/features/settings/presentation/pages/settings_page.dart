@@ -18,7 +18,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeCubit>().isDark;
+    final themeMode = context.watch<ThemeCubit>().state;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4EE),
@@ -63,16 +63,19 @@ class _SettingsPageState extends State<SettingsPage> {
               onChanged: (val) => setState(() => _notifications = val),
             ),
             const Divider(height: 1, indent: 56),
-            SwitchListTile(
-              secondary: Icon(
-                isDark ? Icons.dark_mode : Icons.light_mode_outlined,
+            ListTile(
+              leading: Icon(
+                switch (themeMode) {
+                  ThemeMode.dark => Icons.dark_mode,
+                  ThemeMode.light => Icons.light_mode_outlined,
+                  ThemeMode.system => Icons.brightness_auto_outlined,
+                },
                 color: const Color(0xFF6B7F4D),
               ),
-              title: const Text('Mode sombre'),
-              subtitle: Text(isDark ? 'Activé' : 'Désactivé'),
-              value: isDark,
-              activeColor: const Color(0xFF6B7F4D),
-              onChanged: (_) => context.read<ThemeCubit>().toggle(),
+              title: const Text('Apparence'),
+              subtitle: Text(_themeModeLabel(themeMode)),
+              trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+              onTap: () => _showThemeModeSheet(context, themeMode),
             ),
           ]),
           const SizedBox(height: 22),
@@ -155,6 +158,58 @@ class _SettingsPageState extends State<SettingsPage> {
       title: Text(title, style: const TextStyle(fontSize: 14)),
       trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
       onTap: onTap,
+    );
+  }
+
+  String _themeModeLabel(ThemeMode mode) => switch (mode) {
+        ThemeMode.light => 'Clair',
+        ThemeMode.dark => 'Sombre',
+        ThemeMode.system => 'Automatique (système)',
+      };
+
+  void _showThemeModeSheet(BuildContext context, ThemeMode current) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        Widget option(ThemeMode mode, IconData icon) {
+          return ListTile(
+            leading: Icon(icon, color: const Color(0xFF6B7F4D)),
+            title: Text(_themeModeLabel(mode)),
+            trailing: current == mode
+                ? const Icon(Icons.check, color: Color(0xFF6B7F4D))
+                : null,
+            onTap: () {
+              context.read<ThemeCubit>().setMode(mode);
+              Navigator.pop(sheetContext);
+            },
+          );
+        }
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Apparence',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ),
+              option(ThemeMode.light, Icons.light_mode_outlined),
+              option(ThemeMode.dark, Icons.dark_mode),
+              option(ThemeMode.system, Icons.brightness_auto_outlined),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
   }
 

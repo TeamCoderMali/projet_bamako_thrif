@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 
 /// Champ de texte personnalisé et réutilisable.
@@ -80,13 +79,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
         labelText: widget.label,
         hintText: widget.hint,
         prefixIcon: widget.prefixIcon != null
-            ? Icon(widget.prefixIcon, color: AppColors.outline)
+            ? Icon(widget.prefixIcon,
+                color: Theme.of(context).colorScheme.outline)
             : null,
         suffixIcon: widget.obscureText
             ? IconButton(
                 icon: Icon(
                   _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: AppColors.outline,
+                  color: Theme.of(context).colorScheme.outline,
                 ),
                 onPressed: () => setState(() => _obscure = !_obscure),
               )

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/app_radius.dart';
@@ -29,8 +28,8 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = foregroundColor ?? AppColors.primary;
-    final border = borderColor ?? AppColors.primary;
+    final color = foregroundColor ?? Theme.of(context).colorScheme.primary;
+    final border = borderColor ?? Theme.of(context).colorScheme.primary;
 
     return SizedBox(
       width: width ?? double.infinity,

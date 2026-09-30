@@ -77,14 +77,15 @@ Future<void> main() async {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     logger.info(
         'Notification reçue (premier plan): ${message.notification?.title}');
-    final ctx = AppKeys.scaffoldMessengerKey.currentState;
-    if (ctx != null && message.notification != null) {
-      ctx.showSnackBar(
+    final messengerState = AppKeys.scaffoldMessengerKey.currentState;
+    final context = AppKeys.scaffoldMessengerKey.currentContext;
+    if (messengerState != null && context != null && message.notification != null) {
+      messengerState.showSnackBar(
         SnackBar(
           content: Text(
             '${message.notification!.title}\n${message.notification!.body}',
           ),
-          backgroundColor: const Color(0xFF6B7F4D),
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     }

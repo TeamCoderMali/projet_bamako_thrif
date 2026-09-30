@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 
@@ -36,7 +35,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: titleWidget ?? (title != null ? Text(title!) : null),
       actions: actions,
       centerTitle: centerTitle,
-      backgroundColor: backgroundColor ?? AppColors.surface,
+      backgroundColor: backgroundColor,
       elevation: elevation,
       scrolledUnderElevation: 1,
       leading: showBackButton

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_duration.dart';
@@ -38,13 +37,13 @@ class CustomCard extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: color ?? AppColors.surface,
+        color: color ?? Theme.of(context).colorScheme.surface,
         borderRadius: radius,
         border: border,
         boxShadow: elevation != null && elevation! > 0
             ? [
                 BoxShadow(
-                  color: AppColors.shadow,
+                  color: Theme.of(context).colorScheme.shadow,
                   blurRadius: elevation! * 4,
                   offset: Offset(0, elevation!),
                 )

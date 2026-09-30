@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_keys.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/constants/app_sizes.dart';
@@ -69,7 +68,8 @@ class _AppSearchBarState extends State<AppSearchBar> {
             style: AppTextStyles.bodyMedium,
             decoration: InputDecoration(
               hintText: widget.hint ?? 'Rechercher des articles…',
-              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.outline),
+              prefixIcon: Icon(Icons.search_rounded,
+                  color: Theme.of(context).colorScheme.outline),
               suffixIcon: _hasText
                   ? IconButton(
                       icon: const Icon(Icons.clear_rounded, size: AppSizes.iconSm),
@@ -108,12 +108,12 @@ class _FilterButton extends StatelessWidget {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: AppColors.primaryContainer,
+          color: Theme.of(context).colorScheme.primaryContainer,
           borderRadius: AppRadius.md,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.tune_rounded,
-          color: AppColors.primary,
+          color: Theme.of(context).colorScheme.primary,
           size: AppSizes.iconMd,
         ),
       ),

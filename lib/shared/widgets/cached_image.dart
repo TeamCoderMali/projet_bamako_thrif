@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_radius.dart';
 import 'loading_indicator.dart';
 
@@ -33,7 +32,7 @@ class CachedImage extends StatelessWidget {
     final url = imageUrl;
 
     if (url == null || url.isEmpty) {
-      return _buildError(radius);
+      return _buildError(context, radius);
     }
 
     return ClipRRect(
@@ -48,27 +47,28 @@ class CachedImage extends StatelessWidget {
             Container(
               width: width,
               height: height,
-              color: backgroundColor ?? AppColors.shimmerBase,
+              color: backgroundColor ??
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
               child: const Center(child: LoadingIndicator(size: 24)),
             ),
-        errorWidget: (context, url, error) => _buildError(radius),
+        errorWidget: (context, url, error) => _buildError(context, radius),
       ),
     );
   }
 
-  Widget _buildError(BorderRadius radius) {
+  Widget _buildError(BuildContext context, BorderRadius radius) {
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: radius,
       ),
       child: errorWidget ??
-          const Center(
+          Center(
             child: Icon(
               Icons.image_not_supported_outlined,
-              color: AppColors.outline,
+              color: Theme.of(context).colorScheme.outline,
               size: 32,
             ),
           ),
