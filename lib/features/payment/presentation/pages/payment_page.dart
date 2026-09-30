@@ -106,6 +106,11 @@ class _PaymentPageState extends State<PaymentPage> {
     // (évite qu'un autre acheteur le paie en même temps).
     await _markProductSold(product.id);
 
+    // Signal d'activité pour la relance des utilisateurs inactifs.
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'lastActivityAt': FieldValue.serverTimestamp(),
+    });
+
     // ⚠️ Le crédit du portefeuille vendeur ne se fait PAS ici.
     // Il est fait uniquement par le point relais, quand la commande passe
     // au statut "completed" (récupérée) — c'est le principe du tiers de

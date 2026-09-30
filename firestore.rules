@@ -15,7 +15,15 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      // ⚠️ Exception pour totalSales/lastActivityAt : l'acheteur qui confirme
+      // une réception met à jour ces compteurs sur le document du VENDEUR
+      // (pas de Cloud Function pour le faire côté serveur). Même faille de
+      // principe que sur /wallet — à durcir avec une Cloud Function avant
+      // un vrai lancement.
+      allow update: if isOwner(userId)
+        || (isAuthenticated()
+            && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['totalSales', 'lastActivityAt']));
       allow delete: if isOwner(userId);
 
       // Sous-collection favorites

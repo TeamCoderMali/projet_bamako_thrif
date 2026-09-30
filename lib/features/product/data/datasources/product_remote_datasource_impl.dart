@@ -98,6 +98,12 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     final docRef = await _productsCol.add(data);
     final created = await docRef.get();
     final createdData = _convertTimestamps(created.data()!);
+
+    // Signal d'activité pour la relance des utilisateurs inactifs.
+    await _firestore.collection('users').doc(product.sellerId).update({
+      'lastActivityAt': FieldValue.serverTimestamp(),
+    });
+
     return ProductModel.fromFirestore(createdData, docRef.id);
   }
 

@@ -33,13 +33,17 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
   Future<void> _markCollected() async {
     setState(() => _isSubmitting = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('order')
-          .doc(widget.orderId)
-          .update({
+      final db = FirebaseFirestore.instance;
+      await db.collection('order').doc(widget.orderId).update({
         'status': 'collecte',
         'collectedAt': Timestamp.now(),
       });
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await db.collection('users').doc(uid).update({
+          'lastActivityAt': Timestamp.now(),
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -88,6 +92,20 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
           'createdAt': Timestamp.now(),
           'expiresAt': Timestamp.fromDate(
               DateTime.now().add(const Duration(days: 90))),
+        });
+        // Compteur + signal d'activité pour la relance des utilisateurs
+        // inactifs (profil "vendeur" vs "acheteur").
+        await db.collection('users').doc(sellerId).update({
+          'totalSales': FieldValue.increment(1),
+          'lastActivityAt': Timestamp.now(),
+        });
+      }
+
+      final buyerId = orderData['buyerId'] as String?;
+      if (buyerId != null) {
+        await db.collection('users').doc(buyerId).update({
+          'totalPurchases': FieldValue.increment(1),
+          'lastActivityAt': Timestamp.now(),
         });
       }
 
