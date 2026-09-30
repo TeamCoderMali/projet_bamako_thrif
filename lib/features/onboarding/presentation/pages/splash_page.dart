@@ -70,6 +70,13 @@ class _SplashPageState extends State<SplashPage>
     final cubit = context.read<AuthCubit>();
     cubit.stream
         .firstWhere((s) => s is! AuthLoading && s is! AuthInitial)
+        // Filet de sécurité : si AuthCubit ne se résout jamais (ex. appel
+        // réseau bloqué en amont), on ne laisse pas le splash tourner à
+        // l'infini — on retombe sur l'écran de connexion.
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: () => const AuthUnauthenticated(),
+        )
         .then((state) {
       if (!mounted) return;
       if (state is AuthAuthenticated) {

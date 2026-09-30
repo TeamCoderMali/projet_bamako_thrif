@@ -1,5 +1,7 @@
 // ─── Bamako Thrift — Auth Repository Implementation ─────────────────────────
 // Implémentation complète Firebase Auth + Firestore
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -290,7 +292,15 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
   /// Déconnecte l'utilisateur et lance une exception avec un message clair
   /// si c'est le cas (cahier des charges 2.3 : sanctions automatiques).
   Future<void> _enforceSanctions(String uid) async {
-    final doc = await _usersCol.doc(uid).get();
+    final DocumentSnapshot<Map<String, dynamic>> doc;
+    try {
+      doc = await _usersCol.doc(uid).get().timeout(const Duration(seconds: 8));
+    } on TimeoutException {
+      // Réseau indisponible/trop lent : on ne peut pas vérifier le statut de
+      // bannissement, mais on ne doit pas déconnecter un utilisateur légitime
+      // juste à cause d'une coupure réseau — on laisse passer.
+      return;
+    }
     if (!doc.exists) return;
     final data = doc.data();
     if (data == null) return;
