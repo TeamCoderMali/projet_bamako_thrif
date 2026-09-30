@@ -177,6 +177,12 @@ service cloud.firestore {
       }
     }
 
+    // Requête groupée (collectionGroup) sur toutes les sous-collections
+    // transactions, utilisée par le dashboard Finances du back-office.
+    match /{path=**}/transactions/{txId} {
+      allow read: if isAdmin();
+    }
+
     // ── Collection non_conformities ────────────────────────────────────────
     // Signalement acheteur (remplace l'ancienne inspection relais). Le relais
     // (et l'admin) doivent voir et traiter tous les signalements, pas
