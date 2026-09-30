@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
 class MyListingsPage extends StatelessWidget {
@@ -12,7 +13,7 @@ class MyListingsPage extends StatelessWidget {
 
   String _fmtPrice(dynamic p) {
     final price = (p is num) ? p.toDouble() : 0.0;
-    return '${price.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ')} FCFA';
+    return price.toPriceFCFA;
   }
 
   // ── Statut ─────────────────────────────────────────────────────────────────

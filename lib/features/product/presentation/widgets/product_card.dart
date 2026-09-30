@@ -3,6 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/extensions/double_extension.dart';
 import '../../../../shared/widgets/cached_image.dart';
 import '../../domain/entities/product_entity.dart';
 
@@ -82,7 +83,7 @@ class ProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${product.price.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ' ')} FCFA',
+                    product.price.toPriceFCFA,
                     style: AppTextStyles.titleMedium.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w700,

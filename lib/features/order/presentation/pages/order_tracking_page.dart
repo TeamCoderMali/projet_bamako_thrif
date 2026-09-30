@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
 class OrderTrackingPage extends StatefulWidget {
@@ -26,7 +27,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
 
   String _fmtPrice(dynamic p) {
     final price = (p is num) ? p.toDouble() : 0.0;
-    return '${price.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ')} FCFA';
+    return price.toPriceFCFA;
   }
 
   // ── Vendeur : "Marquer collecté" (le livreur externe est passé) ─────────

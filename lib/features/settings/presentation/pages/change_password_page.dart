@@ -58,7 +58,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Mot de passe modifié avec succès'),
-          backgroundColor: Colors.green,
+          backgroundColor: Color(0xFF6B7F4D),
         ),
       );
 
@@ -175,7 +175,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               ),
               const SizedBox(height: 24),
               _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF6B7F4D),
+                      ),
+                    )
                   : ElevatedButton(
                       onPressed: _changePassword,
                       style: ElevatedButton.styleFrom(

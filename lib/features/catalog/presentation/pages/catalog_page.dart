@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 import 'package:bamako_thrift/features/product/presentation/cubit/product_cubit.dart';
@@ -85,8 +86,7 @@ String _conditionLabel(ProductCondition c) {
   }
 }
 
-String _fmtPrice(double p) =>
-    '${p.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ')} FCFA';
+String _fmtPrice(double p) => p.toPriceFCFA;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
