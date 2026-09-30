@@ -29,12 +29,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   int _myRating = 0;
   bool _isRatingLoading = false;
 
+  // ── Avis texte (réservé aux vendeurs Pro) ──────────────────────────────
+  final _commentController = TextEditingController();
+  bool _isCommentSubmitting = false;
+  bool _sellerIsVendeurPro = false;
+  bool _proStatusRequested = false;
+
   @override
   void initState() {
     super.initState();
     context.read<ProductCubit>().loadProductDetail(widget.productId);
     _checkIfFavorite();
     _loadMyRating();
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 
   // ── Vérifier si déjà en favori ─────────────────────────────────────────
@@ -67,7 +79,69 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         .get();
 
     if (doc.exists && mounted) {
-      setState(() => _myRating = (doc['rating'] as num).toInt());
+      final data = doc.data()!;
+      setState(() {
+        _myRating = (data['rating'] as num).toInt();
+        _commentController.text = data['comment'] as String? ?? '';
+      });
+    }
+  }
+
+  // ── Vérifier si le vendeur de cet article est "Vendeur Pro" ────────────
+  // (seuls les Vendeurs Pro reçoivent des avis texte, pas juste des étoiles)
+  Future<void> _loadSellerProStatus(String sellerId) async {
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(sellerId).get();
+    if (mounted) {
+      setState(() => _sellerIsVendeurPro = doc.data()?['isVendeurPro'] == true);
+    }
+  }
+
+  // ── Envoyer/mettre à jour le commentaire texte (nécessite d'avoir déjà
+  // noté par étoiles, et que le vendeur soit Pro) ────────────────────────
+  Future<void> _submitComment() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final currentUser = context.read<AuthCubit>().currentUser;
+    if (user == null || _myRating == 0 || _isCommentSubmitting) return;
+
+    final comment = _commentController.text.trim();
+    if (comment.isEmpty) return;
+
+    setState(() => _isCommentSubmitting = true);
+    try {
+      await FirebaseFirestore.instance
+          .collection('product')
+          .doc(widget.productId)
+          .collection('reviews')
+          .doc(user.uid)
+          .set(
+        {
+          'userId': user.uid,
+          'userName': currentUser?.fullName ?? 'Utilisateur',
+          'comment': comment,
+        },
+        SetOptions(merge: true),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Avis envoyé, merci !'),
+            backgroundColor: Color(0xFF6B7F4D),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur : ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCommentSubmitting = false);
     }
   }
 
@@ -277,7 +351,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: BlocBuilder<ProductCubit, ProductState>(
+      body: BlocConsumer<ProductCubit, ProductState>(
+        listener: (context, state) {
+          if (state is ProductDetailLoaded && !_proStatusRequested) {
+            _proStatusRequested = true;
+            _loadSellerProStatus(state.product.sellerId);
+          }
+        },
         builder: (context, state) {
           if (state is ProductLoading) {
             return const Center(
@@ -426,6 +506,59 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
                 const SizedBox(height: 12),
 
+                // ── Avis texte (réservé aux Vendeurs Pro) ──────────────
+                if (_sellerIsVendeurPro) ...[
+                  if (_myRating == 0)
+                    const Text(
+                      'Notez d\'abord l\'article avec les étoiles pour pouvoir laisser un avis.',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    )
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextField(
+                          controller: _commentController,
+                          maxLength: 500,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText: 'Laissez un avis sur ce vendeur Pro...',
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: _isCommentSubmitting ? null : _submitComment,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6B7F4D),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: _isCommentSubmitting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Envoyer l\'avis',
+                                    style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 12),
+                ],
+
                 Row(
                   children: [
                     _Badge(
@@ -464,6 +597,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       color: Colors.grey, height: 1.6, fontSize: 14),
                 ),
                 const SizedBox(height: 24),
+                if (_sellerIsVendeurPro) ...[
+                  const Text('Avis',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  _ReviewsList(productId: widget.productId),
+                  const SizedBox(height: 24),
+                ],
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -687,6 +828,96 @@ class _RatingStars extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+}
+
+// ── Liste des avis texte (Vendeurs Pro uniquement) ─────────────────────────
+class _ReviewsList extends StatelessWidget {
+  final String productId;
+  const _ReviewsList({required this.productId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('product')
+          .doc(productId)
+          .collection('reviews')
+          .orderBy('createdAt', descending: true)
+          .limit(20)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF6B7F4D),
+              ),
+            ),
+          );
+        }
+
+        final reviews = (snapshot.data?.docs ?? [])
+            .where((doc) =>
+                ((doc.data() as Map<String, dynamic>)['comment']
+                        as String?)
+                    ?.trim()
+                    .isNotEmpty ==
+                true)
+            .toList();
+
+        if (reviews.isEmpty) {
+          return const Text(
+            'Aucun avis pour le moment.',
+            style: TextStyle(color: Colors.grey, fontSize: 13),
+          );
+        }
+
+        return Column(
+          children: reviews.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final rating = (data['rating'] as num?)?.toInt() ?? 0;
+            final userName = data['userName'] as String? ?? 'Utilisateur';
+            final comment = data['comment'] as String? ?? '';
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(userName,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 13)),
+                      const SizedBox(width: 8),
+                      Row(
+                        children: List.generate(
+                          5,
+                          (i) => Icon(
+                            i < rating ? Icons.star : Icons.star_border,
+                            size: 12,
+                            color: i < rating
+                                ? Colors.amber
+                                : Colors.grey.shade400,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(comment,
+                      style: const TextStyle(
+                          color: Colors.grey, fontSize: 13, height: 1.4)),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

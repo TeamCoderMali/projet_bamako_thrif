@@ -17,6 +17,7 @@ class UserEntity extends Equatable {
   final int totalSales;
   final double rating;
   final int reviewCount;
+  final bool isVendeurPro;
 
   const UserEntity({
     required this.id,
@@ -34,6 +35,7 @@ class UserEntity extends Equatable {
     this.totalSales = 0,
     this.rating = 0.0,
     this.reviewCount = 0,
+    this.isVendeurPro = false,
   });
 
   bool get isSeller => role == UserRole.seller || role == UserRole.admin;
@@ -63,6 +65,7 @@ class UserEntity extends Equatable {
         totalSales,
         rating,
         reviewCount,
+        isVendeurPro,
       ];
 }
 

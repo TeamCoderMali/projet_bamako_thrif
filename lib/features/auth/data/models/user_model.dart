@@ -20,6 +20,7 @@ class UserModel extends UserEntity {
     super.totalSales,
     super.rating,
     super.reviewCount,
+    super.isVendeurPro,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +44,7 @@ class UserModel extends UserEntity {
       totalSales: json['totalSales'] as int? ?? 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       reviewCount: json['reviewCount'] as int? ?? 0,
+      isVendeurPro: json['isVendeurPro'] as bool? ?? false,
     );
   }
 
@@ -68,6 +70,7 @@ class UserModel extends UserEntity {
       'totalSales': totalSales,
       'rating': rating,
       'reviewCount': reviewCount,
+      'isVendeurPro': isVendeurPro,
     };
   }
 
@@ -87,6 +90,7 @@ class UserModel extends UserEntity {
     int? totalSales,
     double? rating,
     int? reviewCount,
+    bool? isVendeurPro,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -104,6 +108,7 @@ class UserModel extends UserEntity {
       totalSales: totalSales ?? this.totalSales,
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,
+      isVendeurPro: isVendeurPro ?? this.isVendeurPro,
     );
   }
 

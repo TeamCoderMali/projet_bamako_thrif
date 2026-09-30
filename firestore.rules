@@ -9,9 +9,33 @@ service cloud.firestore {
     function isOwner(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
+    // ── Rôles back-office (admin/relay_manager) ─────────────────────────────
+    // Les comptes admin/relais sont stockés dans admin_users/{uid}, séparément
+    // des clients de l'app mobile (users/{uid}). Le dashboard (Angular) utilise
+    // le SDK client Firebase, donc ces vérifications de rôle sont la SEULE
+    // barrière serveur — sans elles, le dashboard n'a aucun accès légitime.
+    function isAdmin() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isRelayManager() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role == 'relay_manager';
+    }
+    // Un commentaire texte sur un avis n'est autorisé que si le vendeur du
+    // produit est "Vendeur Pro" — vérifié côté serveur, pas seulement caché
+    // côté app (un client pourrait sinon écrire directement via le SDK).
+    function sellerIsPro(productId) {
+      let sellerId = get(/databases/$(database)/documents/product/$(productId)).data.sellerId;
+      return get(/databases/$(database)/documents/users/$(sellerId)).data.isVendeurPro == true;
+    }
 
     // ── Collection users ───────────────────────────────────────────────────
-    // Chaque utilisateur peut lire/écrire uniquement son propre document.
+    // Profil public (nom, avatar, note...) — lecture ouverte à tout
+    // utilisateur connecté (marketplace, chat). Les champs sensibles
+    // (email, téléphone, token FCM) vivent dans la sous-collection /private.
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
@@ -20,7 +44,12 @@ service cloud.firestore {
       // (pas de Cloud Function pour le faire côté serveur). Même faille de
       // principe que sur /wallet — à durcir avec une Cloud Function avant
       // un vrai lancement.
-      allow update: if isOwner(userId)
+      // isVendeurPro : exclu de l'auto-modification, seul un admin peut le
+      // changer (statut accordé par la plateforme, pas auto-déclaré).
+      allow update: if isAdmin()
+        || (isOwner(userId)
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['isVendeurPro']))
         || (isAuthenticated()
             && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['totalSales', 'lastActivityAt']));
@@ -30,6 +59,22 @@ service cloud.firestore {
       match /favorites/{productId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Sous-collection privée : email, téléphone, statut de vérification
+      // email, token FCM — jamais exposés aux autres utilisateurs
+      // (contrairement au reste du profil, public pour la marketplace/chat).
+      match /private/{doc} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // ── Collection admin_users ─────────────────────────────────────────────
+    // Comptes du dashboard back-office (admin / relay_manager). Distincte de
+    // /users (clients mobile).
+    match /admin_users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isOwner(uid) || isAdmin();
     }
 
     // ── Collection product ─────────────────────────────────────────────────
@@ -42,13 +87,33 @@ service cloud.firestore {
         && request.resource.data.sellerId == request.auth.uid;
       allow update: if isAuthenticated()
         && (resource.data.sellerId == request.auth.uid
+            || isAdmin()
             || request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['viewCount', 'favoriteCount', 'rating', 'reviewCount'])
             || (request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly(['status', 'updatedAt'])
-                && request.resource.data.status in ['sold', 'available']));
+                  .hasOnly(['status', 'updatedAt', 'orderId'])
+                && request.resource.data.status in ['sold', 'available']
+                && request.resource.data.orderId is string
+                && get(/databases/$(database)/documents/order/$(request.resource.data.orderId)).data.buyerId == request.auth.uid
+                && get(/databases/$(database)/documents/order/$(request.resource.data.orderId)).data.productId == productId));
       allow delete: if isAuthenticated()
-        && resource.data.sellerId == request.auth.uid;
+        && (resource.data.sellerId == request.auth.uid || isAdmin());
+
+      // Avis (note + commentaire optionnel). L'ID du doc = uid de l'auteur,
+      // donc un seul avis par personne et par produit.
+      match /reviews/{reviewId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isOwner(reviewId)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && (!('comment' in request.resource.data)
+              || (request.resource.data.comment is string
+                  && request.resource.data.comment.size() <= 500
+                  && sellerIsPro(productId)));
+        allow delete: if false;
+      }
     }
 
     // ── Collection chat ────────────────────────────────────────────────────
@@ -66,8 +131,11 @@ service cloud.firestore {
         allow create: if isAuthenticated()
           && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds
           && request.resource.data.senderId == request.auth.uid;
+        // Seul le champ isRead est modifiable (marquer comme lu) — pas le
+        // contenu du message ni son expéditeur.
         allow update: if isAuthenticated()
-          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds;
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
         allow delete: if false;
       }
     }
@@ -84,7 +152,8 @@ service cloud.firestore {
     match /order/{orderId} {
       allow read: if isAuthenticated()
         && (resource.data.buyerId == request.auth.uid
-            || resource.data.sellerId == request.auth.uid);
+            || resource.data.sellerId == request.auth.uid
+            || isAdmin());
       allow create: if isAuthenticated()
         && request.resource.data.buyerId == request.auth.uid;
       allow update: if isAuthenticated()
@@ -99,23 +168,27 @@ service cloud.firestore {
     // Cloud Function déclenchée sur le changement de statut de commande
     // avant un vrai lancement.
     match /wallet/{uid} {
-      allow read: if isOwner(uid);
+      allow read: if isOwner(uid) || isAdmin();
       allow write: if isAuthenticated();
 
       match /transactions/{txId} {
-        allow read: if isOwner(uid);
+        allow read: if isOwner(uid) || isAdmin();
         allow create: if isAuthenticated();
       }
     }
 
     // ── Collection non_conformities ────────────────────────────────────────
-    // Signalement acheteur (remplace l'ancienne inspection relais).
+    // Signalement acheteur (remplace l'ancienne inspection relais). Le relais
+    // (et l'admin) doivent voir et traiter tous les signalements, pas
+    // seulement ceux où ils sont partie prenante.
     match /non_conformities/{ncId} {
       allow create: if isAuthenticated()
         && request.resource.data.buyerId == request.auth.uid;
       allow read, update: if isAuthenticated()
         && (resource.data.buyerId == request.auth.uid
-            || resource.data.sellerId == request.auth.uid);
+            || resource.data.sellerId == request.auth.uid
+            || isRelayManager()
+            || isAdmin());
     }
 
     // ── Collection refund_requests ─────────────────────────────────────────
@@ -123,7 +196,22 @@ service cloud.firestore {
       allow create: if isAuthenticated()
         && request.resource.data.buyerId == request.auth.uid;
       allow read: if isAuthenticated()
-        && resource.data.buyerId == request.auth.uid;
+        && (resource.data.buyerId == request.auth.uid || isAdmin());
+    }
+
+    // ── Collection disputes ─────────────────────────────────────────────────
+    // Litiges génériques gérés par l'admin (distinct de non_conformities,
+    // qui est le flux relais du nouveau circuit de livraison).
+    match /disputes/{id} {
+      allow read, update: if isAdmin();
+    }
+
+    // ── Collection relay_centers ────────────────────────────────────────────
+    // Gestion des points relais (admin uniquement) ; lecture aussi ouverte
+    // au relay_manager pour consulter les infos de son centre.
+    match /relay_centers/{id} {
+      allow read: if isAdmin() || isRelayManager();
+      allow write: if isAdmin();
     }
   }
 }
