@@ -3,6 +3,7 @@ import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -52,7 +53,7 @@ Future<void> main() async {
   );
 
   // ── Logging ──────────────────────────────────────────────────────────────
-  logger.init(isProduction: false);
+  logger.init(isProduction: kReleaseMode);
   logger.info('DANAYA — Démarrage');
 
   // ── Firebase Messaging (notifications push) ─────────────────────────────

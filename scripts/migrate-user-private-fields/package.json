@@ -1,0 +1,8 @@
+{
+  "name": "migrate-user-private-fields",
+  "private": true,
+  "description": "Script ponctuel (pas une Cloud Function) - migration email/phoneNumber/fcmToken vers users/{uid}/private/data",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

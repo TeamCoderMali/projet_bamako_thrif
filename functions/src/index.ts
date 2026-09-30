@@ -36,7 +36,10 @@ export const relanceUtilisateursInactifs = onSchedule(
 
     for (const doc of snap.docs) {
       const user = doc.data();
-      const fcmToken = user.fcmToken as string | undefined;
+      // fcmToken vit dans la sous-collection privée (jamais exposée aux
+      // autres utilisateurs — voir firestore.rules /users/{uid}/private).
+      const privateSnap = await doc.ref.collection("private").doc("data").get();
+      const fcmToken = privateSnap.data()?.fcmToken as string | undefined;
       if (!fcmToken) continue;
 
       const totalSales = (user.totalSales as number | undefined) ?? 0;

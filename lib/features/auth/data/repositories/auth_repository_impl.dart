@@ -21,6 +21,30 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
   CollectionReference<Map<String, dynamic>> get _usersCol =>
       _firestore.collection('users');
 
+  // Champs jamais exposés aux autres utilisateurs (contrairement au reste du
+  // profil, public pour la marketplace/le chat) : stockés dans une
+  // sous-collection privée, lisible uniquement par le propriétaire (+ admin).
+  static const _privateFields = ['email', 'phoneNumber', 'isEmailVerified'];
+
+  DocumentReference<Map<String, dynamic>> _privateDoc(String uid) =>
+      _usersCol.doc(uid).collection('private').doc('data');
+
+  /// Crée le document utilisateur (profil public + données privées) en une
+  /// seule opération atomique.
+  Future<void> _createUserDoc(String uid, UserModel user) async {
+    final json = user.toJson()..remove('id');
+    final privateData = <String, dynamic>{};
+    for (final key in _privateFields) {
+      if (json.containsKey(key)) privateData[key] = json.remove(key);
+    }
+    json['createdAt'] = FieldValue.serverTimestamp();
+
+    final batch = _firestore.batch();
+    batch.set(_usersCol.doc(uid), json);
+    batch.set(_privateDoc(uid), privateData);
+    await batch.commit();
+  }
+
   // ── Stream auth ─────────────────────────────────────────────────────────
   @override
   Stream<UserEntity?> get authStateChanges {
@@ -78,9 +102,7 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
           isActive: true,
           createdAt: now,
         );
-        final data = newUser.toJson()..remove('id');
-        data['createdAt'] = FieldValue.serverTimestamp();
-        await _usersCol.doc(uid).set(data);
+        await _createUserDoc(uid, newUser);
         return newUser;
       }
 
@@ -128,9 +150,7 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
       );
 
       // 4. Écrire dans Firestore (séparé du catch FirebaseAuthException)
-      final data = userModel.toJson()..remove('id');
-      data['createdAt'] = FieldValue.serverTimestamp();
-      await _usersCol.doc(uid).set(data);
+      await _createUserDoc(uid, userModel);
 
       return userModel;
     } on FirebaseAuthException catch (e) {
@@ -194,9 +214,7 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
           isActive: true,
           createdAt: now,
         );
-        final data = newUser.toJson()..remove('id');
-        data['createdAt'] = FieldValue.serverTimestamp();
-        await _usersCol.doc(uid).set(data);
+        await _createUserDoc(uid, newUser);
         return newUser;
       }
 
@@ -258,10 +276,15 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     };
     if (fullName != null) updates['fullName'] = fullName.trim();
     if (bio != null) updates['bio'] = bio.trim();
-    if (phoneNumber != null) updates['phoneNumber'] = phoneNumber.trim();
     if (avatarUrl != null) updates['avatarUrl'] = avatarUrl;
-
     await _usersCol.doc(uid).update(updates);
+
+    if (phoneNumber != null) {
+      await _privateDoc(uid).set(
+        {'phoneNumber': phoneNumber.trim()},
+        SetOptions(merge: true),
+      );
+    }
 
     // Mettre à jour Firebase Auth displayName si nécessaire
     if (fullName != null) {
@@ -279,7 +302,8 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     final uid = _auth.currentUser?.uid;
     if (uid == null) throw Exception('Utilisateur non connecté.');
 
-    // Supprimer le doc Firestore d'abord
+    // Supprimer les docs Firestore d'abord (privé puis public)
+    await _privateDoc(uid).delete();
     await _usersCol.doc(uid).delete();
 
     // Supprimer le compte Firebase Auth
@@ -329,12 +353,19 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  /// Récupère le UserModel depuis Firestore par uid.
+  /// Récupère le UserModel depuis Firestore par uid (profil public fusionné
+  /// avec les données privées — uniquement lisibles par le propriétaire).
   Future<UserModel?> _fetchUserFromFirestore(String uid) async {
     final doc = await _usersCol.doc(uid).get();
     if (!doc.exists || doc.data() == null) return null;
 
-    final data = doc.data()!;
+    final data = Map<String, dynamic>.from(doc.data()!);
+
+    final privateSnap = await _privateDoc(uid).get();
+    if (privateSnap.exists && privateSnap.data() != null) {
+      data.addAll(privateSnap.data()!);
+    }
+
     // Convertir Timestamp → int pour fromFirestore
     _convertTimestamps(data);
 

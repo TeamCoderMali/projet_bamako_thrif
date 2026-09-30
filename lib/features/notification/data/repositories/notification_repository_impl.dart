@@ -107,10 +107,20 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
   @override
   Future<void> updateFcmToken(String token) async {
-    await _firestore.collection('users').doc(_currentUid).update({
-      'fcmToken': token,
-      'fcmUpdatedAt': FieldValue.serverTimestamp(),
-    });
+    // fcmToken est une donnée privée (sous-collection dédiée, jamais exposée
+    // aux autres utilisateurs — voir firestore.rules /users/{uid}/private).
+    await _firestore
+        .collection('users')
+        .doc(_currentUid)
+        .collection('private')
+        .doc('data')
+        .set(
+      {
+        'fcmToken': token,
+        'fcmUpdatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
   }
 
   // ── Helper Timestamp ─────────────────────────────────────────────────────

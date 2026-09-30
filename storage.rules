@@ -21,6 +21,24 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
+    // ── Photos de signalement (litiges) ────────────────────────────────────
+    // Chemin : non_conformities/{userId}/{filename}
+    match /non_conformities/{userId}/{filename} {
+      // Lire : tout utilisateur authentifié (relais/admin doivent comparer
+      // les photos ; les photos déjà envoyées restent accessibles via leur
+      // URL de téléchargement, indépendamment de cette règle)
+      allow read: if request.auth != null;
+
+      // Écrire : uniquement l'auteur du signalement (l'acheteur), fichier
+      // image, max 5 MB
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024;
+
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
     // ── Avatars de profil ──────────────────────────────────────────────────
     // Chemin : avatars/{userId}.jpg
     match /avatars/{userId}.jpg {

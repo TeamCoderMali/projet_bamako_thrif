@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 
@@ -27,8 +28,7 @@ class _PaymentPageState extends State<PaymentPage> {
     super.dispose();
   }
 
-  String _fmt(double price) =>
-      '${price.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ' ')} FCFA';
+  String _fmt(double price) => price.toPriceFCFA;
 
   String _condition(ProductCondition c) {
     switch (c) {
@@ -89,7 +89,8 @@ class _PaymentPageState extends State<PaymentPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    await FirebaseFirestore.instance.collection('order').add({
+    final orderRef =
+        await FirebaseFirestore.instance.collection('order').add({
       'buyerId': uid,
       'sellerId': product.sellerId,
       'productId': product.id,
@@ -103,8 +104,10 @@ class _PaymentPageState extends State<PaymentPage> {
     });
 
     // L'article n'est plus disponible à l'achat dès que la vente est payée
-    // (évite qu'un autre acheteur le paie en même temps).
-    await _markProductSold(product.id);
+    // (évite qu'un autre acheteur le paie en même temps). orderId est vérifié
+    // côté règles Firestore pour empêcher qu'un tiers marque l'article d'un
+    // autre vendeur comme vendu sans commande réelle.
+    await _markProductSold(product.id, orderRef.id);
 
     // Signal d'activité pour la relance des utilisateurs inactifs.
     await FirebaseFirestore.instance.collection('users').doc(uid).update({
@@ -122,11 +125,11 @@ class _PaymentPageState extends State<PaymentPage> {
     // de payer avec son "avoir" (option pas encore proposée ci-dessous).
   }
 
-  Future<void> _markProductSold(String productId) async {
+  Future<void> _markProductSold(String productId, String orderId) async {
     await FirebaseFirestore.instance
         .collection('product')
         .doc(productId)
-        .update({'status': 'sold'});
+        .update({'status': 'sold', 'orderId': orderId});
   }
 
   @override

@@ -80,8 +80,7 @@ class _NewChatPageState extends State<NewChatPage> {
           ? _allUsers
           : _allUsers.where((u) {
               final name = (u['fullName'] as String? ?? '').toLowerCase();
-              final email = (u['email'] as String? ?? '').toLowerCase();
-              return name.contains(q) || email.contains(q);
+              return name.contains(q);
             }).toList();
     });
   }
