@@ -26,7 +26,6 @@ class ProfilePage extends StatelessWidget {
             if (!didPop) context.go(RouteNames.home);
           },
           child: Scaffold(
-            backgroundColor: const Color(0xFFF7F4EE),
             body: SafeArea(
               child: SingleChildScrollView(
                 child: Column(
@@ -184,6 +183,7 @@ class ProfilePage extends StatelessWidget {
                                 children: [
                                   Expanded(
                                     child: _buildStatCard(
+                                      context,
                                       '$totalListings',
                                       'Annonces',
                                     ),
@@ -191,6 +191,7 @@ class ProfilePage extends StatelessWidget {
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: _buildStatCard(
+                                      context,
                                       '$totalSales',
                                       'Achats',
                                     ),
@@ -198,6 +199,7 @@ class ProfilePage extends StatelessWidget {
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: _buildStatCard(
+                                      context,
                                       reviewCount > 0
                                           ? '${rating.toStringAsFixed(1)}★'
                                           : '—',
@@ -276,7 +278,7 @@ class ProfilePage extends StatelessWidget {
 
                           // ── Dashboard Admin ───────────────────────────
                           if (user != null && user.isAdmin) ...[
-                            _buildMenuSection([
+                            _buildMenuSection(context, [
                               _buildMenuItem(
                                 context,
                                 icon: Icons.admin_panel_settings,
@@ -293,7 +295,7 @@ class ProfilePage extends StatelessWidget {
                           ],
 
                           // ── Menu principal ────────────────────────────
-                          _buildMenuSection([
+                          _buildMenuSection(context, [
                             _buildMenuItem(
                               context,
                               icon: Icons.list_alt,
@@ -341,20 +343,28 @@ class ProfilePage extends StatelessWidget {
                           const SizedBox(height: 12),
 
                           // ── Menu secondaire ───────────────────────────
-                          _buildMenuSection([
+                          _buildMenuSection(context, [
                             _buildMenuItem(
                               context,
                               icon: Icons.settings_outlined,
-                              iconBg: Colors.grey.withOpacity(0.1),
-                              iconColor: Colors.grey,
+                              iconBg: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant
+                                  .withOpacity(0.1),
+                              iconColor:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
                               title: 'Paramètres',
                               onTap: () => context.push(RouteNames.settings),
                             ),
                             _buildMenuItem(
                               context,
                               icon: Icons.help_outline,
-                              iconBg: Colors.grey.withOpacity(0.1),
-                              iconColor: Colors.grey,
+                              iconBg: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant
+                                  .withOpacity(0.1),
+                              iconColor:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
                               title: 'Aide & Support',
                               onTap: () => context.push(RouteNames.support),
                               isLast: true,
@@ -364,7 +374,7 @@ class ProfilePage extends StatelessWidget {
                           const SizedBox(height: 12),
 
                           // ── Déconnexion ───────────────────────────────
-                          _buildMenuSection([
+                          _buildMenuSection(context, [
                             _buildMenuItem(
                               context,
                               icon: Icons.logout,
@@ -408,8 +418,8 @@ class ProfilePage extends StatelessWidget {
               },
               type: BottomNavigationBarType.fixed,
               selectedItemColor: const Color(0xFF6B7F4D),
-              unselectedItemColor: Colors.grey,
-              backgroundColor: Colors.white,
+              unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               elevation: 8,
               items: const [
                 BottomNavigationBarItem(
@@ -438,7 +448,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String value, String label) {
+  Widget _buildStatCard(BuildContext context, String value, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
@@ -458,17 +468,19 @@ class ProfilePage extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuSection(List<Widget> items) {
+  Widget _buildMenuSection(BuildContext context, List<Widget> items) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -489,9 +501,11 @@ class ProfilePage extends StatelessWidget {
     required Color iconColor,
     required String title,
     required VoidCallback onTap,
-    Color titleColor = const Color(0xFF2B2B2B),
+    Color? titleColor,
     bool isLast = false,
   }) {
+    final defaultTitleColor = Theme.of(context).colorScheme.onSurface;
+    final resolvedTitleColor = titleColor ?? defaultTitleColor;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -499,8 +513,10 @@ class ProfilePage extends StatelessWidget {
         decoration: BoxDecoration(
           border: isLast
               ? null
-              : const Border(
-                  bottom: BorderSide(color: Color(0xFFF5F5F5), width: 1)),
+              : Border(
+                  bottom: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                      width: 1)),
         ),
         child: Row(
           children: [
@@ -520,15 +536,15 @@ class ProfilePage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: titleColor,
+                  color: resolvedTitleColor,
                 ),
               ),
             ),
             Icon(
               Icons.chevron_right,
-              color: titleColor == const Color(0xFF2B2B2B)
-                  ? Colors.grey.shade300
-                  : titleColor.withOpacity(0.4),
+              color: titleColor == null
+                  ? Theme.of(context).colorScheme.outlineVariant
+                  : resolvedTitleColor.withOpacity(0.4),
               size: 20,
             ),
           ],
@@ -547,7 +563,9 @@ class ProfilePage extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+            child: Text('Annuler',
+                style: TextStyle(
+                    color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),

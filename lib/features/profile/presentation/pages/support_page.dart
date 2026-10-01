@@ -8,7 +8,6 @@ class SupportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
         backgroundColor: const Color(0xFF6B7F4D),
         elevation: 0,
@@ -27,21 +26,23 @@ class SupportPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Contact
-            const Text(
+            Text(
               'Nous contacter',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: Color(0xFF2B2B2B),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 12),
             _buildContactItem(
+              context,
               Icons.email_outlined,
               'Email',
               'support@danaya.ml',
             ),
             _buildContactItem(
+              context,
               Icons.phone_outlined,
               'WhatsApp',
               '+223 XX XX XX XX',
@@ -49,32 +50,37 @@ class SupportPage extends StatelessWidget {
             const SizedBox(height: 24),
 
             // FAQ
-            const Text(
+            Text(
               'Questions fréquentes',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: Color(0xFF2B2B2B),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 12),
             _buildFaq(
+              context,
               'Comment vendre un article ?',
               'Cliquez sur "Publier" en bas de l\'écran, ajoutez des photos, remplissez les informations et publiez gratuitement.',
             ),
             _buildFaq(
+              context,
               'Comment fonctionne le paiement ?',
               'L\'argent est bloqué jusqu\'à validation par notre équipe. Vous pouvez payer via Orange Money, Moov Money ou votre avoir.',
             ),
             _buildFaq(
+              context,
               'Qu\'est-ce que le badge Vérifié ?',
               'Le badge Vérifié signifie que notre équipe a inspecté, lavé et repassé le vêtement avant remise à l\'acheteur.',
             ),
             _buildFaq(
+              context,
               'Que faire si mon colis ne correspond pas ?',
               'Vous pouvez refuser le vêtement et être remboursé, ou accepter avec une remise en état à la charge du vendeur.',
             ),
             _buildFaq(
+              context,
               'Combien de temps pour récupérer mon article ?',
               'Vous avez 7 jours après notification pour récupérer votre article. Des frais de garde s\'appliquent à partir du 8e jour.',
             ),
@@ -84,12 +90,13 @@ class SupportPage extends StatelessWidget {
     );
   }
 
-  Widget _buildContactItem(IconData icon, String label, String value) {
+  Widget _buildContactItem(
+      BuildContext context, IconData icon, String label, String value) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -101,16 +108,16 @@ class SupportPage extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.grey,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2B2B2B),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],
@@ -120,20 +127,20 @@ class SupportPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFaq(String question, String reponse) {
+  Widget _buildFaq(BuildContext context, String question, String reponse) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ExpansionTile(
         title: Text(
           question,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 13,
-            color: Color(0xFF2B2B2B),
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         children: [
@@ -141,8 +148,8 @@ class SupportPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Text(
               reponse,
-              style: const TextStyle(
-                color: Colors.grey,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             ),

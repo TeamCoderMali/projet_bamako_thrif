@@ -95,7 +95,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
         backgroundColor: const Color(0xFF6B7F4D),
         elevation: 0,
@@ -133,19 +132,21 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Aucun favori pour l\'instant',
                         style: TextStyle(
-                          color: Color(0xFF2B2B2B),
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Ajoutez des articles à vos favoris\npour les retrouver ici.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 13),
                       ),
                     ],
                   ),
@@ -168,7 +169,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEEF3E6),
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: const Color(0xFF6B7F4D).withOpacity(0.2),
@@ -221,9 +222,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                 children: [
                                   Text(
                                     product['title']?.toString() ?? '',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF2B2B2B),
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       fontSize: 14,
                                     ),
                                   ),

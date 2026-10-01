@@ -122,7 +122,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: Theme.of(ctx).colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -222,20 +222,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
         final isLoading = state is AuthLoading || _isSaving;
 
         return Scaffold(
-          backgroundColor: Colors.grey.shade50,
           appBar: AppBar(
-            backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              icon: Icon(Icons.arrow_back,
+                  color: Theme.of(context).colorScheme.onSurface),
               onPressed: (isLoading || _isUploadingAvatar)
                   ? null
                   : () => context.go(RouteNames.profile),
             ),
-            title: const Text(
+            title: Text(
               'Modifier le profil',
               style: TextStyle(
-                  color: Colors.black, fontWeight: FontWeight.bold),
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.bold),
             ),
             actions: [
               TextButton(
@@ -336,7 +336,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     style: TextStyle(
                       color: _isUploadingAvatar
                           ? const Color(0xFF6B7F4D)
-                          : Colors.grey,
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -351,15 +351,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       labelText: 'Email',
                       prefixIcon: const Icon(Icons.email_outlined),
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
-                      suffixIcon: const Icon(Icons.lock_outline,
-                          size: 16, color: Colors.grey),
+                      suffixIcon: Icon(Icons.lock_outline,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 16),
 
@@ -371,7 +374,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       labelText: 'Nom complet',
                       prefixIcon: const Icon(Icons.person_outline),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -397,7 +401,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       hintText: '+223 70 00 00 00',
                       prefixIcon: const Icon(Icons.phone_outlined),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -424,7 +429,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         child: Icon(Icons.info_outline),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
