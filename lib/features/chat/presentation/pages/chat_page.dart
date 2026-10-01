@@ -86,12 +86,11 @@ class _ChatPageState extends State<ChatPage> {
     final currentUid = context.read<AuthCubit>().currentUser?.id ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => context.go(RouteNames.messages),
         ),
         title: Row(
@@ -107,18 +106,18 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
             const SizedBox(width: 12),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Conversation',
                   style: TextStyle(
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
-                Text('En ligne',
+                const Text('En ligne',
                     style: TextStyle(color: Colors.green, fontSize: 11)),
               ],
             ),
@@ -140,15 +139,17 @@ class _ChatPageState extends State<ChatPage> {
                 if (snapshot.hasError) {
                   return Center(
                     child: Text('Erreur: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.grey)),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   );
                 }
                 final messages = snapshot.data ?? [];
                 if (messages.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text(
                       'Commencez la conversation !',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   );
                 }
@@ -174,7 +175,7 @@ class _ChatPageState extends State<ChatPage> {
           // ── Barre d'envoi ───────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(12),
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             child: SafeArea(
               child: Row(
                 children: [
@@ -183,10 +184,12 @@ class _ChatPageState extends State<ChatPage> {
                       controller: _messageController,
                       textCapitalization: TextCapitalization.sentences,
                       maxLines: null,
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                       decoration: InputDecoration(
                         hintText: 'Écrire un message...',
                         filled: true,
-                        fillColor: Colors.grey.shade100,
+                        fillColor:
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 10,
@@ -249,7 +252,9 @@ class _MessageBubble extends StatelessWidget {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: isMe ? const Color(0xFF6B7F4D) : Colors.white,
+            color: isMe
+                ? const Color(0xFF6B7F4D)
+                : Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(18),
               topRight: const Radius.circular(18),
@@ -271,7 +276,9 @@ class _MessageBubble extends StatelessWidget {
               Text(
                 message.content,
                 style: TextStyle(
-                  color: isMe ? Colors.white : Colors.black87,
+                  color: isMe
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                   height: 1.4,
                 ),
@@ -280,7 +287,9 @@ class _MessageBubble extends StatelessWidget {
               Text(
                 _formatTime(message.createdAt),
                 style: TextStyle(
-                  color: isMe ? Colors.white70 : Colors.grey,
+                  color: isMe
+                      ? Colors.white70
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 10,
                 ),
               ),
@@ -301,7 +310,8 @@ class _MessageBubble extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+            child: Text('Annuler',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),

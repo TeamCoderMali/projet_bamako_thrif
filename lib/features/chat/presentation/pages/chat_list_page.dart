@@ -38,7 +38,6 @@ class _ChatListPageState extends State<ChatListPage> {
         if (!didPop) context.go(RouteNames.home);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F4EE),
         appBar: AppBar(
           backgroundColor: const Color(0xFF6B7F4D),
           elevation: 0,
@@ -71,11 +70,13 @@ class _ChatListPageState extends State<ChatListPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline,
-                        color: Colors.grey, size: 48),
+                    Icon(Icons.error_outline,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        size: 48),
                     const SizedBox(height: 12),
                     Text('Erreur: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.grey)),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
               );
@@ -101,18 +102,20 @@ class _ChatListPageState extends State<ChatListPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Aucun message pour l\'instant',
                       style: TextStyle(
-                        color: Color(0xFF2B2B2B),
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Contactez un vendeur depuis un article',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 13),
                     ),
                   ],
                 ),
@@ -137,7 +140,7 @@ class _ChatListPageState extends State<ChatListPage> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: unread > 0
                           ? Border.all(
@@ -193,7 +196,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                           ? FontWeight.bold
                                           : FontWeight.w600,
                                       fontSize: 15,
-                                      color: const Color(0xFF2B2B2B),
+                                      color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                   if (chat.lastMessageAt != null)
@@ -202,7 +205,9 @@ class _ChatListPageState extends State<ChatListPage> {
                                       style: TextStyle(
                                         color: unread > 0
                                             ? const Color(0xFF6B7F4D)
-                                            : Colors.grey,
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
                                         fontSize: 11,
                                         fontWeight: unread > 0
                                             ? FontWeight.bold
@@ -243,8 +248,10 @@ class _ChatListPageState extends State<ChatListPage> {
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         color: unread > 0
-                                            ? const Color(0xFF2B2B2B)
-                                            : Colors.grey,
+                                            ? Theme.of(context).colorScheme.onSurface
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
                                         fontSize: 12,
                                         fontWeight: unread > 0
                                             ? FontWeight.w500
@@ -296,8 +303,8 @@ class _ChatListPageState extends State<ChatListPage> {
           },
           type: BottomNavigationBarType.fixed,
           selectedItemColor: const Color(0xFF6B7F4D),
-          unselectedItemColor: Colors.grey,
-          backgroundColor: Colors.white,
+          unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           items: const [
             BottomNavigationBarItem(
                 icon: Icon(Icons.home_outlined),

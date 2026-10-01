@@ -121,17 +121,17 @@ class _NewChatPageState extends State<NewChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Nouveau message',
           style: TextStyle(
-              color: Colors.black, fontWeight: FontWeight.bold, fontSize: 17),
+              color: Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+              fontSize: 17),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
         bottom: PreferredSize(
@@ -142,16 +142,20 @@ class _NewChatPageState extends State<NewChatPage> {
               controller: _searchController,
               autofocus: true,
               onChanged: _filterUsers,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Rechercher un utilisateur...',
-                hintStyle:
-                    const TextStyle(color: Colors.grey, fontSize: 14),
+                hintStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 14),
                 filled: true,
-                fillColor: const Color(0xFFF7F4EE),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                prefixIcon: Icon(Icons.search,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close, color: Colors.grey),
+                        icon: Icon(Icons.close,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant),
                         onPressed: () {
                           _searchController.clear();
                           _filterUsers('');
@@ -169,14 +173,15 @@ class _NewChatPageState extends State<NewChatPage> {
         ),
       ),
       body: _isStartingChat
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: Color(0xFF6B7F4D)),
-                  SizedBox(height: 12),
+                  const CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                  const SizedBox(height: 12),
                   Text('Ouverture de la conversation...',
-                      style: TextStyle(color: Colors.grey)),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
             )
@@ -195,8 +200,9 @@ class _NewChatPageState extends State<NewChatPage> {
                               const EdgeInsets.fromLTRB(16, 14, 16, 8),
                           child: Text(
                             '${_filtered.length} utilisateur${_filtered.length > 1 ? 's' : ''}',
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 12),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                fontSize: 12),
                           ),
                         ),
                         Expanded(
@@ -222,13 +228,15 @@ class _NewChatPageState extends State<NewChatPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.person_search,
-              size: 64, color: Colors.grey.shade300),
+              size: 64, color: Theme.of(context).colorScheme.outlineVariant),
           const SizedBox(height: 16),
           Text(
             _searchController.text.isEmpty
                 ? 'Aucun utilisateur disponible'
                 : 'Aucun résultat pour "${_searchController.text}"',
-            style: const TextStyle(color: Colors.grey, fontSize: 14),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 14),
             textAlign: TextAlign.center,
           ),
         ],
@@ -280,7 +288,7 @@ class _UserTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -320,17 +328,18 @@ class _UserTile extends StatelessWidget {
                 children: [
                   Text(
                     fullName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: Color(0xFF2B2B2B),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     email,
-                    style: const TextStyle(
-                        color: Colors.grey, fontSize: 12),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
