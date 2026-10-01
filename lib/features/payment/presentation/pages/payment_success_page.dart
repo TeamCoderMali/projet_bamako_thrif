@@ -71,7 +71,6 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -117,21 +116,21 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                 opacity: _fadeIn,
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       'Paiement confirmé !',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF2B2B2B),
+                        color: Theme.of(context).colorScheme.onSurface,
                         letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
+                    Text(
                       'Votre commande a bien été enregistrée.\nL\'argent est sécurisé en escrow.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 14,
                         height: 1.5,
                       ),
@@ -143,7 +142,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
@@ -258,7 +257,9 @@ class _StepRow extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 13,
-              color: done ? const Color(0xFF2B2B2B) : Colors.grey,
+              color: done
+                  ? Theme.of(context).colorScheme.onSurface
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: done ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
@@ -278,7 +279,9 @@ class _StepRow extends StatelessWidget {
             width: 20,
             height: 20,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300, width: 2),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                  width: 2),
               shape: BoxShape.circle,
             ),
           ),

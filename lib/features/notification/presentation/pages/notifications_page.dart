@@ -49,17 +49,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => context.go(RouteNames.home),
         ),
-        title: const Text(
+        title: Text(
           'Notifications',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.bold),
         ),
         actions: [
           TextButton(
@@ -83,7 +84,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
           if (snapshot.hasError) {
             return Center(
               child: Text('Erreur: ${snapshot.error}',
-                  style: const TextStyle(color: Colors.grey)),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
             );
           }
 
@@ -95,11 +97,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.notifications_none,
-                      size: 64, color: Colors.grey.shade300),
+                      size: 64,
+                      color: Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Aucune notification',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 16),
                   ),
                 ],
               ),
@@ -216,7 +221,7 @@ class _RepairValidationSheet extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: Theme.of(context).colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -227,19 +232,23 @@ class _RepairValidationSheet extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(productTitle,
-                  style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 13)),
               const SizedBox(height: 16),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F4EE),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Column(
                   children: [
-                    const Text('Montant à votre charge',
-                        style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text('Montant à votre charge',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 12)),
                     const SizedBox(height: 6),
                     Text(
                       _fmt(repairCost),
@@ -257,7 +266,9 @@ class _RepairValidationSheet extends StatelessWidget {
                             : 'À accepter avant le ${DateFormat('dd/MM à HH:mm').format(deadline)}',
                         style: TextStyle(
                           fontSize: 11,
-                          color: expired ? Colors.red : Colors.grey,
+                          color: expired
+                              ? Colors.red
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -270,7 +281,7 @@ class _RepairValidationSheet extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
+                    color: Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Center(
@@ -324,7 +335,7 @@ class _NotifCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: notification.isRead
-              ? Colors.white
+              ? Theme.of(context).colorScheme.surface
               : const Color(0xFF6B7F4D).withOpacity(0.05),
           borderRadius: BorderRadius.circular(16),
           border: notification.isRead
@@ -368,7 +379,7 @@ class _NotifCard extends StatelessWidget {
                                 ? FontWeight.normal
                                 : FontWeight.bold,
                             fontSize: 13,
-                            color: const Color(0xFF2B2B2B),
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -376,16 +387,19 @@ class _NotifCard extends StatelessWidget {
                       ),
                       Text(
                         _formatDate(notification.createdAt),
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 10),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 10),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     notification.body,
-                    style: const TextStyle(
-                        color: Colors.grey, fontSize: 12, height: 1.4),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                        height: 1.4),
                   ),
                   if (!notification.isRead) ...[
                     const SizedBox(height: 4),
