@@ -46,11 +46,8 @@ class _WelcomePageState extends State<WelcomePage>
 
   @override
   Widget build(BuildContext context) {
-    // ── Fond crème identique à celui du logo (même teinte que Splash,
-    // Login, Register) : identité visuelle homogène sur tout le parcours
-    // d'entrée dans l'app, comme demandé (cohérence type DeliverMeat).
+    // Le logo (PNG transparent) s'adapte au fond du theme ambiant.
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       body: SafeArea(
         child: Center(
           child: FadeTransition(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:bamako_thrift/core/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
@@ -35,7 +34,6 @@ class _IntroPageState extends State<IntroPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -52,9 +50,10 @@ class _IntroPageState extends State<IntroPage> {
                   ),
                   TextButton(
                     onPressed: () {},
-                    child: const Text(
+                    child: Text(
                       'Passer',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ],
@@ -81,32 +80,34 @@ class _IntroPageState extends State<IntroPage> {
                           height: 250,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7F4EE),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Icon(
                             Icons.checkroom,
                             size: 100,
-                            color: const Color(0xFF6B7F4D),
+                            color: Color(0xFF6B7F4D),
                           ),
                         ),
                         const SizedBox(height: 40),
                         Text(
                           _slides[index]['title']!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           _slides[index]['description']!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: Colors.grey,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -129,7 +130,7 @@ class _IntroPageState extends State<IntroPage> {
                   decoration: BoxDecoration(
                     color: _currentPage == index
                         ? Colors.orange
-                        : Colors.grey.shade300,
+                        : Theme.of(context).colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),

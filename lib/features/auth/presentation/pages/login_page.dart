@@ -50,7 +50,6 @@ class _LoginPageState extends State<LoginPage> {
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return Scaffold(
-          backgroundColor: const Color(0xFFF7F4EE),
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -72,22 +71,22 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 8),
 
                     // ── Titre ─────────────────────────────────────────────
-                    const Center(
+                    Center(
                       child: Text(
                         'Se connecter',
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF2B2B2B),
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Center(
+                    Center(
                       child: Text(
                         'Bienvenue sur DANAYA',
                         style: TextStyle(
-                          color: Color(0xFF888888),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 14,
                         ),
                       ),
@@ -98,27 +97,29 @@ class _LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        color: Color(0xFF2B2B2B),
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Email ou téléphone',
-                        labelStyle: const TextStyle(color: Color(0xFF888888)),
+                        labelStyle: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant),
                         prefixIcon: const Icon(
                           Icons.email_outlined,
                           color: Color(0xFF6B7F4D),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                              color: Color(0xFFE0E0E0), width: 1),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.outlineVariant,
+                              width: 1),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -140,13 +141,14 @@ class _LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        color: Color(0xFF2B2B2B),
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Mot de passe',
-                        labelStyle: const TextStyle(color: Color(0xFF888888)),
+                        labelStyle: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant),
                         prefixIcon: const Icon(
                           Icons.lock_outline,
                           color: Color(0xFF6B7F4D),
@@ -162,15 +164,16 @@ class _LoginPageState extends State<LoginPage> {
                               () => _obscurePassword = !_obscurePassword),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                              color: Color(0xFFE0E0E0), width: 1),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.outlineVariant,
+                              width: 1),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -231,9 +234,9 @@ class _LoginPageState extends State<LoginPage> {
                     // ── Séparateur ─────────────────────────────────────────
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Divider(
-                            color: Color(0xFFBDBDBD),
+                            color: Theme.of(context).colorScheme.outlineVariant,
                             thickness: 1,
                           ),
                         ),
@@ -242,15 +245,15 @@ class _LoginPageState extends State<LoginPage> {
                           child: Text(
                             'ou continuer avec',
                             style: TextStyle(
-                              color: Colors.grey[700],
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Divider(
-                            color: Color(0xFFBDBDBD),
+                            color: Theme.of(context).colorScheme.outlineVariant,
                             thickness: 1,
                           ),
                         ),
@@ -266,10 +269,12 @@ class _LoginPageState extends State<LoginPage> {
                           child: Container(
                             height: 54,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: const Color(0xFFE0E0E0),
+                                color: Theme.of(context).colorScheme.outlineVariant,
                                 width: 1.5,
                               ),
                               boxShadow: [
@@ -300,10 +305,10 @@ class _LoginPageState extends State<LoginPage> {
                                       width: 22,
                                       height: 22,
                                     ),
-                              label: const Text(
+                              label: Text(
                                 'Google',
                                 style: TextStyle(
-                                  color: Color(0xFF2B2B2B),
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
                                 ),
@@ -317,10 +322,12 @@ class _LoginPageState extends State<LoginPage> {
                           child: Container(
                             height: 54,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: const Color(0xFFE0E0E0),
+                                color: Theme.of(context).colorScheme.outlineVariant,
                                 width: 1.5,
                               ),
                               boxShadow: [
@@ -348,10 +355,10 @@ class _LoginPageState extends State<LoginPage> {
                                 color: Color(0xFF1877F2),
                                 size: 26,
                               ),
-                              label: const Text(
+                              label: Text(
                                 'Facebook',
                                 style: TextStyle(
-                                  color: Color(0xFF2B2B2B),
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
                                 ),
@@ -367,10 +374,10 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           "Pas de compte ? ",
                           style: TextStyle(
-                            color: Color(0xFF666666),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 14,
                           ),
                         ),

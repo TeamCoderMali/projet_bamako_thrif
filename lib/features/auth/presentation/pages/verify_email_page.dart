@@ -8,12 +8,11 @@ class VerifyEmailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => context.go(RouteNames.login),
         ),
       ),
@@ -27,7 +26,7 @@ class VerifyEmailPage extends StatelessWidget {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F4EE),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -37,20 +36,20 @@ class VerifyEmailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              const Text(
+              Text(
                 'Vérifiez votre email',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2B2B2B),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Un lien de vérification a été envoyé à votre adresse email. Cliquez dessus pour activer votre compte.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.grey,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.5,
                 ),
               ),
@@ -86,9 +85,10 @@ class VerifyEmailPage extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () => context.go(RouteNames.login),
-                child: const Text(
+                child: Text(
                   'Retour à la connexion',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
             ],

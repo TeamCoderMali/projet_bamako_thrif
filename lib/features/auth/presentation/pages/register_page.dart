@@ -81,7 +81,6 @@ class _RegisterPageState extends State<RegisterPage> {
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return Scaffold(
-          backgroundColor: const Color(0xFFF7F4EE),
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -103,22 +102,22 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 8),
 
                     // ── Titre ─────────────────────────────────────────────
-                    const Center(
+                    Center(
                       child: Text(
                         'Créer un compte',
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF2B2B2B),
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Center(
+                    Center(
                       child: Text(
                         'Rejoins DANAYA',
                         style: TextStyle(
-                          color: Color(0xFF888888),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 14,
                         ),
                       ),
@@ -129,10 +128,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     TextFormField(
                       controller: _nomController,
                       textCapitalization: TextCapitalization.words,
-                      style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF2B2B2B)),
+                      style: TextStyle(
+                          fontSize: 15,
+                          color: Theme.of(context).colorScheme.onSurface),
                       decoration:
-                          _inputDeco('Nom complet *', Icons.person_outline),
+                          _inputDeco(context, 'Nom complet *', Icons.person_outline),
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Le nom est requis'
                           : null,
@@ -143,9 +143,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF2B2B2B)),
-                      decoration: _inputDeco('Email *', Icons.email_outlined),
+                      style: TextStyle(
+                          fontSize: 15,
+                          color: Theme.of(context).colorScheme.onSurface),
+                      decoration: _inputDeco(context, 'Email *', Icons.email_outlined),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
                           return 'L\'email est requis';
@@ -160,10 +161,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     TextFormField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF2B2B2B)),
+                      style: TextStyle(
+                          fontSize: 15,
+                          color: Theme.of(context).colorScheme.onSurface),
                       decoration: _inputDeco(
-                          'Téléphone (optionnel)', Icons.phone_outlined),
+                          context, 'Téléphone (optionnel)', Icons.phone_outlined),
                     ),
                     const SizedBox(height: 14),
 
@@ -171,10 +173,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF2B2B2B)),
+                      style: TextStyle(
+                          fontSize: 15,
+                          color: Theme.of(context).colorScheme.onSurface),
                       decoration:
-                          _inputDeco('Mot de passe *', Icons.lock_outline)
+                          _inputDeco(context, 'Mot de passe *', Icons.lock_outline)
                               .copyWith(
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -203,10 +206,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     TextFormField(
                       controller: _confirmPasswordController,
                       obscureText: _obscureConfirm,
-                      style: const TextStyle(
-                          fontSize: 15, color: Color(0xFF2B2B2B)),
+                      style: TextStyle(
+                          fontSize: 15,
+                          color: Theme.of(context).colorScheme.onSurface),
                       decoration: _inputDeco(
-                              'Confirmer le mot de passe *', Icons.lock_outline)
+                              context, 'Confirmer le mot de passe *', Icons.lock_outline)
                           .copyWith(
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -226,12 +230,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 20),
 
                     // ── Rôle ─────────────────────────────────────────────
-                    const Text(
+                    Text(
                       'Je suis :',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: Color(0xFF2B2B2B),
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -294,10 +298,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'Déjà un compte ? ',
                           style: TextStyle(
-                            color: Color(0xFF666666),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 14,
                           ),
                         ),
@@ -325,19 +329,22 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  InputDecoration _inputDeco(String label, IconData icon) => InputDecoration(
+  InputDecoration _inputDeco(BuildContext context, String label, IconData icon) =>
+      InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF888888)),
+        labelStyle:
+            TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         prefixIcon: Icon(icon, color: const Color(0xFF6B7F4D)),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1),
+          borderSide:
+              BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -371,10 +378,12 @@ class _RoleCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF6B7F4D).withOpacity(0.08)
-              : Colors.white,
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF6B7F4D) : Colors.grey.shade300,
+            color: isSelected
+                ? const Color(0xFF6B7F4D)
+                : Theme.of(context).colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -382,7 +391,9 @@ class _RoleCard extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? const Color(0xFF6B7F4D) : Colors.grey,
+              color: isSelected
+                  ? const Color(0xFF6B7F4D)
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
               size: 28,
             ),
             const SizedBox(height: 6),
@@ -390,14 +401,18 @@ class _RoleCard extends StatelessWidget {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: isSelected ? const Color(0xFF6B7F4D) : Colors.black87,
+                color: isSelected
+                    ? const Color(0xFF6B7F4D)
+                    : Theme.of(context).colorScheme.onSurface,
                 fontSize: 13,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: const TextStyle(color: Colors.grey, fontSize: 10),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 10),
               textAlign: TextAlign.center,
             ),
           ],

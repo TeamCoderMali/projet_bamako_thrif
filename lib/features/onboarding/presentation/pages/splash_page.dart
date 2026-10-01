@@ -95,10 +95,8 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
-    // ── Fond crème identique à celui du logo : aucune bordure visible,
-    // le logo "fait partie" de l'écran au lieu d'être posé dessus.
+    // Le logo (PNG transparent) s'adapte au fond du theme ambiant.
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnim,
