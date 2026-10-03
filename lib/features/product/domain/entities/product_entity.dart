@@ -16,6 +16,7 @@ class ProductEntity extends Equatable {
   final String? size;
   final String? color;
   final ProductStatus status;
+  final bool verifie;
   final int viewCount;
   final int favoriteCount;
   final String? location;
@@ -39,6 +40,7 @@ class ProductEntity extends Equatable {
     this.size,
     this.color,
     this.status = ProductStatus.available,
+    this.verifie = false,
     this.viewCount = 0,
     this.favoriteCount = 0,
     this.location,
@@ -54,7 +56,7 @@ class ProductEntity extends Equatable {
   @override
   List<Object?> get props => [
         id, sellerId, title, description, price, imageUrls,
-        category, condition, brand, size, color, status,
+        category, condition, brand, size, color, status, verifie,
         viewCount, favoriteCount, rating, reviewCount, createdAt, updatedAt,
       ];
 }
@@ -80,10 +82,11 @@ enum ProductCondition {
 }
 
 enum ProductStatus {
-  available,   // Disponible
-  reserved,    // Réservé
-  sold,        // Vendu
-  inactive,    // Inactif (masqué par le vendeur)
-  pending,     // En attente de validation admin
-  rejected,    // Rejeté par l'admin
+  available,            // Disponible
+  reserved,             // Réservé
+  sold,                 // Vendu
+  inactive,             // Inactif (masqué par le vendeur)
+  pending,              // En attente de validation admin
+  rejected,             // Rejeté par l'admin
+  enAttenteVerification, // En cours de vérification/remise en état (pressing)
 }
