@@ -566,22 +566,22 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   const SizedBox(height: 12),
                 ],
 
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     _Badge(
                       label: _conditionLabel(product.condition),
                       color: Colors.green,
                     ),
-                    if (product.brand != null) ...[
-                      const SizedBox(width: 8),
+                    if (product.verifie)
+                      const _Badge(label: '✓ Vérifié', color: Colors.teal),
+                    if (product.brand != null)
                       _Badge(label: product.brand!, color: Colors.blue),
-                    ],
-                    if (product.size != null) ...[
-                      const SizedBox(width: 8),
+                    if (product.size != null)
                       _Badge(
                           label: 'Taille ${product.size}',
                           color: Colors.orange),
-                    ],
                   ],
                 ),
                 const SizedBox(height: 14),

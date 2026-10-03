@@ -40,4 +40,6 @@ enum NotificationType {
   system,
   // Demande de validation d'un coût de remise en état (cahier 2.2 / 4.8)
   repairValidation,
+  // Article vérifié/remis à neuf par le pressing, validé par un admin
+  productVerified,
 }

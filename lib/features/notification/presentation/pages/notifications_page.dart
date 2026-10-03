@@ -450,6 +450,8 @@ class _NotifCard extends StatelessWidget {
         return (Icons.local_offer_outlined, Colors.orange);
       case NotificationType.repairValidation:
         return (Icons.build_outlined, Colors.deepOrange);
+      case NotificationType.productVerified:
+        return (Icons.verified_outlined, Colors.teal);
       case NotificationType.system:
         return (Icons.info_outline, Colors.grey);
     }

@@ -592,6 +592,27 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (product.verifie)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.teal,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          '✓ Vérifié',
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

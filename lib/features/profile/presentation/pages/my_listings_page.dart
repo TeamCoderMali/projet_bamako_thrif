@@ -31,6 +31,8 @@ class MyListingsPage extends StatelessWidget {
         return 'En attente';
       case 'rejected':
         return 'Rejeté';
+      case 'enAttenteVerification':
+        return 'En cours de vérification';
       default:
         return status;
     }
@@ -50,6 +52,8 @@ class MyListingsPage extends StatelessWidget {
         return Colors.amber;
       case 'rejected':
         return Colors.red;
+      case 'enAttenteVerification':
+        return Colors.teal;
       default:
         return Colors.grey;
     }
@@ -215,6 +219,7 @@ class MyListingsPage extends StatelessWidget {
                     final title = data['title'] as String? ?? 'Sans titre';
                     final price = data['price'];
                     final status = data['status'] as String? ?? 'available';
+                    final verifie = data['verifie'] as bool? ?? false;
                     final images = data['imageUrls'] as List<dynamic>?;
                     final imageUrl = images?.isNotEmpty == true
                         ? images!.first as String
@@ -278,23 +283,48 @@ class MyListingsPage extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  // Badge statut
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          _statusColor(status).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      _statusLabel(status),
-                                      style: TextStyle(
-                                        color: _statusColor(status),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
+                                  // Badge statut + badge Vérifié
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 4,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: _statusColor(status)
+                                              .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          _statusLabel(status),
+                                          style: TextStyle(
+                                            color: _statusColor(status),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      if (verifie)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: Colors.teal.withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: const Text(
+                                            '✓ Vérifié',
+                                            style: TextStyle(
+                                              color: Colors.teal,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ],
                               ),

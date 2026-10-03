@@ -30,6 +30,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   ProductCategory _selectedCategory = ProductCategory.women;
   ProductCondition _selectedCondition = ProductCondition.bon;
+  bool _pressingRequested = false;
 
   final List<File> _selectedImages = [];
   bool _isPublishing = false;
@@ -153,7 +154,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
         location: _localisationController.text.trim().isEmpty
             ? null
             : _localisationController.text.trim(),
-        status: ProductStatus.available,
+        status: _pressingRequested
+            ? ProductStatus.enAttenteVerification
+            : ProductStatus.available,
+        verifie: false,
         createdAt: DateTime.now(),
       );
 
@@ -170,10 +174,14 @@ class _PublishProductPageState extends State<PublishProductPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
-              children: const [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 10),
-                Text('Article publié avec succès !'),
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(_pressingRequested
+                      ? 'Article envoyé au pressing — en cours de vérification !'
+                      : 'Article publié avec succès !'),
+                ),
               ],
             ),
             backgroundColor: const Color(0xFF6B7F4D),
@@ -334,6 +342,8 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           ? 'La description est requise'
                           : null,
                     ),
+                    const SizedBox(height: 18),
+                    _buildPressingOption(),
                     const SizedBox(height: 30),
                     SizedBox(
                       width: double.infinity,
@@ -723,4 +733,64 @@ class _PublishProductPageState extends State<PublishProductPage> {
         ),
         child: child,
       );
+
+  // ── Option pressing : vérification / remise en état avant publication ────
+  Widget _buildPressingOption() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _pressingRequested
+              ? const Color(0xFF6B7F4D)
+              : Colors.grey.shade300,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () =>
+            setState(() => _pressingRequested = !_pressingRequested),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Checkbox(
+              value: _pressingRequested,
+              activeColor: const Color(0xFF6B7F4D),
+              onChanged: (v) =>
+                  setState(() => _pressingRequested = v ?? false),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Faire vérifier / remettre à neuf mon article via notre partenaire pressing',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: Color(0xFF2B2B2B),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _pressingRequested
+                          ? 'Votre article sera visible après vérification et affichera le badge « Vérifié ».'
+                          : 'Optionnel. Votre article reste publié directement, comme aujourd\'hui.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
