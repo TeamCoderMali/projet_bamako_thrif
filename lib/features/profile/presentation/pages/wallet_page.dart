@@ -204,7 +204,7 @@ class WalletPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF0F5E8),
+                              color: const Color(0xFF6B7F4D).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Row(
@@ -216,7 +216,7 @@ class WalletPage extends StatelessWidget {
                                   child: Text(
                                     'Les gains des ventes sont crédités après confirmation de réception par l\'acheteur.',
                                     style: TextStyle(
-                                        color: Color(0xFF5A6B3E), fontSize: 12),
+                                        color: Color(0xFF6B7F4D), fontSize: 12),
                                   ),
                                 ),
                               ],
@@ -229,21 +229,21 @@ class WalletPage extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEFF3FA),
+                                color: Colors.blue.withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(10),
                                 border:
-                                    Border.all(color: const Color(0xFFC9D6EC)),
+                                    Border.all(color: Colors.blue.withOpacity(0.3)),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.hourglass_top_outlined,
-                                      color: Color(0xFF3D5A80), size: 18),
+                                  Icon(Icons.hourglass_top_outlined,
+                                      color: Colors.blue.shade700, size: 18),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       '${_fmt(pendingAmount)} en attente — commande(s) vendues pas encore reçues par l\'acheteur.',
-                                      style: const TextStyle(
-                                          color: Color(0xFF3D5A80),
+                                      style: TextStyle(
+                                          color: Colors.blue.shade700,
                                           fontSize: 12),
                                     ),
                                   ),
@@ -258,21 +258,21 @@ class WalletPage extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFF7E6),
+                                color: Colors.orange.withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                    color: const Color(0xFFF0D999)),
+                                    color: Colors.orange.withOpacity(0.3)),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.timer_outlined,
-                                      color: Color(0xFFB8860B), size: 18),
+                                  Icon(Icons.timer_outlined,
+                                      color: Colors.orange.shade800, size: 18),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       'Une partie de votre solde expire le ${_fmtDate(Timestamp.fromDate(nextExpiry!))} si non utilisée (validité 3 mois).',
-                                      style: const TextStyle(
-                                          color: Color(0xFF8A6A1A),
+                                      style: TextStyle(
+                                          color: Colors.orange.shade800,
                                           fontSize: 12),
                                     ),
                                   ),
@@ -299,10 +299,16 @@ class WalletPage extends StatelessWidget {
                                 child: Column(
                                   children: [
                                     Icon(Icons.receipt_long_outlined,
-                                        size: 56, color: Colors.grey.shade300),
+                                        size: 56,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outlineVariant),
                                     const SizedBox(height: 12),
-                                    const Text('Aucune transaction',
-                                        style: TextStyle(color: Colors.grey)),
+                                    Text('Aucune transaction',
+                                        style: TextStyle(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant)),
                                   ],
                                 ),
                               ),
@@ -335,10 +341,12 @@ class WalletPage extends StatelessWidget {
                                     height: 40,
                                     decoration: BoxDecoration(
                                       color: isExpired
-                                          ? Colors.grey.shade100
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .surfaceContainerHighest
                                           : isCredit
-                                              ? Colors.green.shade50
-                                              : Colors.red.shade50,
+                                              ? Colors.green.withOpacity(0.12)
+                                              : Colors.red.withOpacity(0.12),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -346,7 +354,9 @@ class WalletPage extends StatelessWidget {
                                           ? Icons.arrow_downward_rounded
                                           : Icons.arrow_upward_rounded,
                                       color: isExpired
-                                          ? Colors.grey
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant
                                           : isCredit
                                               ? Colors.green
                                               : Colors.red,
@@ -357,22 +367,29 @@ class WalletPage extends StatelessWidget {
                                       style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
-                                          color:
-                                              isExpired ? Colors.grey : null)),
+                                          color: isExpired
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant
+                                              : null)),
                                   subtitle: Text(
                                     isExpired ? '$date · Expiré' : date,
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: isExpired
                                           ? Colors.orange.shade700
-                                          : Colors.grey,
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
                                     ),
                                   ),
                                   trailing: Text(
                                     '${isCredit ? '+' : '-'}${_fmt(amount)}',
                                     style: TextStyle(
                                       color: isExpired
-                                          ? Colors.grey
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant
                                           : isCredit
                                               ? Colors.green.shade700
                                               : Colors.red.shade700,

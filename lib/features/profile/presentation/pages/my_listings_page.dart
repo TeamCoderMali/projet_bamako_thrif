@@ -85,7 +85,9 @@ class MyListingsPage extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+            child: Text('Annuler',
+                style: TextStyle(
+                    color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -176,11 +178,14 @@ class MyListingsPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.store_mall_directory_outlined,
-                            size: 72, color: Colors.grey.shade300),
+                            size: 72,
+                            color: Theme.of(context).colorScheme.outlineVariant),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Aucune annonce publiée',
-                          style: TextStyle(color: Colors.grey, fontSize: 16),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontSize: 16),
                         ),
                         const SizedBox(height: 12),
                         ElevatedButton.icon(
@@ -242,9 +247,10 @@ class MyListingsPage extends StatelessWidget {
                                     width: 90,
                                     height: 90,
                                     fit: BoxFit.cover,
-                                    errorWidget: (_, __, ___) => _placeholder(),
+                                    errorWidget: (_, __, ___) =>
+                                        _placeholder(context),
                                   )
-                                : _placeholder(),
+                                : _placeholder(context),
                           ),
                           const SizedBox(width: 12),
                           // Infos
@@ -304,7 +310,9 @@ class MyListingsPage extends StatelessWidget {
                                     status == 'available'
                                         ? Icons.visibility_off_outlined
                                         : Icons.visibility_outlined,
-                                    color: Colors.grey,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                     size: 20,
                                   ),
                                   tooltip: status == 'available'
@@ -332,10 +340,10 @@ class MyListingsPage extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() => Container(
+  Widget _placeholder(BuildContext context) => Container(
         width: 90,
         height: 90,
-        color: const Color(0xFFF7F4EE),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: const Icon(Icons.checkroom, size: 36, color: Color(0xFF6B7F4D)),
       );
 }

@@ -338,8 +338,10 @@ class _SearchPageState extends State<SearchPage> {
     required IconData icon,
     required String title,
     String? subtitle,
-    Color iconColor = Colors.grey,
+    Color? iconColor,
   }) {
+    final resolvedIconColor =
+        iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -347,10 +349,10 @@ class _SearchPageState extends State<SearchPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: resolvedIconColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 48, color: iconColor),
+            child: Icon(icon, size: 48, color: resolvedIconColor),
           ),
           const SizedBox(height: 16),
           Text(
