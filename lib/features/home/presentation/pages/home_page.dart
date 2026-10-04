@@ -19,19 +19,19 @@ class _HomePageState extends State<HomePage> {
   ProductCategory? _selectedCategory;
 
   final List<Map<String, dynamic>> _categoryFilters = [
-    {'label': 'Tous', 'value': null, 'icon': Icons.grid_view_rounded},
+    {'label': 'Voir tout', 'value': null, 'icon': Icons.grid_view_rounded},
     {
-      'label': 'Femme',
+      'label': 'Femmes',
       'value': ProductCategory.women,
       'icon': Icons.woman_outlined
     },
     {
-      'label': 'Homme',
+      'label': 'Hommes',
       'value': ProductCategory.men,
       'icon': Icons.man_outlined
     },
     {
-      'label': 'Enfant',
+      'label': 'Enfants',
       'value': ProductCategory.children,
       'icon': Icons.child_care
     },
