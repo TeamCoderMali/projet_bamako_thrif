@@ -9,6 +9,7 @@ import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 import 'package:bamako_thrift/features/product/presentation/cubit/product_cubit.dart';
+import 'package:bamako_thrift/shared/widgets/bottom_navigation.dart';
 
 // ── Modèle de filtres partagé entre CatalogPage et FilterPage ────────────────
 class CatalogFilters {
@@ -386,7 +387,7 @@ class _CatalogPageState extends State<CatalogPage> {
           ),
         ],
       ),
-      bottomNavigationBar: _BottomNav(currentIndex: 1),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 1),
     );
   }
 }
@@ -523,52 +524,6 @@ class _ProductCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ── Bottom Nav ────────────────────────────────────────────────────────────────
-class _BottomNav extends StatelessWidget {
-  final int currentIndex;
-  const _BottomNav({required this.currentIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: (i) {
-        switch (i) {
-          case 0:
-            context.go(RouteNames.home);
-            break;
-          case 1:
-            context.go(RouteNames.search);
-            break;
-          case 2:
-            context.go(RouteNames.publish);
-            break;
-          case 3:
-            context.go(RouteNames.messages);
-            break;
-          case 4:
-            context.go(RouteNames.profile);
-            break;
-        }
-      },
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: const Color(0xFF6B7F4D),
-      unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
-      items: const [
-        BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined), label: 'Accueil'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Chercher'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline), label: 'Publier'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.message_outlined), label: 'Messages'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline), label: 'Profil'),
-      ],
     );
   }
 }

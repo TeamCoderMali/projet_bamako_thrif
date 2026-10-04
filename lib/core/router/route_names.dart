@@ -15,6 +15,7 @@ abstract class RouteNames {
 
   // ── Main shell ────────────────────────────────────────────────────────
   static const String home = '/home';
+  static const String browse = '/browse';
   static const String catalog = '/catalog';
   static const String publish = '/publish';
   static const String messages = '/messages';

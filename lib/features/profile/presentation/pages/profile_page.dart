@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:bamako_thrift/shared/widgets/bottom_navigation.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -395,53 +396,7 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
             ),
-            bottomNavigationBar: BottomNavigationBar(
-              currentIndex: 4,
-              onTap: (index) {
-                switch (index) {
-                  case 0:
-                    context.go(RouteNames.home);
-                    break;
-                  case 1:
-                    context.go(RouteNames.search);
-                    break;
-                  case 2:
-                    context.go(RouteNames.publish);
-                    break;
-                  case 3:
-                    context.go(RouteNames.messages);
-                    break;
-                  case 4:
-                    context.go(RouteNames.profile);
-                    break;
-                }
-              },
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: const Color(0xFF6B7F4D),
-              unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              elevation: 8,
-              items: const [
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.home_outlined),
-                    activeIcon: Icon(Icons.home),
-                    label: 'Accueil'),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.search), label: 'Chercher'),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.add_circle_outline),
-                    activeIcon: Icon(Icons.add_circle),
-                    label: 'Publier'),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.message_outlined),
-                    activeIcon: Icon(Icons.message),
-                    label: 'Messages'),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.person_outline),
-                    activeIcon: Icon(Icons.person),
-                    label: 'Profil'),
-              ],
-            ),
+            bottomNavigationBar: const AppBottomNav(currentIndex: 4),
           ),
         );
       },

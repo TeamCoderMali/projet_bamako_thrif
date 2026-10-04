@@ -10,6 +10,7 @@ import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 import 'package:bamako_thrift/features/product/data/models/product_model.dart';
 import 'package:bamako_thrift/features/product/presentation/cubit/product_cubit.dart';
+import 'package:bamako_thrift/shared/widgets/bottom_navigation.dart';
 
 class PublishProductPage extends StatefulWidget {
   const PublishProductPage({super.key});
@@ -469,44 +470,9 @@ class _PublishProductPageState extends State<PublishProductPage> {
               ),
           ],
         ),
-        bottomNavigationBar: BottomNavigationBar(
+        bottomNavigationBar: AppBottomNav(
           currentIndex: 2,
-          onTap: _isPublishing
-              ? null
-              : (index) {
-                  switch (index) {
-                    case 0:
-                      context.go(RouteNames.home);
-                      break;
-                    case 1:
-                      context.go(RouteNames.search);
-                      break;
-                    case 2:
-                      context.go(RouteNames.publish);
-                      break;
-                    case 3:
-                      context.go(RouteNames.messages);
-                      break;
-                    case 4:
-                      context.go(RouteNames.profile);
-                      break;
-                  }
-                },
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF6B7F4D),
-          unselectedItemColor: Colors.grey,
-          items: const [
-            BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined), label: 'Accueil'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.search), label: 'Chercher'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.add_circle), label: 'Publier'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.message_outlined), label: 'Messages'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline), label: 'Profil'),
-          ],
+          enabled: !_isPublishing,
         ),
       ),
     );
