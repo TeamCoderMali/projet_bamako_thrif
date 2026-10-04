@@ -22,6 +22,7 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/catalog/presentation/pages/catalog_page.dart';
 import '../../features/catalog/presentation/pages/search_page.dart';
 import '../../features/catalog/presentation/pages/filter_page.dart';
+import '../../features/catalog/presentation/pages/browse_page.dart';
 
 // ── Product ────────────────────────────────────────────────────────────────
 import '../../features/product/presentation/pages/product_detail_page.dart';
@@ -154,11 +155,19 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const HomePage(),
     ),
 
+    // ── Browse ───────────────────────────────────────────────────────────────────
+    GoRoute(
+      path: RouteNames.browse,
+      name: 'browse',
+      builder: (context, state) => const BrowsePage(),
+    ),
+
     // ── Catalog ──────────────────────────────────────────────────────────────────
     GoRoute(
       path: RouteNames.catalog,
       name: 'catalog',
-      builder: (context, state) => const CatalogPage(),
+      builder: (context, state) =>
+          CatalogPage(initialFilters: state.extra as CatalogFilters?),
     ),
 
     // ── Search ──────────────────────────────────────────────────────────────────
