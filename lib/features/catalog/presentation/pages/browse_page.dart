@@ -9,6 +9,8 @@
 // jewelry/traditional/other sur cet écran. Pas de repli générique
 // silencieux : un asset manquant (svgAsset null) affiche une erreur visible
 // au lieu d'une icône grise qui masquerait le problème.
+// Illustrations centrées dans chaque tuile (taille régulière), nom sous le
+// dessin.
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -54,9 +56,7 @@ const _categoryTiles = <_CategoryTile>[
   _CategoryTile(
     category: ProductCategory.accessories,
     label: 'Accessoires',
-    // En attente du SVG lunettes (l'ancien accessoires.svg était en fait un
-    // sac, renomme en sacs.svg). Ne pas remettre un fallback ici.
-    svgAsset: null,
+    svgAsset: 'assets/images/categories/accessoires.svg',
   ),
   _CategoryTile(
     category: ProductCategory.bags,
@@ -162,6 +162,7 @@ class _BrowsePageState extends State<BrowsePage> {
               Expanded(
                 child: _CategoryTileCard(
                   tile: _categoryTiles[i],
+                  isWide: isLast,
                   onTap: () => _openCategory(_categoryTiles[i].category),
                 ),
               ),
@@ -187,7 +188,12 @@ class _BrowsePageState extends State<BrowsePage> {
 class _CategoryTileCard extends StatelessWidget {
   final _CategoryTile tile;
   final VoidCallback onTap;
-  const _CategoryTileCard({required this.tile, required this.onTap});
+  final bool isWide;
+  const _CategoryTileCard({
+    required this.tile,
+    required this.onTap,
+    this.isWide = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +202,7 @@ class _CategoryTileCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AspectRatio(
-        aspectRatio: 1.15,
+        aspectRatio: isWide ? 2.6 : 1.15,
         child: Container(
           decoration: BoxDecoration(
             color: colors.surfaceContainerHighest,
@@ -205,49 +211,41 @@ class _CategoryTileCard extends StatelessWidget {
                 ? Border.all(color: Colors.red.shade400, width: 1.5)
                 : null,
           ),
-          child: Stack(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Positioned(
-                right: -6,
-                bottom: -6,
-                child: SizedBox(
-                  width: 84,
-                  height: 84,
-                  child: missing
-                      ? Tooltip(
-                          message: 'Illustration manquante pour "${tile.label}"',
-                          child: Icon(Icons.warning_amber_rounded,
-                              color: Colors.red.shade400, size: 36),
-                        )
-                      : SvgPicture.asset(tile.svgAsset!, fit: BoxFit.contain),
+              SizedBox(
+                width: 72,
+                height: 72,
+                child: missing
+                    ? Tooltip(
+                        message: 'Illustration manquante pour "${tile.label}"',
+                        child: Icon(Icons.warning_amber_rounded,
+                            color: Colors.red.shade400, size: 36),
+                      )
+                    : SvgPicture.asset(tile.svgAsset!, fit: BoxFit.contain),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                tile.label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: colors.onSurface,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    tile.label,
-                    style: TextStyle(
-                      fontSize: 15,
+              if (missing) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'SVG manquant',
+                  style: TextStyle(
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: colors.onSurface,
-                    ),
-                  ),
+                      color: Colors.red.shade400),
                 ),
-              ),
-              if (missing)
-                Positioned(
-                  left: 16,
-                  bottom: 12,
-                  child: Text(
-                    'SVG manquant',
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red.shade400),
-                  ),
-                ),
+              ],
             ],
           ),
         ),
