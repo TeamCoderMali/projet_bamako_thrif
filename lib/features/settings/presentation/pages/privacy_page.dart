@@ -1,9 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/payment_config_service.dart';
 
-class PrivacyPage extends StatelessWidget {
+class PrivacyPage extends StatefulWidget {
   const PrivacyPage({super.key});
+
+  @override
+  State<PrivacyPage> createState() => _PrivacyPageState();
+}
+
+class _PrivacyPageState extends State<PrivacyPage> {
+  // Repli = desactive, meme choix que partout ailleurs. Lot 9.
+  bool _paymentEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPaymentConfig();
+  }
+
+  Future<void> _loadPaymentConfig() async {
+    final enabled = await PaymentConfigService.instance.isPaymentEnabled();
+    if (mounted) setState(() => _paymentEnabled = enabled);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +68,9 @@ class PrivacyPage extends StatelessWidget {
             ),
             _buildSection(
               'Paiements',
-              'Les paiements sont traités via Orange Money et Moov Money. Les fonds sont bloqués jusqu\'à validation de la transaction par notre équipe.',
+              _paymentEnabled
+                  ? 'Les paiements sont traités via Orange Money et Moov Money. Les fonds sont bloqués jusqu\'à validation de la transaction par notre équipe.'
+                  : 'Pendant la phase de test, Danaya n\'intervient pas dans le paiement : il se fait directement entre l\'acheteur et le vendeur, en dehors de l\'app.',
             ),
             _buildSection(
               'Vos droits',

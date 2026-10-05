@@ -142,7 +142,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
     if (result == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Signalement envoyé à l\'équipe'),
+          content: Text('Signalement envoyé'),
           backgroundColor: Color(0xFF6B7F4D),
         ),
       );

@@ -127,7 +127,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Votre commande a bien été enregistrée.\nL\'argent est sécurisé en escrow.',
+                      'Votre commande a bien été enregistrée.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -155,7 +155,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                         children: [
                           _StepRow(
                             emoji: '✅',
-                            label: 'Paiement reçu et sécurisé',
+                            label: 'Commande enregistrée',
                             done: true,
                           ),
                           SizedBox(height: 12),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/payment_config_service.dart';
 
 class IntroPage extends StatefulWidget {
   const IntroPage({super.key});
@@ -13,23 +15,56 @@ class _IntroPageState extends State<IntroPage> {
   final PageController _controller = PageController();
   int _currentPage = 0;
 
-  final List<Map<String, String>> _slides = [
-    {
-      'title': 'Achète. Vends. Économise.',
-      'description':
-          'La meilleure façon d\'acheter et vendre de la seconde main à Bamako.',
-    },
-    {
-      'title': 'Vêtements vérifiés & lavés',
-      'description':
-          'Chaque article est inspecté et lavé par notre équipe avant la remise.',
-    },
-    {
-      'title': 'Paiement 100% sécurisé',
-      'description':
-          'Orange Money, Moov Money et portefeuille virtuel disponibles.',
-    },
-  ];
+  // Repli = desactive, meme choix que partout ailleurs (voir
+  // PaymentConfigService). Lot 9.
+  bool _paymentEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPaymentConfig();
+  }
+
+  Future<void> _loadPaymentConfig() async {
+    final enabled = await PaymentConfigService.instance.isPaymentEnabled();
+    if (mounted) setState(() => _paymentEnabled = enabled);
+  }
+
+  // Slide 2 : decrit le pressing (gouverne par pressingEnabled, pas par le
+  // paiement). Slide 3 : decrit le paiement (gouverne par _paymentEnabled).
+  // Lot 9 : textes "equipe"/"escrow"/paiement integre retires tant que ces
+  // fonctionnalites ne sont pas actives.
+  List<Map<String, String>> get _slides => [
+        {
+          'title': 'Achète. Vends. Économise.',
+          'description':
+              'La meilleure façon d\'acheter et vendre de la seconde main à Bamako.',
+        },
+        if (pressingEnabled)
+          {
+            'title': 'Vêtements vérifiés & lavés',
+            'description':
+                'Chaque article est inspecté et lavé par notre équipe avant la remise.',
+          }
+        else
+          {
+            'title': 'Articles de seconde main, choisis avec soin',
+            'description':
+                'Chaque vendeur décrit précisément l\'état de son article avant publication.',
+          },
+        if (_paymentEnabled)
+          {
+            'title': 'Paiement 100% sécurisé',
+            'description':
+                'Orange Money, Moov Money et portefeuille virtuel disponibles.',
+          }
+        else
+          {
+            'title': 'Mise en relation directe',
+            'description':
+                'Discutez avec le vendeur dans l\'app et mettez-vous d\'accord sur la remise de l\'article.',
+          },
+      ];
 
   @override
   Widget build(BuildContext context) {

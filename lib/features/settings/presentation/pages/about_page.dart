@@ -1,9 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/payment_config_service.dart';
 
-class AboutPage extends StatelessWidget {
+class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
+
+  @override
+  State<AboutPage> createState() => _AboutPageState();
+}
+
+class _AboutPageState extends State<AboutPage> {
+  // Repli = desactive, meme choix que partout ailleurs. Lot 9.
+  bool _paymentEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPaymentConfig();
+  }
+
+  Future<void> _loadPaymentConfig() async {
+    final enabled = await PaymentConfigService.instance.isPaymentEnabled();
+    if (mounted) setState(() => _paymentEnabled = enabled);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +68,13 @@ class AboutPage extends StatelessWidget {
             // Infos
             _buildInfo(context, 'Fondée en', '2026'),
             _buildInfo(context, 'Basée à', 'Bamako, Mali'),
-            _buildInfo(context, 'Paiement', 'Orange Money & Moov Money'),
+            _buildInfo(
+              context,
+              'Paiement',
+              _paymentEnabled
+                  ? 'Orange Money & Moov Money'
+                  : 'Directement entre acheteur et vendeur (phase test)',
+            ),
             _buildInfo(context, 'Support', 'support@danaya.ml'),
 
             const SizedBox(height: 32),
