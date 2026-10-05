@@ -31,6 +31,13 @@ service cloud.firestore {
       let sellerId = get(/databases/$(database)/documents/product/$(productId)).data.sellerId;
       return get(/databases/$(database)/documents/users/$(sellerId)).data.isVendeurPro == true;
     }
+    // Phase test sans paiement integre (back-office > Parametres >
+    // Paiement). Document absent ou champ absent = paiement actif (meme
+    // repli que cote mobile, voir PaymentConfigService).
+    function paymentDisabled() {
+      return exists(/databases/$(database)/documents/config/payment)
+        && get(/databases/$(database)/documents/config/payment).data.get('enabled', true) == false;
+    }
     // Pressing/vérification d'article : le vendeur ne peut jamais toucher au
     // champ "verifie" (statut accordé par la plateforme après remise en état
     // par le pressing, pas auto-déclaré — même principe que isVendeurPro).
@@ -45,7 +52,12 @@ service cloud.firestore {
       return after.get('verifie', false) == before.get('verifie', false)
         && (after.status == before.status
             || (before.status in ['available', 'inactive']
-                && after.status in ['available', 'inactive']))
+                && after.status in ['available', 'inactive'])
+            // Vendeur marque son article vendu/reserve lui-meme :
+            // uniquement en phase sans paiement integre (lot 5).
+            || (before.status == 'available'
+                && after.status in ['sold', 'reserved']
+                && paymentDisabled()))
         && (before.get('verifie', false) != true
             || (after.title == before.title
                 && after.description == before.description

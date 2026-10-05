@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/payment_config_service.dart';
 
 class MyListingsPage extends StatelessWidget {
   const MyListingsPage({super.key});
@@ -72,6 +73,29 @@ class MyListingsPage extends StatelessWidget {
         SnackBar(
           content: Text(
               newStatus == 'available' ? 'Annonce publiée' : 'Annonce masquée'),
+          backgroundColor: const Color(0xFF6B7F4D),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // Vendu/réservé par le vendeur lui-même : possible UNIQUEMENT quand le
+  // paiement est désactivé (phase test). Côté règles, voir paymentDisabled()
+  // dans firestore.rules — ce bouton n'est qu'un repli d'affichage, la
+  // vraie barrière est serveur.
+  Future<void> _markStatus(
+      BuildContext context, String docId, String newStatus) async {
+    await FirebaseFirestore.instance
+        .collection('product')
+        .doc(docId)
+        .update({'status': newStatus});
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(newStatus == 'sold'
+              ? 'Article marqué vendu'
+              : 'Article marqué réservé'),
           backgroundColor: const Color(0xFF6B7F4D),
           duration: const Duration(seconds: 2),
         ),
@@ -158,7 +182,21 @@ class MyListingsPage extends StatelessWidget {
       ),
       body: uid == null
           ? const Center(child: Text('Connectez-vous pour voir vos annonces'))
-          : StreamBuilder<QuerySnapshot>(
+          : FutureBuilder<bool>(
+              future: PaymentConfigService.instance.isPaymentEnabled(),
+              builder: (context, paymentSnap) {
+                // Repli prudent pendant le chargement aussi : tant qu'on ne
+                // sait pas, on se comporte comme si le paiement était actif
+                // (pas de bouton vendu/réservé affiché par erreur).
+                final paymentEnabled = paymentSnap.data ?? true;
+                return _buildList(context, uid, paymentEnabled);
+              },
+            ),
+    );
+  }
+
+  Widget _buildList(BuildContext context, String uid, bool paymentEnabled) {
+    return StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('product')
                   .where('sellerId', isEqualTo: uid)
@@ -226,6 +264,8 @@ class MyListingsPage extends StatelessWidget {
                         : null;
                     final canToggle =
                         status == 'available' || status == 'inactive';
+                    final canMarkSoldReserved =
+                        status == 'available' && !paymentEnabled;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -351,6 +391,29 @@ class MyListingsPage extends StatelessWidget {
                                   onPressed: () =>
                                       _toggleStatus(context, docId, status),
                                 ),
+                              if (canMarkSoldReserved)
+                                PopupMenuButton<String>(
+                                  icon: Icon(
+                                    Icons.sell_outlined,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    size: 20,
+                                  ),
+                                  tooltip: 'Marquer vendu/réservé',
+                                  onSelected: (v) =>
+                                      _markStatus(context, docId, v),
+                                  itemBuilder: (_) => const [
+                                    PopupMenuItem(
+                                      value: 'sold',
+                                      child: Text('Marquer vendu'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'reserved',
+                                      child: Text('Marquer réservé'),
+                                    ),
+                                  ],
+                                ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,
                                     color: Colors.red, size: 20),
@@ -366,8 +429,7 @@ class MyListingsPage extends StatelessWidget {
                   },
                 );
               },
-            ),
-    );
+            );
   }
 
   Widget _placeholder(BuildContext context) => Container(
