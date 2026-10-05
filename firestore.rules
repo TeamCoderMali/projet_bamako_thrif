@@ -57,6 +57,12 @@ service cloud.firestore {
             // uniquement en phase sans paiement integre (lot 5).
             || (before.status == 'available'
                 && after.status in ['sold', 'reserved']
+                && paymentDisabled())
+            // Annule une vente/reservation auto-declaree (meme phase
+            // uniquement) : une vente reelle, payee, reste geree par le
+            // flux de commande (acheteur), pas par ce carve-out.
+            || (before.status in ['sold', 'reserved']
+                && after.status == 'available'
                 && paymentDisabled()))
         && (before.get('verifie', false) != true
             || (after.title == before.title

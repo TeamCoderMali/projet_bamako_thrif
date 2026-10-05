@@ -94,9 +94,11 @@ class MyListingsPage extends StatelessWidget {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(newStatus == 'sold'
-              ? 'Article marqué vendu'
-              : 'Article marqué réservé'),
+          content: Text(switch (newStatus) {
+            'sold' => 'Article marqué vendu',
+            'reserved' => 'Article marqué réservé',
+            _ => 'Article remis disponible',
+          }),
           backgroundColor: const Color(0xFF6B7F4D),
           duration: const Duration(seconds: 2),
         ),
@@ -267,6 +269,13 @@ class MyListingsPage extends StatelessWidget {
                         status == 'available' || status == 'inactive';
                     final canMarkSoldReserved =
                         status == 'available' && !paymentEnabled;
+                    // Annuler une vente/reservation auto-declaree (phase
+                    // sans paiement uniquement — une vente reelle, payee,
+                    // reste geree par le flux de commande, pas par ce
+                    // bouton).
+                    final canRevertToAvailable = (status == 'sold' ||
+                            status == 'reserved') &&
+                        !paymentEnabled;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -414,6 +423,19 @@ class MyListingsPage extends StatelessWidget {
                                       child: Text('Marquer réservé'),
                                     ),
                                   ],
+                                ),
+                              if (canRevertToAvailable)
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.undo,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    size: 20,
+                                  ),
+                                  tooltip: 'Annuler la vente/réservation',
+                                  onPressed: () => _markStatus(
+                                      context, docId, 'available'),
                                 ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,

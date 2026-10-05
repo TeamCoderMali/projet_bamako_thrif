@@ -1,0 +1,263 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Fonctions utilitaires ──────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    // ── Rôles back-office (admin/relay_manager) ─────────────────────────────
+    // Les comptes admin/relais sont stockés dans admin_users/{uid}, séparément
+    // des clients de l'app mobile (users/{uid}). Le dashboard (Angular) utilise
+    // le SDK client Firebase, donc ces vérifications de rôle sont la SEULE
+    // barrière serveur — sans elles, le dashboard n'a aucun accès légitime.
+    function isAdmin() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isRelayManager() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role == 'relay_manager';
+    }
+    // Un commentaire texte sur un avis n'est autorisé que si le vendeur du
+    // produit est "Vendeur Pro" — vérifié côté serveur, pas seulement caché
+    // côté app (un client pourrait sinon écrire directement via le SDK).
+    function sellerIsPro(productId) {
+      let sellerId = get(/databases/$(database)/documents/product/$(productId)).data.sellerId;
+      return get(/databases/$(database)/documents/users/$(sellerId)).data.isVendeurPro == true;
+    }
+    // Phase test sans paiement integre (back-office > Parametres >
+    // Paiement). Document absent ou champ absent = paiement actif (meme
+    // repli que cote mobile, voir PaymentConfigService).
+    function paymentDisabled() {
+      return exists(/databases/$(database)/documents/config/payment)
+        && get(/databases/$(database)/documents/config/payment).data.get('enabled', true) == false;
+    }
+
+    // ── Collection users ───────────────────────────────────────────────────
+    // Profil public (nom, avatar, note...) — lecture ouverte à tout
+    // utilisateur connecté (marketplace, chat). Les champs sensibles
+    // (email, téléphone, token FCM) vivent dans la sous-collection /private.
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      // ⚠️ Exception pour totalSales/lastActivityAt : l'acheteur qui confirme
+      // une réception met à jour ces compteurs sur le document du VENDEUR
+      // (pas de Cloud Function pour le faire côté serveur). Même faille de
+      // principe que sur /wallet — à durcir avec une Cloud Function avant
+      // un vrai lancement.
+      // isVendeurPro : exclu de l'auto-modification, seul un admin peut le
+      // changer (statut accordé par la plateforme, pas auto-déclaré).
+      allow update: if isAdmin()
+        || (isOwner(userId)
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['isVendeurPro']))
+        || (isAuthenticated()
+            && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['totalSales', 'lastActivityAt']));
+      allow delete: if isOwner(userId);
+
+      // Sous-collection favorites
+      match /favorites/{productId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Sous-collection privée : email, téléphone, statut de vérification
+      // email, token FCM — jamais exposés aux autres utilisateurs
+      // (contrairement au reste du profil, public pour la marketplace/chat).
+      match /private/{doc} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // ── Collection admin_users ─────────────────────────────────────────────
+    // Comptes du dashboard back-office (admin / relay_manager). Distincte de
+    // /users (clients mobile).
+    match /admin_users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isOwner(uid) || isAdmin();
+    }
+
+    // ── Collection product ─────────────────────────────────────────────────
+    // Lecture publique pour les utilisateurs connectés.
+    // Création uniquement par l'auteur.
+    // Modification/suppression uniquement par l'auteur.
+    match /product/{productId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (
+            // Vendeur marque/annule vendu-reserve sur son propre article :
+            // seulement en phase sans paiement integre (lot 5). Une vente
+            // reelle (paiement actif) reste geree par le flux de commande,
+            // pas par ce carve-out. Tout le reste des droits du vendeur
+            // (inchange par rapport a la production) reste ouvert.
+            (resource.data.sellerId == request.auth.uid
+             && (!((resource.data.status == 'available'
+                    && request.resource.data.status in ['sold', 'reserved'])
+                   || (resource.data.status in ['sold', 'reserved']
+                       && request.resource.data.status == 'available'))
+                 || paymentDisabled()))
+            || isAdmin()
+            || request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['viewCount', 'favoriteCount', 'rating', 'reviewCount'])
+            || (request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['status', 'updatedAt', 'orderId'])
+                && request.resource.data.status in ['sold', 'available']
+                && request.resource.data.orderId is string
+                && get(/databases/$(database)/documents/order/$(request.resource.data.orderId)).data.buyerId == request.auth.uid
+                && get(/databases/$(database)/documents/order/$(request.resource.data.orderId)).data.productId == productId));
+      allow delete: if isAuthenticated()
+        && (resource.data.sellerId == request.auth.uid || isAdmin());
+
+      // Avis (note + commentaire optionnel). L'ID du doc = uid de l'auteur,
+      // donc un seul avis par personne et par produit.
+      match /reviews/{reviewId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isOwner(reviewId)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && (!('comment' in request.resource.data)
+              || (request.resource.data.comment is string
+                  && request.resource.data.comment.size() <= 500
+                  && sellerIsPro(productId)));
+        allow delete: if false;
+      }
+    }
+
+    // ── Collection chat ────────────────────────────────────────────────────
+    // Un chat est accessible uniquement aux participants.
+    match /chat/{chatId} {
+      allow read, write: if isAuthenticated()
+        && request.auth.uid in resource.data.participantIds;
+      allow create: if isAuthenticated()
+        && request.auth.uid in request.resource.data.participantIds;
+
+      // Messages : uniquement les participants du chat parent
+      match /message/{messageId} {
+        allow read: if isAuthenticated()
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds;
+        allow create: if isAuthenticated()
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds
+          && request.resource.data.senderId == request.auth.uid;
+        // Seul le champ isRead est modifiable (marquer comme lu) — pas le
+        // contenu du message ni son expéditeur.
+        allow update: if isAuthenticated()
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+        allow delete: if false;
+      }
+    }
+
+    // ── Collection notification ────────────────────────────────────────────
+    // Chaque utilisateur lit/modifie uniquement ses notifications.
+    match /notification/{notificationId} {
+      allow read, update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+    }
+
+    // ── Collection order ──────────────────────────────────────────────────
+    match /order/{orderId} {
+      allow read: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isAdmin());
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // ── Collection wallet ──────────────────────────────────────────────────
+    // ⚠️ allow write volontairement large : le crédit vendeur se fait côté
+    // client (app mobile) faute de Cloud Functions. À restreindre à une
+    // Cloud Function déclenchée sur le changement de statut de commande
+    // avant un vrai lancement.
+    match /wallet/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isAuthenticated();
+
+      match /transactions/{txId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create: if isAuthenticated();
+      }
+    }
+
+    // Requête groupée (collectionGroup) sur toutes les sous-collections
+    // transactions, utilisée par le dashboard Finances du back-office.
+    match /{path=**}/transactions/{txId} {
+      allow read: if isAdmin();
+    }
+
+    // ── Collection non_conformities ────────────────────────────────────────
+    // Signalement acheteur (remplace l'ancienne inspection relais). Le relais
+    // (et l'admin) doivent voir et traiter tous les signalements, pas
+    // seulement ceux où ils sont partie prenante.
+    match /non_conformities/{ncId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid;
+      allow read, update: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isRelayManager()
+            || isAdmin());
+    }
+
+    // ── Collection refund_requests ─────────────────────────────────────────
+    match /refund_requests/{id} {
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid;
+      allow read: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid || isAdmin());
+    }
+
+    // ── Collection disputes ─────────────────────────────────────────────────
+    // Litiges génériques gérés par l'admin (distinct de non_conformities,
+    // qui est le flux relais du nouveau circuit de livraison).
+    match /disputes/{id} {
+      allow read, update: if isAdmin();
+    }
+
+    // ── Collection reports ──────────────────────────────────────────────────
+    // Signalement libre (article ou conversation), distinct de
+    // non_conformities (lié à une commande) et de disputes (litige
+    // acheteur/vendeur). Tout utilisateur connecté peut créer un
+    // signalement avec son propre reporterId ; seuls les admins le
+    // lisent et le traitent.
+    match /reports/{id} {
+      allow create: if isAuthenticated()
+        && request.resource.data.reporterId == request.auth.uid;
+      allow read, update: if isAdmin();
+    }
+
+    // ── Collection config ───────────────────────────────────────────────────
+    // Reglages globaux lus par l'app mobile (ex: interrupteur paiement,
+    // config/payment). Lecture ouverte a tout utilisateur connecte : l'app a
+    // besoin de savoir si le paiement est actif avant meme d'afficher quoi
+    // que ce soit. Ecriture reservee aux admins (back-office).
+    match /config/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ── Collection relay_centers ────────────────────────────────────────────
+    // Gestion des points relais (admin uniquement) ; lecture aussi ouverte
+    // au relay_manager pour consulter les infos de son centre.
+    match /relay_centers/{id} {
+      allow read: if isAdmin() || isRelayManager();
+      allow write: if isAdmin();
+    }
+  }
+}
