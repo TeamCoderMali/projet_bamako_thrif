@@ -11,6 +11,7 @@ import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 import 'package:bamako_thrift/features/product/presentation/cubit/product_cubit.dart';
+import 'package:bamako_thrift/shared/widgets/report_dialog.dart';
 import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -467,6 +468,23 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.share_outlined, color: Colors.black),
+              ),
+            ),
+            // ── Signaler ────────────────────────────────────────────────
+            GestureDetector(
+              onTap: () => showReportDialog(
+                context,
+                targetType: ReportTargetType.product,
+                targetId: widget.productId,
+              ),
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.flag_outlined, color: Colors.black),
               ),
             ),
           ],

@@ -6,6 +6,7 @@ import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/chat/domain/entities/message_entity.dart';
+import 'package:bamako_thrift/shared/widgets/report_dialog.dart';
 import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -189,6 +190,18 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.flag_outlined,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
+            tooltip: 'Signaler',
+            onPressed: () => showReportDialog(
+              context,
+              targetType: ReportTargetType.chat,
+              targetId: widget.chatId,
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [

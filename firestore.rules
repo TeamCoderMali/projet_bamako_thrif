@@ -246,6 +246,18 @@ service cloud.firestore {
       allow read, update: if isAdmin();
     }
 
+    // ── Collection reports ──────────────────────────────────────────────────
+    // Signalement libre (article ou conversation), distinct de
+    // non_conformities (lié à une commande) et de disputes (litige
+    // acheteur/vendeur). Tout utilisateur connecté peut créer un
+    // signalement avec son propre reporterId ; seuls les admins le
+    // lisent et le traitent.
+    match /reports/{id} {
+      allow create: if isAuthenticated()
+        && request.resource.data.reporterId == request.auth.uid;
+      allow read, update: if isAdmin();
+    }
+
     // ── Collection config ───────────────────────────────────────────────────
     // Reglages globaux lus par l'app mobile (ex: interrupteur paiement,
     // config/payment). Lecture ouverte a tout utilisateur connecte : l'app a
