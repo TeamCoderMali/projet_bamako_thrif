@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/chat/domain/entities/message_entity.dart';
+import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -22,6 +24,10 @@ class _ChatPageState extends State<ChatPage> {
   final _scrollController = ScrollController();
   late final ChatRepositoryImpl _chatRepo;
 
+  String _otherName = 'Conversation';
+  String? _otherAvatarUrl;
+  bool _otherIsVendeurPro = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +37,45 @@ class _ChatPageState extends State<ChatPage> {
     );
     // Marquer comme lu au chargement
     _chatRepo.markAsRead(widget.chatId).catchError((_) {});
+    _loadOtherParticipant();
+  }
+
+  // Le document chat dénormalise déjà nom/avatar des participants (pas de
+  // lecture supplémentaire) ; isVendeurPro n'y est pas dupliqué, d'où la
+  // lecture ponctuelle du doc users/{uid}. Échec silencieux : l'en-tête
+  // garde son libellé générique plutôt que de bloquer l'écran.
+  Future<void> _loadOtherParticipant() async {
+    try {
+      final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final chatDoc = await FirebaseFirestore.instance
+          .collection('chat')
+          .doc(widget.chatId)
+          .get();
+      final data = chatDoc.data();
+      if (data == null) return;
+      final participantIds =
+          (data['participantIds'] as List?)?.cast<String>() ?? <String>[];
+      final otherUid =
+          participantIds.firstWhere((id) => id != currentUid, orElse: () => '');
+      if (otherUid.isEmpty) return;
+      final names = (data['participantNames'] as Map?)?.cast<String, dynamic>() ??
+          <String, dynamic>{};
+      final avatars =
+          (data['participantAvatars'] as Map?)?.cast<String, dynamic>() ??
+              <String, dynamic>{};
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(otherUid)
+          .get();
+      if (!mounted) return;
+      setState(() {
+        _otherName = names[otherUid] as String? ?? 'Utilisateur';
+        _otherAvatarUrl = avatars[otherUid] as String?;
+        _otherIsVendeurPro = userDoc.data()?['isVendeurPro'] == true;
+      });
+    } catch (_) {
+      // Repli silencieux, voir commentaire ci-dessus.
+    }
   }
 
   @override
@@ -97,29 +142,50 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             CircleAvatar(
               backgroundColor: const Color(0xFFD4E4B8),
-              child: const Text(
-                '?',
-                style: TextStyle(
-                  color: Color(0xFF6B7F4D),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              backgroundImage: (_otherAvatarUrl != null &&
+                      _otherAvatarUrl!.isNotEmpty)
+                  ? CachedNetworkImageProvider(_otherAvatarUrl!)
+                  : null,
+              child: (_otherAvatarUrl == null || _otherAvatarUrl!.isEmpty)
+                  ? Text(
+                      _otherName.isNotEmpty
+                          ? _otherName[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        color: Color(0xFF6B7F4D),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Conversation',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _otherName,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (_otherIsVendeurPro) ...[
+                        const SizedBox(width: 6),
+                        const VendeurProBadge(),
+                      ],
+                    ],
                   ),
-                ),
-                const Text('En ligne',
-                    style: TextStyle(color: Colors.green, fontSize: 11)),
-              ],
+                  const Text('En ligne',
+                      style: TextStyle(color: Colors.green, fontSize: 11)),
+                ],
+              ),
             ),
           ],
         ),

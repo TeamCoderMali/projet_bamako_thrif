@@ -10,6 +10,7 @@ import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 import 'package:bamako_thrift/features/product/presentation/cubit/product_cubit.dart';
+import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productId;
@@ -647,12 +648,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              product.sellerName,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    product.sellerName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (_sellerIsVendeurPro) ...[
+                                  const SizedBox(width: 6),
+                                  const VendeurProBadge(),
+                                ],
+                              ],
                             ),
                             const Text(
                               'Vendeur vérifié ✓',

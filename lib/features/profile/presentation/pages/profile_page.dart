@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/shared/widgets/bottom_navigation.dart';
+import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -120,28 +121,10 @@ class ProfilePage extends StatelessWidget {
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.4),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    user?.isSeller == true
-                                        ? '🏪 Vendeur'
-                                        : '🛍️ Acheteur',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
+                                if (user?.isVendeurPro == true) ...[
+                                  const SizedBox(height: 8),
+                                  const VendeurProBadge(),
+                                ],
                               ],
                             ),
                           ),

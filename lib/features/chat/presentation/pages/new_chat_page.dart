@@ -258,15 +258,6 @@ class _UserTile extends StatelessWidget {
     return '${name[0][0]}${name[1][0]}'.toUpperCase();
   }
 
-  String get _roleLabel {
-    final role = user['role'] as String? ?? 'buyer';
-    switch (role) {
-      case 'seller': return '🏪 Vendeur';
-      case 'admin':  return '⚙️ Admin';
-      default:       return '🛍️ Acheteur';
-    }
-  }
-
   Color get _roleColor {
     final role = user['role'] as String? ?? 'buyer';
     switch (role) {
@@ -343,24 +334,6 @@ class _UserTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-              ),
-            ),
-
-            // Badge rôle
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: _roleColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                _roleLabel,
-                style: TextStyle(
-                  color: _roleColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
               ),
             ),
 
