@@ -73,10 +73,10 @@ class SupportPage extends StatefulWidget {
 }
 
 class _SupportPageState extends State<SupportPage> {
-  // Repli = paiement actif (même choix que partout ailleurs) tant que la
-  // config n'est pas chargée ou si la lecture échoue — donc variante
-  // "sécurisé" par défaut, cohérent avec le comportement actuel de l'app.
-  bool _paymentEnabled = true;
+  // Repli = paiement désactivé (même choix que partout ailleurs, voir
+  // PaymentConfigService) tant que la config n'est pas chargée ou si la
+  // lecture échoue — donc variante "phase de test" par défaut.
+  bool _paymentEnabled = false;
 
   @override
   void initState() {

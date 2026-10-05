@@ -1,20 +1,23 @@
 // ─── Bamako Thrift — Payment Config Service ────────────────────────────────
 // Lit le document config/payment (interrupteur paiement, back-office >
-// Paramètres > Paiement). Repli = paiement ACTIVÉ si le document n'existe
+// Paramètres > Paiement). Repli = paiement DÉSACTIVÉ si le document n'existe
 // pas encore, si le champ "enabled" est absent/invalide, ou si la lecture
-// échoue (règles pas déployées, pas de réseau...) — c'est le comportement
-// actuel de l'app, donc ne rien changer tant qu'aucun admin n'a
-// explicitement désactivé le paiement. Même repli partout (bouton Acheter,
-// bannière, FAQ) pour ne jamais se contredire à l'écran.
+// échoue (règles pas déployées, pas de réseau...). Choix délibéré : la page
+// de paiement actuelle est une simulation qui ne débite rien, donc un repli
+// "activé" afficherait une fausse sécurité à l'acheteur. Même repli partout
+// (bouton Acheter, bannière, FAQ) pour ne jamais se contredire à l'écran, et
+// même repli côté règles Firestore (voir paymentDisabled() dans
+// firestore.rules) pour ne jamais contredire le serveur non plus.
 // Le document est créé par le back-office au premier bascule de
 // l'interrupteur (jamais par l'app mobile, qui ne fait que lire).
+// À REPASSER à activé par défaut quand un vrai paiement existera.
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PaymentConfigService {
   PaymentConfigService._();
   static final PaymentConfigService instance = PaymentConfigService._();
 
-  static const bool fallbackEnabled = true;
+  static const bool fallbackEnabled = false;
 
   Future<bool> isPaymentEnabled() async {
     try {

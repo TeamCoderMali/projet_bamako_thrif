@@ -40,10 +40,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _proStatusRequested = false;
 
   // ── Interrupteur paiement (config/payment, back-office > Paramètres) ───
-  // Repli = actif tant que la config n'est pas chargée, pour ne jamais
-  // afficher par erreur l'état "paiement désactivé" avant d'avoir lu le
-  // document (voir PaymentConfigService pour le détail du repli).
-  bool _paymentEnabled = true;
+  // Repli = désactivé tant que la config n'est pas chargée (même repli que
+  // PaymentConfigService : la page de paiement est une simulation, un repli
+  // "activé" afficherait une fausse sécurité).
+  bool _paymentEnabled = false;
 
   @override
   void initState() {

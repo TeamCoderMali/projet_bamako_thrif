@@ -32,11 +32,15 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(sellerId)).data.isVendeurPro == true;
     }
     // Phase test sans paiement integre (back-office > Parametres >
-    // Paiement). Document absent ou champ absent = paiement actif (meme
-    // repli que cote mobile, voir PaymentConfigService).
+    // Paiement). Document absent ou champ absent = paiement DESACTIVE
+    // (meme repli que cote mobile, voir PaymentConfigService : la page de
+    // paiement actuelle est une simulation, un repli "active" donnerait
+    // une fausse securite). Actif seulement si le document existe ET
+    // enabled vaut explicitement true. A REPASSER quand un vrai paiement
+    // existera.
     function paymentDisabled() {
-      return exists(/databases/$(database)/documents/config/payment)
-        && get(/databases/$(database)/documents/config/payment).data.get('enabled', true) == false;
+      return !(exists(/databases/$(database)/documents/config/payment)
+        && get(/databases/$(database)/documents/config/payment).data.get('enabled', false) == true);
     }
     // Pressing/vérification d'article : le vendeur ne peut jamais toucher au
     // champ "verifie" (statut accordé par la plateforme après remise en état

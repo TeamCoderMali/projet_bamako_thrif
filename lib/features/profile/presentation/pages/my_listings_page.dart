@@ -188,10 +188,10 @@ class MyListingsPage extends StatelessWidget {
           : FutureBuilder<bool>(
               future: PaymentConfigService.instance.isPaymentEnabled(),
               builder: (context, paymentSnap) {
-                // Repli prudent pendant le chargement aussi : tant qu'on ne
-                // sait pas, on se comporte comme si le paiement était actif
-                // (pas de bouton vendu/réservé affiché par erreur).
-                final paymentEnabled = paymentSnap.data ?? true;
+                // Même repli que PaymentConfigService : désactivé tant
+                // qu'on ne sait pas (voir payment_config_service.dart). La
+                // vraie barrière reste la règle Firestore, pas ce bouton.
+                final paymentEnabled = paymentSnap.data ?? false;
                 return _buildList(context, uid, paymentEnabled);
               },
             ),
