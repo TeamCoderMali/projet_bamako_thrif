@@ -527,7 +527,7 @@ class _ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        _conditionLabel(product.condition),
+                        product.condition.label,
                         style: const TextStyle(
                           fontSize: 9,
                           color: Colors.white,
@@ -646,16 +646,4 @@ class _ProductCard extends StatelessWidget {
     );
   }
 
-  String _conditionLabel(ProductCondition condition) {
-    switch (condition) {
-      case ProductCondition.neufAvecEtiquette:
-        return 'État 99 ✓';
-      case ProductCondition.tresSatisfaisant:
-        return 'Très satisfaisant';
-      case ProductCondition.bon:
-        return 'Bon état';
-      case ProductCondition.satisfaisant:
-        return 'Satisfaisant';
-    }
-  }
 }

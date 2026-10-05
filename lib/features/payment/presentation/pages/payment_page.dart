@@ -30,18 +30,6 @@ class _PaymentPageState extends State<PaymentPage> {
 
   String _fmt(double price) => price.toPriceFCFA;
 
-  String _condition(ProductCondition c) {
-    switch (c) {
-      case ProductCondition.neufAvecEtiquette:
-        return 'État 99 avec étiquette';
-      case ProductCondition.tresSatisfaisant:
-        return 'Très satisfaisant';
-      case ProductCondition.bon:
-        return 'Bon état';
-      case ProductCondition.satisfaisant:
-        return 'État satisfaisant';
-    }
-  }
 
   bool _validate() {
     if (_method == 'card' || _method == 'wave') return true;
@@ -214,7 +202,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       [
                         product.sellerName,
                         if (product.size != null) 'Taille ${product.size}',
-                        _condition(product.condition),
+                        product.condition.label,
                       ].join(' · '),
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),

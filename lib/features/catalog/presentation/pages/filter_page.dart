@@ -212,12 +212,14 @@ const _catItems = [
   _Item(ProductCategory.traditional, 'Traditionnel'),
 ];
 
-const _condItems = [
-  _Item(ProductCondition.neufAvecEtiquette, 'Neuf avec étiquette'),
-  _Item(ProductCondition.tresSatisfaisant, 'Neuf sans étiquette'),
-  _Item(ProductCondition.tresSatisfaisant, 'Très bon état'),
-  _Item(ProductCondition.bon, 'Bon état'),
-  _Item(ProductCondition.satisfaisant, 'État correct'),
+final _condItems = [
+  for (final c in [
+    ProductCondition.neufAvecEtiquette,
+    ProductCondition.tresSatisfaisant,
+    ProductCondition.bon,
+    ProductCondition.satisfaisant,
+  ])
+    _Item(c, c.label),
 ];
 
 // ── Widgets utilitaires ───────────────────────────────────────────────────────

@@ -53,13 +53,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   // ── 4 états exacts du cahier des charges (section 4.3) ──────────────────
   final List<Map<String, dynamic>> _conditions = [
-    {'label': 'État satisfaisant', 'value': ProductCondition.satisfaisant},
-    {'label': 'Bon état', 'value': ProductCondition.bon},
-    {'label': 'Très satisfaisant', 'value': ProductCondition.tresSatisfaisant},
-    {
-      'label': 'État 99 avec étiquette',
-      'value': ProductCondition.neufAvecEtiquette
-    },
+    for (final c in ProductCondition.values) {'label': c.label, 'value': c},
   ];
 
   @override

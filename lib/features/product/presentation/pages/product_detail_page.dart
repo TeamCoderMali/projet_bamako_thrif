@@ -571,7 +571,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   runSpacing: 8,
                   children: [
                     _Badge(
-                      label: _conditionLabel(product.condition),
+                      label: product.condition.label,
                       color: Colors.green,
                     ),
                     if (product.verifie)
@@ -759,18 +759,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  String _conditionLabel(ProductCondition c) {
-    switch (c) {
-      case ProductCondition.neufAvecEtiquette:
-        return 'État 99 avec étiquette';
-      case ProductCondition.tresSatisfaisant:
-        return 'Très satisfaisant';
-      case ProductCondition.bon:
-        return 'Bon état';
-      case ProductCondition.satisfaisant:
-        return 'État satisfaisant';
-    }
-  }
 }
 
 class _Badge extends StatelessWidget {

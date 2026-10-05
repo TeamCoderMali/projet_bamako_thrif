@@ -72,21 +72,6 @@ String _categoryLabel(ProductCategory c) {
   }
 }
 
-String _conditionLabel(ProductCondition c) {
-  switch (c) {
-    case ProductCondition.neufAvecEtiquette:
-      return 'Neuf avec étiquette';
-    case ProductCondition.tresSatisfaisant:
-      return 'Neuf sans étiquette';
-    case ProductCondition.tresSatisfaisant:
-      return 'Très bon état';
-    case ProductCondition.bon:
-      return 'Bon état';
-    case ProductCondition.satisfaisant:
-      return 'État correct';
-  }
-}
-
 String _fmtPrice(double p) => p.toPriceFCFA;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -277,7 +262,7 @@ class _CatalogPageState extends State<CatalogPage> {
                       size: 14, color: Color(0xFF6B7F4D)),
                   const SizedBox(width: 6),
                   if (_filters.condition != null)
-                    _Chip(_conditionLabel(_filters.condition!)),
+                    _Chip(_filters.condition!.label),
                   if (_filters.minPrice > 0 || _filters.maxPrice < 100000)
                     _Chip(
                         '${_fmtPrice(_filters.minPrice)} – ${_fmtPrice(_filters.maxPrice)}'),
@@ -490,7 +475,7 @@ class _ProductCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          _conditionLabel(product.condition),
+                          product.condition.label,
                           style: TextStyle(
                               fontSize: 9,
                               color:

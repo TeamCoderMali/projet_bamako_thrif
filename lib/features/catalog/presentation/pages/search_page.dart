@@ -219,7 +219,7 @@ class _SearchPageState extends State<SearchPage> {
                               const SizedBox(width: 4),
                               Text(
                                 _selectedCondition != null
-                                    ? _conditionLabel(_selectedCondition!)
+                                    ? _selectedCondition!.label
                                     : 'État',
                                 style: TextStyle(
                                   fontSize: 12,
@@ -481,7 +481,7 @@ class _SearchPageState extends State<SearchPage> {
                 return RadioListTile<ProductCondition?>(
                   value: c,
                   groupValue: _selectedCondition,
-                  title: Text(_conditionLabel(c)),
+                  title: Text(c.label),
                   activeColor: const Color(0xFF6B7F4D),
                   onChanged: (v) {
                     setModalState(() => _selectedCondition = v);
@@ -510,20 +510,6 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  String _conditionLabel(ProductCondition c) {
-    switch (c) {
-      case ProductCondition.neufAvecEtiquette:
-        return 'Neuf avec étiquette';
-      case ProductCondition.tresSatisfaisant:
-        return 'Neuf sans étiquette';
-      case ProductCondition.tresSatisfaisant:
-        return 'Très bon état';
-      case ProductCondition.bon:
-        return 'Bon état';
-      case ProductCondition.satisfaisant:
-        return 'État correct';
-    }
-  }
 }
 
 class _ProductCard extends StatelessWidget {
@@ -601,7 +587,7 @@ class _ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        _conditionLabel(product.condition),
+                        product.condition.label,
                         style: const TextStyle(
                           fontSize: 9,
                           color: Colors.white,
@@ -684,18 +670,4 @@ class _ProductCard extends StatelessWidget {
     );
   }
 
-  String _conditionLabel(ProductCondition condition) {
-    switch (condition) {
-      case ProductCondition.neufAvecEtiquette:
-        return 'Neuf ✓';
-      case ProductCondition.tresSatisfaisant:
-        return 'Neuf';
-      case ProductCondition.tresSatisfaisant:
-        return 'Très bon';
-      case ProductCondition.bon:
-        return 'Bon état';
-      case ProductCondition.satisfaisant:
-        return 'Correct';
-    }
-  }
 }

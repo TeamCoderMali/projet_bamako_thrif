@@ -81,6 +81,17 @@ enum ProductCondition {
   neufAvecEtiquette,  // État 99 avec étiquette — jamais porté, étiquette d'origine présente
 }
 
+/// Libellé affiché, centralisé ici pour éviter les copies divergentes
+/// entre écrans. La valeur stockée en Firestore reste le nom de l'enum.
+extension ProductConditionLabel on ProductCondition {
+  String get label => switch (this) {
+        ProductCondition.satisfaisant => 'Satisfaisant',
+        ProductCondition.bon => 'Bon état',
+        ProductCondition.tresSatisfaisant => 'Très bon état',
+        ProductCondition.neufAvecEtiquette => 'Neuf avec étiquette',
+      };
+}
+
 enum ProductStatus {
   available,            // Disponible
   reserved,             // Réservé
