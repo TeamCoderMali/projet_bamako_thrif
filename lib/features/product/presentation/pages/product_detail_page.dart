@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/payment_config_service.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
@@ -606,7 +607,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       label: product.condition.label,
                       color: Colors.green,
                     ),
-                    if (product.verifie)
+                    if (pressingEnabled && product.verifie)
                       const _Badge(label: '✓ Vérifié', color: Colors.teal),
                     if (product.brand != null)
                       _Badge(label: product.brand!, color: Colors.blue),

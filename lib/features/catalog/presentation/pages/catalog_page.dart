@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
@@ -483,7 +484,7 @@ class _ProductCard extends StatelessWidget {
                               fontWeight: FontWeight.w600),
                         ),
                       ),
-                      if (product.verifie) ...[
+                      if (pressingEnabled && product.verifie) ...[
                         const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(

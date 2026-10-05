@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/payment_config_service.dart';
 
@@ -90,7 +91,11 @@ class _SupportPageState extends State<SupportPage> {
 
   @override
   Widget build(BuildContext context) {
-    final faq = _paymentEnabled ? _faqPaiementSecurise : _faqPaiementDesactive;
+    // Le partenaire pressing n'existe pas encore pour Fatou : la question est
+    // masquée (texte conservé dans les listes ci-dessus) sans rien supprimer.
+    final faq = (_paymentEnabled ? _faqPaiementSecurise : _faqPaiementDesactive)
+        .where((item) => pressingEnabled || item.question != 'Qu\'est-ce que le badge Vérifié ?')
+        .toList();
 
     return Scaffold(
       appBar: AppBar(

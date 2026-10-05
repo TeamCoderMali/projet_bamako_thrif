@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/storage_service.dart';
@@ -344,8 +345,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           decoration:
                               _inputDeco('Ex: Bamako, Hamdallaye ACI 2000...'),
                         ),
-                        const SizedBox(height: 18),
-                        _buildPressingOption(),
+                        if (pressingEnabled) ...[
+                          const SizedBox(height: 18),
+                          _buildPressingOption(),
+                        ],
                       ],
                     ),
                   ],

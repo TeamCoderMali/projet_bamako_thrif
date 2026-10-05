@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/payment_config_service.dart';
@@ -346,7 +347,7 @@ class MyListingsPage extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                      if (verifie)
+                                      if (pressingEnabled && verifie)
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 8, vertical: 3),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 import 'package:bamako_thrift/features/product/presentation/cubit/product_cubit.dart';
@@ -596,7 +597,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (product.verifie)
+                  if (pressingEnabled && product.verifie)
                     Positioned(
                       top: 8,
                       right: 8,
