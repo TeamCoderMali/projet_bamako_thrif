@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/payment_config_service.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
@@ -36,12 +37,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _sellerIsVendeurPro = false;
   bool _proStatusRequested = false;
 
+  // ── Interrupteur paiement (config/payment, back-office > Paramètres) ───
+  // Repli = actif tant que la config n'est pas chargée, pour ne jamais
+  // afficher par erreur l'état "paiement désactivé" avant d'avoir lu le
+  // document (voir PaymentConfigService pour le détail du repli).
+  bool _paymentEnabled = true;
+
   @override
   void initState() {
     super.initState();
     context.read<ProductCubit>().loadProductDetail(widget.productId);
     _checkIfFavorite();
     _loadMyRating();
+    _loadPaymentConfig();
+  }
+
+  Future<void> _loadPaymentConfig() async {
+    final enabled = await PaymentConfigService.instance.isPaymentEnabled();
+    if (mounted) setState(() => _paymentEnabled = enabled);
   }
 
   @override
@@ -676,59 +689,124 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _contactSeller(product),
-                        icon: _isContactLoading
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFF6B7F4D),
-                                ),
-                              )
-                            : const Icon(Icons.chat_bubble_outline,
-                                color: Color(0xFF6B7F4D), size: 18),
-                        label: const Text('Contacter',
-                            style: TextStyle(color: Color(0xFF6B7F4D))),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF6B7F4D)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                if (!_paymentEnabled) ...[
+                  _buildNoPaymentBanner(context),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _contactSeller(product),
+                      icon: _isContactLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.chat_bubble_outline,
+                              color: Colors.white, size: 18),
+                      label: const Text(
+                        'Contacter le vendeur',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B7F4D),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => context.go('/payment', extra: product),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B7F4D),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                  ),
+                ] else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _contactSeller(product),
+                          icon: _isContactLoading
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF6B7F4D),
+                                  ),
+                                )
+                              : const Icon(Icons.chat_bubble_outline,
+                                  color: Color(0xFF6B7F4D), size: 18),
+                          label: const Text('Contacter',
+                              style: TextStyle(color: Color(0xFF6B7F4D))),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF6B7F4D)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text(
-                          'Acheter',
-                          style: TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () =>
+                              context.go('/payment', extra: product),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6B7F4D),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text(
+                            'Acheter',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 const SizedBox(height: 20),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  // ── Bannière phase sans paiement intégré (interrupteur désactivé) ──────
+  Widget _buildNoPaymentBanner(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.orange.shade700, width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded,
+              color: Colors.orange.shade800, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Transaction directe — non sécurisée par Danaya',
+              style: TextStyle(
+                color: Colors.orange.shade900,
+                fontWeight: FontWeight.bold,
+                fontSize: 12.5,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

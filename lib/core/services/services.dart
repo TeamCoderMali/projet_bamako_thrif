@@ -5,3 +5,4 @@ export 'navigation_service.dart';
 export 'loading_service.dart';
 export 'logger_service.dart';
 export 'permission_service.dart';
+export 'payment_config_service.dart';

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/payment_config_service.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 
 class PaymentPage extends StatefulWidget {
@@ -21,6 +22,36 @@ class _PaymentPageState extends State<PaymentPage> {
   String _method = 'orange_money';
   bool _isProcessing = false;
   final _phoneCtrl = TextEditingController();
+
+  // null = verification en cours (aucun formulaire affiche entre-temps).
+  // Cette page ne doit JAMAIS afficher ni collecter d'informations de
+  // paiement quand l'interrupteur est desactive, quel que soit le chemin
+  // d'entree (bouton Acheter, "Reessayer" apres echec, menu Profil >
+  // Paiements sans article) — le garde est donc ici, au niveau de la page,
+  // plutot que duplique a chaque point d'entree.
+  bool? _paymentEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _guardPaymentEnabled();
+  }
+
+  Future<void> _guardPaymentEnabled() async {
+    final enabled = await PaymentConfigService.instance.isPaymentEnabled();
+    if (!mounted) return;
+    setState(() => _paymentEnabled = enabled);
+    if (!enabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(RouteNames.home);
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -122,6 +153,15 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_paymentEnabled != true) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF7F4EE),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+        ),
+      );
+    }
+
     final product = widget.product;
     final price = product?.price ?? 0.0;
     final fmtPrice = _fmt(price);
