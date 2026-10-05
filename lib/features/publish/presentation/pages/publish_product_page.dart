@@ -39,17 +39,24 @@ class _PublishProductPageState extends State<PublishProductPage> {
   double _uploadProgress = 0.0;
   String _publishStep = '';
 
+  // Libelles centralises (ProductCategoryLabel, lot 8). La valeur stockee
+  // (ProductCategory) ne change pas, seul le texte affiche change. Ordre
+  // d'origine conserve (ne correspond pas a l'ordre de declaration de
+  // l'enum : Femme avant Homme).
   final List<Map<String, dynamic>> _categories = [
-    {'label': 'Femme', 'value': ProductCategory.women},
-    {'label': 'Homme', 'value': ProductCategory.men},
-    {'label': 'Enfant', 'value': ProductCategory.children},
-    {'label': 'Chaussures', 'value': ProductCategory.shoes},
-    {'label': 'Accessoires', 'value': ProductCategory.accessories},
-    {'label': 'Sacs', 'value': ProductCategory.bags},
-    {'label': 'Bijoux', 'value': ProductCategory.jewelry},
-    {'label': 'Sport', 'value': ProductCategory.sportswear},
-    {'label': 'Traditionnel', 'value': ProductCategory.traditional},
-    {'label': 'Autre', 'value': ProductCategory.other},
+    for (final c in [
+      ProductCategory.women,
+      ProductCategory.men,
+      ProductCategory.children,
+      ProductCategory.shoes,
+      ProductCategory.accessories,
+      ProductCategory.bags,
+      ProductCategory.jewelry,
+      ProductCategory.sportswear,
+      ProductCategory.traditional,
+      ProductCategory.other,
+    ])
+      {'label': c.label, 'value': c},
   ];
 
   // ── 4 états exacts du cahier des charges (section 4.3) ──────────────────

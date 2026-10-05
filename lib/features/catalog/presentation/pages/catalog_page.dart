@@ -47,31 +47,9 @@ class CatalogFilters {
   }
 }
 
-// ── Labels ────────────────────────────────────────────────────────────────────
-String _categoryLabel(ProductCategory c) {
-  switch (c) {
-    case ProductCategory.men:
-      return 'Homme';
-    case ProductCategory.women:
-      return 'Femme';
-    case ProductCategory.children:
-      return 'Enfant';
-    case ProductCategory.shoes:
-      return 'Chaussures';
-    case ProductCategory.accessories:
-      return 'Accessoires';
-    case ProductCategory.bags:
-      return 'Sacs';
-    case ProductCategory.jewelry:
-      return 'Bijoux';
-    case ProductCategory.sportswear:
-      return 'Sport';
-    case ProductCategory.traditional:
-      return 'Traditionnel';
-    case ProductCategory.other:
-      return 'Autre';
-  }
-}
+// _categoryLabel (ancienne fonction locale, jamais appelee dans ce fichier)
+// supprimee au lot 8 : le libelle est desormais centralise dans
+// ProductCategoryLabel (product_entity.dart).
 
 String _fmtPrice(double p) => p.toPriceFCFA;
 
@@ -88,15 +66,22 @@ class CatalogPage extends StatefulWidget {
 class _CatalogPageState extends State<CatalogPage> {
   late CatalogFilters _filters;
 
-  // Catégories rapides dans la barre horizontale
-  static const _quickCats = <_QuickCat>[
-    _QuickCat(null, 'Tous', Icons.grid_view_rounded),
-    _QuickCat(ProductCategory.women, 'Femme', Icons.woman_outlined),
-    _QuickCat(ProductCategory.men, 'Homme', Icons.man_outlined),
-    _QuickCat(ProductCategory.children, 'Enfant', Icons.child_care),
-    _QuickCat(ProductCategory.shoes, 'Chaussures', Icons.do_not_step_outlined),
-    _QuickCat(ProductCategory.accessories, 'Accès.', Icons.watch_outlined),
-    _QuickCat(ProductCategory.bags, 'Sacs', Icons.shopping_bag_outlined),
+  // Catégories rapides dans la barre horizontale. "Tous" n'est pas une
+  // catégorie (value null) ; les autres libellés viennent de
+  // ProductCategoryLabel (lot 8, remplace l'abréviation "Accès.").
+  static final _quickCats = <_QuickCat>[
+    const _QuickCat(null, 'Tous', Icons.grid_view_rounded),
+    _QuickCat(ProductCategory.women, ProductCategory.women.label,
+        Icons.woman_outlined),
+    _QuickCat(ProductCategory.men, ProductCategory.men.label, Icons.man_outlined),
+    _QuickCat(ProductCategory.children, ProductCategory.children.label,
+        Icons.child_care),
+    _QuickCat(ProductCategory.shoes, ProductCategory.shoes.label,
+        Icons.do_not_step_outlined),
+    _QuickCat(ProductCategory.accessories, ProductCategory.accessories.label,
+        Icons.watch_outlined),
+    _QuickCat(
+        ProductCategory.bags, ProductCategory.bags.label, Icons.shopping_bag_outlined),
   ];
 
   @override

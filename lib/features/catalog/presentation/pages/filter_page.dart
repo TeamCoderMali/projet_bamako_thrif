@@ -200,16 +200,23 @@ class _Item<T> {
   const _Item(this.value, this.label);
 }
 
-const _catItems = [
-  _Item(ProductCategory.women, 'Femme'),
-  _Item(ProductCategory.men, 'Homme'),
-  _Item(ProductCategory.children, 'Enfant'),
-  _Item(ProductCategory.shoes, 'Chaussures'),
-  _Item(ProductCategory.accessories, 'Accessoires'),
-  _Item(ProductCategory.bags, 'Sacs'),
-  _Item(ProductCategory.jewelry, 'Bijoux'),
-  _Item(ProductCategory.sportswear, 'Sport'),
-  _Item(ProductCategory.traditional, 'Traditionnel'),
+// Libelles centralises (ProductCategoryLabel, lot 8). Ajoute au passage
+// "Autres" (ProductCategory.other), absent de cette liste jusqu'ici — aucun
+// filtre ne permettait de le selectionner.
+final _catItems = [
+  for (final c in [
+    ProductCategory.women,
+    ProductCategory.men,
+    ProductCategory.children,
+    ProductCategory.shoes,
+    ProductCategory.accessories,
+    ProductCategory.bags,
+    ProductCategory.jewelry,
+    ProductCategory.sportswear,
+    ProductCategory.traditional,
+    ProductCategory.other,
+  ])
+    _Item(c, c.label),
 ];
 
 final _condItems = [

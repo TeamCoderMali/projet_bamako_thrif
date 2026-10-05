@@ -25,21 +25,38 @@ class _SearchPageState extends State<SearchPage> {
   ProductCategory? _selectedCategory;
   ProductCondition? _selectedCondition;
 
+  // Libellés centralises (ProductCategoryLabel, lot 8) : corrige au passage
+  // "Tradition" -> "Tenues traditionnelles" (incoherent avec les autres
+  // ecrans avant ce lot).
   final List<Map<String, dynamic>> _categories = [
-    {'label': 'Femme', 'value': ProductCategory.women, 'emoji': '👗'},
-    {'label': 'Homme', 'value': ProductCategory.men, 'emoji': '👔'},
-    {'label': 'Enfant', 'value': ProductCategory.children, 'emoji': '👶'},
-    {'label': 'Chaussures', 'value': ProductCategory.shoes, 'emoji': '👟'},
-    {
-      'label': 'Accessoires',
-      'value': ProductCategory.accessories,
-      'emoji': '🧣'
-    },
-    {'label': 'Sacs', 'value': ProductCategory.bags, 'emoji': '👜'},
-    {'label': 'Bijoux', 'value': ProductCategory.jewelry, 'emoji': '💍'},
-    {'label': 'Sport', 'value': ProductCategory.sportswear, 'emoji': '⚽'},
-    {'label': 'Tradition', 'value': ProductCategory.traditional, 'emoji': '🎋'},
-    {'label': 'Autre', 'value': ProductCategory.other, 'emoji': '📦'},
+    for (final c in [
+      ProductCategory.women,
+      ProductCategory.men,
+      ProductCategory.children,
+      ProductCategory.shoes,
+      ProductCategory.accessories,
+      ProductCategory.bags,
+      ProductCategory.jewelry,
+      ProductCategory.sportswear,
+      ProductCategory.traditional,
+      ProductCategory.other,
+    ])
+      {
+        'label': c.label,
+        'value': c,
+        'emoji': switch (c) {
+          ProductCategory.women => '👗',
+          ProductCategory.men => '👔',
+          ProductCategory.children => '👶',
+          ProductCategory.shoes => '👟',
+          ProductCategory.accessories => '🧣',
+          ProductCategory.bags => '👜',
+          ProductCategory.jewelry => '💍',
+          ProductCategory.sportswear => '⚽',
+          ProductCategory.traditional => '🎋',
+          ProductCategory.other => '📦',
+        },
+      },
   ];
 
   @override
@@ -383,15 +400,20 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildSuggestionsView() {
-    final suggestions = [
-      '👗 Robe',
-      '👟 Sneakers',
-      '👜 Sac',
-      '💍 Bijoux',
-      '🧥 Veste',
-      '👔 Chemise',
-      '👖 Jean',
-      '🧢 Casquette',
+    // Affichage au pluriel (lot 8), mais recherche toujours avec le terme
+    // singulier d'origine : la recherche est une sous-chaine exacte
+    // (title.contains(query)), donc chercher "Sacs" raterait un article
+    // titre "Sac en cuir". Le comportement de la recherche ne change pas,
+    // seule l'etiquette du chip change.
+    const suggestions = [
+      (emoji: '👗', display: 'Robes', query: 'Robe'),
+      (emoji: '👟', display: 'Sneakers', query: 'Sneakers'),
+      (emoji: '👜', display: 'Sacs', query: 'Sac'),
+      (emoji: '💍', display: 'Bijoux', query: 'Bijoux'),
+      (emoji: '🧥', display: 'Vestes', query: 'Veste'),
+      (emoji: '👔', display: 'Chemises', query: 'Chemise'),
+      (emoji: '👖', display: 'Jeans', query: 'Jean'),
+      (emoji: '🧢', display: 'Casquettes', query: 'Casquette'),
     ];
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -413,9 +435,8 @@ class _SearchPageState extends State<SearchPage> {
             children: suggestions.map((s) {
               return GestureDetector(
                 onTap: () {
-                  final q = s.replaceAll(RegExp(r'[^\w\s]'), '').trim();
-                  _controller.text = q;
-                  context.read<ProductCubit>().searchProducts(q);
+                  _controller.text = s.query;
+                  context.read<ProductCubit>().searchProducts(s.query);
                 },
                 child: Container(
                   padding:
@@ -434,7 +455,7 @@ class _SearchPageState extends State<SearchPage> {
                     ],
                   ),
                   child: Text(
-                    s,
+                    '${s.emoji} ${s.display}',
                     style: TextStyle(
                       fontSize: 13,
                       color: Theme.of(context).colorScheme.onSurface,

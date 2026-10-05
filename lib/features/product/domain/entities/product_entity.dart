@@ -74,6 +74,25 @@ enum ProductCategory {
   other,
 }
 
+/// Libellé affiché, centralisé ici (même principe que
+/// ProductConditionLabel) pour éviter les copies divergentes entre écrans
+/// (ex. "Tradition" vs "Traditionnel" trouvé lors de l'audit du lot 8).
+/// N'affecte jamais le filtrage (basé sur la valeur d'enum, pas le texte).
+extension ProductCategoryLabel on ProductCategory {
+  String get label => switch (this) {
+        ProductCategory.women => 'Femmes',
+        ProductCategory.men => 'Hommes',
+        ProductCategory.children => 'Enfants',
+        ProductCategory.shoes => 'Chaussures',
+        ProductCategory.accessories => 'Accessoires',
+        ProductCategory.bags => 'Sacs',
+        ProductCategory.jewelry => 'Bijoux',
+        ProductCategory.sportswear => 'Sports',
+        ProductCategory.traditional => 'Tenues traditionnelles',
+        ProductCategory.other => 'Autres',
+      };
+}
+
 enum ProductCondition {
   satisfaisant,       // État satisfaisant — porté, quelques signes d'usure visibles
   bon,                // Bon état — légèrement porté, très bon aspect général

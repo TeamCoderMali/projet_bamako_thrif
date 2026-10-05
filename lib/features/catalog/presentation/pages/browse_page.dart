@@ -22,50 +22,40 @@ import 'catalog_page.dart' show CatalogFilters;
 
 class _CategoryTile {
   final ProductCategory category;
-  final String label;
   // null = illustration pas encore fournie -> erreur visible, pas de repli.
   final String? svgAsset;
-  const _CategoryTile({
-    required this.category,
-    required this.label,
-    this.svgAsset,
-  });
+  const _CategoryTile({required this.category, this.svgAsset});
 }
 
+// Libelle derive de ProductCategoryLabel (lot 8) : plus de champ label
+// explicite ici, pour ne pas pouvoir diverger de la liste centralisee.
 const _categoryTiles = <_CategoryTile>[
   _CategoryTile(
     category: ProductCategory.women,
-    label: 'Femmes',
     svgAsset: 'assets/images/categories/femmes.svg',
   ),
   _CategoryTile(
     category: ProductCategory.men,
-    label: 'Hommes',
     svgAsset: 'assets/images/categories/hommes.svg',
   ),
   _CategoryTile(
     category: ProductCategory.children,
-    label: 'Enfants',
     svgAsset: 'assets/images/categories/enfants.svg',
   ),
   _CategoryTile(
     category: ProductCategory.shoes,
-    label: 'Chaussures',
     svgAsset: 'assets/images/categories/chaussures.svg',
   ),
   _CategoryTile(
     category: ProductCategory.accessories,
-    label: 'Accessoires',
     svgAsset: 'assets/images/categories/accessoires.svg',
   ),
   _CategoryTile(
     category: ProductCategory.bags,
-    label: 'Sacs',
     svgAsset: 'assets/images/categories/sacs.svg',
   ),
   _CategoryTile(
     category: ProductCategory.sportswear,
-    label: 'Sport',
     svgAsset: 'assets/images/categories/sport.svg',
   ),
 ];
@@ -220,7 +210,7 @@ class _CategoryTileCard extends StatelessWidget {
                 height: 72,
                 child: missing
                     ? Tooltip(
-                        message: 'Illustration manquante pour "${tile.label}"',
+                        message: 'Illustration manquante pour "${tile.category.label}"',
                         child: Icon(Icons.warning_amber_rounded,
                             color: Colors.red.shade400, size: 36),
                       )
@@ -228,7 +218,7 @@ class _CategoryTileCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                tile.label,
+                tile.category.label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
