@@ -667,11 +667,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 ],
                               ],
                             ),
-                            const Text(
-                              'Vendeur vérifié ✓',
-                              style:
-                                  TextStyle(color: Colors.green, fontSize: 12),
-                            ),
                           ],
                         ),
                       ),
