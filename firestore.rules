@@ -234,6 +234,16 @@ service cloud.firestore {
       allow read, update: if isAdmin();
     }
 
+    // ── Collection config ───────────────────────────────────────────────────
+    // Reglages globaux lus par l'app mobile (ex: interrupteur paiement,
+    // config/payment). Lecture ouverte a tout utilisateur connecte : l'app a
+    // besoin de savoir si le paiement est actif avant meme d'afficher quoi
+    // que ce soit. Ecriture reservee aux admins (back-office).
+    match /config/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
     // ── Collection relay_centers ────────────────────────────────────────────
     // Gestion des points relais (admin uniquement) ; lecture aussi ouverte
     // au relay_manager pour consulter les infos de son centre.
