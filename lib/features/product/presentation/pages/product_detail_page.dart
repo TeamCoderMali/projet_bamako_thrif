@@ -37,6 +37,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   // ── Avis texte (réservé aux vendeurs Pro) ──────────────────────────────
   final _commentController = TextEditingController();
   bool _isCommentSubmitting = false;
+  // Un avis existe déjà pour cet utilisateur sur cet article (ID du doc =
+  // uid, un seul avis possible, voir regles Firestore) : le bouton devient
+  // "Modifier mon avis" plutot que "Envoyer l'avis".
+  bool _hasExistingComment = false;
   bool _sellerIsVendeurPro = false;
   bool _proStatusRequested = false;
 
@@ -97,9 +101,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
     if (doc.exists && mounted) {
       final data = doc.data()!;
+      final existingComment = data['comment'] as String? ?? '';
       setState(() {
         _myRating = (data['rating'] as num).toInt();
-        _commentController.text = data['comment'] as String? ?? '';
+        _commentController.text = existingComment;
+        _hasExistingComment = existingComment.isNotEmpty;
       });
     }
   }
@@ -140,11 +146,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         SetOptions(merge: true),
       );
       if (mounted) {
+        final wasExisting = _hasExistingComment;
+        setState(() => _hasExistingComment = true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Avis envoyé, merci !'),
-            backgroundColor: Color(0xFF6B7F4D),
-            duration: Duration(seconds: 1),
+          SnackBar(
+            content: Text(wasExisting ? 'Avis modifié, merci !' : 'Avis envoyé, merci !'),
+            backgroundColor: const Color(0xFF6B7F4D),
+            duration: const Duration(seconds: 1),
           ),
         );
       }
@@ -591,8 +599,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text('Envoyer l\'avis',
-                                    style: TextStyle(color: Colors.white)),
+                                : Text(
+                                    _hasExistingComment
+                                        ? 'Modifier mon avis'
+                                        : 'Envoyer l\'avis',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
                           ),
                         ),
                       ],
