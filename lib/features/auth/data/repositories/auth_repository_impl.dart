@@ -10,6 +10,17 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../models/user_model.dart';
 
+/// Sanction confirmée (banni/suspendu) — seule raison légitime de
+/// déconnecter réellement l'utilisateur au démarrage. Distincte de toute
+/// autre erreur (réseau, timeout, permission transitoire) pour que
+/// getCurrentUser()/authStateChanges sachent QUAND déconnecter pour de bon.
+class AccountSanctionedException implements Exception {
+  final String message;
+  const AccountSanctionedException(this.message);
+  @override
+  String toString() => 'Exception: $message';
+}
+
 class FirebaseAuthRepositoryImpl implements AuthRepository {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
@@ -46,12 +57,50 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
   }
 
   // ── Stream auth ─────────────────────────────────────────────────────────
+  // Le flux natif peut aussi émettre une erreur (pas seulement une valeur),
+  // typiquement quand le SDK détecte au rafraîchissement du token que le
+  // compte a été désactivé/supprimé côté serveur. On ne déconnecte alors
+  // réellement que pour ces codes d'erreur d'authentification explicites —
+  // jamais pour une erreur réseau/permission transitoire, qui ne doit rien
+  // émettre et laisser le repli getCurrentUser() de checkAuthStatus() agir.
+  static const _explicitAuthFailureCodes = {
+    'user-disabled',
+    'user-not-found',
+    'user-token-expired',
+  };
+
   @override
   Stream<UserEntity?> get authStateChanges {
-    return _auth.authStateChanges().asyncMap((firebaseUser) async {
-      if (firebaseUser == null) return null;
-      return _fetchUserFromFirestore(firebaseUser.uid);
-    });
+    late StreamController<UserEntity?> controller;
+    StreamSubscription<User?>? sub;
+
+    controller = StreamController<UserEntity?>.broadcast(
+      onListen: () {
+        sub = _auth.authStateChanges().listen(
+          (firebaseUser) async {
+            if (firebaseUser == null) {
+              controller.add(null);
+              return;
+            }
+            try {
+              controller.add(await _resolveUser(firebaseUser));
+            } on AccountSanctionedException {
+              controller.add(null);
+            }
+          },
+          onError: (Object error) async {
+            if (error is FirebaseAuthException &&
+                _explicitAuthFailureCodes.contains(error.code)) {
+              await _auth.signOut();
+              controller.add(null);
+            }
+          },
+        );
+      },
+      onCancel: () => sub?.cancel(),
+    );
+
+    return controller.stream;
   }
 
   // ── Utilisateur courant ──────────────────────────────────────────────────
@@ -60,16 +109,63 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) return null;
 
-    // Si le compte a été banni/suspendu depuis la dernière connexion,
-    // on le déconnecte silencieusement plutôt que de le laisser dans l'app.
     try {
-      await _enforceSanctions(firebaseUser.uid);
-    } catch (_) {
-      await signOut();
+      return await _resolveUser(firebaseUser);
+    } on AccountSanctionedException {
       return null;
     }
+  }
 
-    return _fetchUserFromFirestore(firebaseUser.uid);
+  /// Résout un [UserModel] à partir d'un utilisateur Firebase déjà connecté,
+  /// de façon robuste : une panne réseau/Firestore transitoire ne doit
+  /// JAMAIS se traduire par une déconnexion ou un retour "non connecté" —
+  /// seule une sanction confirmée (banni/suspendu) le fait, en relançant
+  /// [AccountSanctionedException] pour que l'appelant sache déconnecter
+  /// pour de vrai.
+  Future<UserModel> _resolveUser(User firebaseUser) async {
+    final uid = firebaseUser.uid;
+
+    try {
+      await _enforceSanctions(uid);
+    } on AccountSanctionedException {
+      rethrow;
+    } catch (_) {
+      // Sanction non vérifiable (réseau/permission) : on laisse passer,
+      // ce n'est pas une preuve de bannissement.
+    }
+
+    try {
+      final fetched =
+          await _fetchUserFromFirestore(uid).timeout(const Duration(seconds: 8));
+      if (fetched != null) return fetched;
+    } catch (_) {
+      // Lecture Firestore indisponible : on continue avec un profil minimal
+      // plutôt que de perdre la session.
+    }
+
+    // Retente en arrière-plan pour réchauffer le cache Firestore, sans
+    // bloquer ni affecter la session en cours.
+    unawaited(_retryFetchUserInBackground(uid));
+
+    return UserModel(
+      id: uid,
+      email: firebaseUser.email ?? '',
+      fullName: firebaseUser.displayName ??
+          (firebaseUser.email?.split('@').first ?? 'Utilisateur DANAYA'),
+      isEmailVerified: firebaseUser.emailVerified,
+      isActive: true,
+      createdAt: DateTime.now(),
+    );
+  }
+
+  /// Relance silencieusement la lecture Firestore, résultat ignoré : ne sert
+  /// qu'à réchauffer le cache local pour la prochaine tentative.
+  Future<void> _retryFetchUserInBackground(String uid) async {
+    try {
+      await _fetchUserFromFirestore(uid);
+    } catch (_) {
+      // Ignoré : tentative de confort, pas critique.
+    }
   }
 
   // ── Connexion email/password ───────────────────────────────────────────
@@ -319,10 +415,10 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     final DocumentSnapshot<Map<String, dynamic>> doc;
     try {
       doc = await _usersCol.doc(uid).get().timeout(const Duration(seconds: 8));
-    } on TimeoutException {
-      // Réseau indisponible/trop lent : on ne peut pas vérifier le statut de
-      // bannissement, mais on ne doit pas déconnecter un utilisateur légitime
-      // juste à cause d'une coupure réseau — on laisse passer.
+    } catch (_) {
+      // Lecture impossible (réseau, timeout, permission transitoire) : on ne
+      // peut pas vérifier le statut de bannissement, mais ça ne prouve rien
+      // contre l'utilisateur — on laisse passer plutôt que de le déconnecter.
       return;
     }
     if (!doc.exists) return;
@@ -332,7 +428,7 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     final isBanned = data['isBanned'] as bool? ?? false;
     if (isBanned) {
       await _auth.signOut();
-      throw Exception(
+      throw const AccountSanctionedException(
         'Ce compte a été banni suite à plusieurs non-conformités constatées. '
         'Contactez le support pour plus d\'informations.',
       );
@@ -345,7 +441,7 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
         await _auth.signOut();
         final d = until.day.toString().padLeft(2, '0');
         final m = until.month.toString().padLeft(2, '0');
-        throw Exception(
+        throw AccountSanctionedException(
           'Ce compte est suspendu jusqu\'au $d/$m/${until.year} '
           'suite à plusieurs non-conformités constatées.',
         );

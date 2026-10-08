@@ -14,15 +14,34 @@ class AuthCubit extends Cubit<AuthState> {
         super(const AuthInitial());
 
   // ── Vérification de l'état d'auth au démarrage ──────────────────────────
+  // Attend la première émission de authStateChanges (le flux qui reflète
+  // fidèlement la restauration de session native de Firebase Auth, souvent
+  // asynchrone au tout premier lancement) plutôt que de lire currentUser de
+  // façon synchrone — sinon une session pourtant valide peut être lue comme
+  // "non connectée" si la lecture arrive avant la fin de la restauration.
   Future<void> checkAuthStatus() async {
     emit(const AuthLoading());
     try {
-      final user = await _authRepository.getCurrentUser();
-      if (user != null) {
-        emit(AuthAuthenticated(user));
-      } else {
-        emit(const AuthUnauthenticated());
+      bool timedOut = false;
+      final user = await _authRepository.authStateChanges.first.timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          timedOut = true;
+          return null;
+        },
+      );
+
+      if (timedOut) {
+        // Le flux n'a rien émis à temps : on retombe sur une lecture directe,
+        // qui sait elle-même rester tolérante aux erreurs transitoires.
+        final fallbackUser = await _authRepository.getCurrentUser();
+        emit(fallbackUser != null
+            ? AuthAuthenticated(fallbackUser)
+            : const AuthUnauthenticated());
+        return;
       }
+
+      emit(user != null ? AuthAuthenticated(user) : const AuthUnauthenticated());
     } catch (_) {
       emit(const AuthUnauthenticated());
     }
