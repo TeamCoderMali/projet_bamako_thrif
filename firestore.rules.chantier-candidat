@@ -43,6 +43,20 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/config/payment).data.get('enabled', false) == true);
     }
 
+    // Lot "offres" (voir PLAN_OFFRES.md) : valeurs reglables depuis
+    // config/offers (back-office a venir), repli en dur si document/champ
+    // absent -- memes valeurs de repli que OffersConfigService (mobile).
+    function offersMinRatio() {
+      return exists(/databases/$(database)/documents/config/offers)
+        ? get(/databases/$(database)/documents/config/offers).data.get('minOfferRatio', 0.5)
+        : 0.5;
+    }
+    function offersMaxRounds() {
+      return exists(/databases/$(database)/documents/config/offers)
+        ? get(/databases/$(database)/documents/config/offers).data.get('maxRounds', 3)
+        : 3;
+    }
+
     // ── Collection users ───────────────────────────────────────────────────
     // Profil public (nom, avatar, note...) — lecture ouverte à tout
     // utilisateur connecté (marketplace, chat). Les champs sensibles
@@ -254,6 +268,74 @@ service cloud.firestore {
     match /config/{docId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+    }
+
+    // ── Collection offers ────────────────────────────────────────────────────
+    // Negociation de prix acheteur/vendeur (lot "offres", PLAN_OFFRES.md).
+    // Lot A (socle) : regles ecrites et testees, AUCUN ecran ne les utilise
+    // encore. Limites assumees, non garanties ici (pas de Cloud Function
+    // transactionnelle) : plafond de 3 offres cumulatives par
+    // acheteur/article, 1 offre active a la fois -- controle cote client
+    // uniquement, meme niveau de confiance que viewCount. L'expiration
+    // (respondBy/reservedUntil depasses) est geree par ecriture paresseuse
+    // cote client a l'ouverture d'un ecran concerne, pas par un cron serveur.
+    match /offers/{offerId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.sellerId ==
+             get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.sellerId
+        && get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.status == 'available'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.round == 1
+        && request.resource.data.turn == 'seller'
+        && request.resource.data.currentPrice < request.resource.data.originalPrice
+        && request.resource.data.currentPrice >= request.resource.data.originalPrice * offersMinRatio();
+
+      allow read: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isAdmin());
+
+      // Les champs identifiants/prix de depart ne changent jamais apres
+      // creation, quelle que soit la transition. Seule la partie dont
+      // c'est le tour peut agir (verrou optimiste sur le champ "turn").
+      allow update: if isAuthenticated()
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['buyerId', 'sellerId', 'productId', 'originalPrice', 'chatId'])
+        && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid)
+        && (
+             // Expiration paresseuse : seul le statut change, vers "expired".
+             (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+               && request.resource.data.status == 'expired')
+
+             // L'acheteur retire son offre tant que le vendeur n'a pas repondu.
+             || (resource.data.buyerId == request.auth.uid
+                 && resource.data.turn == 'seller'
+                 && resource.data.status == 'pending'
+                 && request.resource.data.status == 'cancelled')
+
+             // Le vendeur agit quand c'est son tour.
+             || (resource.data.sellerId == request.auth.uid
+                 && resource.data.turn == 'seller'
+                 && resource.data.status == 'pending'
+                 && (request.resource.data.status == 'accepted'
+                     || request.resource.data.status == 'rejected'
+                     || (request.resource.data.status == 'pending'
+                         && request.resource.data.turn == 'buyer'
+                         && request.resource.data.round == resource.data.round + 1
+                         && resource.data.round < offersMaxRounds())))
+
+             // L'acheteur agit quand c'est son tour (apres une contre-offre).
+             || (resource.data.buyerId == request.auth.uid
+                 && resource.data.turn == 'buyer'
+                 && resource.data.status == 'pending'
+                 && (request.resource.data.status == 'accepted'
+                     || request.resource.data.status == 'rejected'
+                     || (request.resource.data.status == 'pending'
+                         && request.resource.data.turn == 'seller'
+                         && request.resource.data.round == resource.data.round + 1
+                         && resource.data.round < offersMaxRounds())))
+           );
     }
 
     // ── Collection relay_centers ────────────────────────────────────────────
