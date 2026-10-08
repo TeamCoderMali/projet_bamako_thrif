@@ -17,6 +17,12 @@ class ProductEntity extends Equatable {
   final String? color;
   final ProductStatus status;
   final bool verifie;
+  // Le vendeur peut désactiver les offres de prix sur son article ("Faire
+  // une offre", lot offres). Défaut = autorisé : Fatou n'a pas encore
+  // décidé du défaut produit, mais un article publié sans ce champ (tous
+  // les articles existants) doit rester négociable plutôt que de bloquer
+  // silencieusement une fonctionnalité pas encore annoncée aux vendeurs.
+  final bool offersEnabled;
   final int viewCount;
   final int favoriteCount;
   final String? location;
@@ -41,6 +47,7 @@ class ProductEntity extends Equatable {
     this.color,
     this.status = ProductStatus.available,
     this.verifie = false,
+    this.offersEnabled = true,
     this.viewCount = 0,
     this.favoriteCount = 0,
     this.location,
@@ -57,7 +64,8 @@ class ProductEntity extends Equatable {
   List<Object?> get props => [
         id, sellerId, title, description, price, imageUrls,
         category, condition, brand, size, color, status, verifie,
-        viewCount, favoriteCount, rating, reviewCount, createdAt, updatedAt,
+        offersEnabled, viewCount, favoriteCount, rating, reviewCount,
+        createdAt, updatedAt,
       ];
 }
 
