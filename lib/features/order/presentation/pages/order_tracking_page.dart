@@ -128,6 +128,29 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
   // réception : désormais l'équipe compare les photos de l'annonce
   // (déjà en ligne) aux photos envoyées ici par l'acheteur.
   Future<void> _reportIssue(Map<String, dynamic> orderData) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    // ID deterministe {orderId}_{buyerId} : un seul signalement actif par
+    // commande et par acheteur (voir audit du 2026-10-08).
+    final ncId = '${widget.orderId}_$uid';
+    final existing = await FirebaseFirestore.instance
+        .collection('non_conformities')
+        .doc(ncId)
+        .get();
+    if (existing.exists) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vous avez déjà déclaré un problème pour cette commande.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -137,6 +160,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
       builder: (_) => _ReportIssueSheet(
         orderId: widget.orderId,
         orderData: orderData,
+        ncId: ncId,
       ),
     );
     if (result == true && mounted) {
@@ -457,7 +481,12 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
 class _ReportIssueSheet extends StatefulWidget {
   final String orderId;
   final Map<String, dynamic> orderData;
-  const _ReportIssueSheet({required this.orderId, required this.orderData});
+  final String ncId;
+  const _ReportIssueSheet({
+    required this.orderId,
+    required this.orderData,
+    required this.ncId,
+  });
 
   @override
   State<_ReportIssueSheet> createState() => _ReportIssueSheetState();
@@ -570,8 +599,13 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
           'expiresAt': Timestamp.fromDate(
               DateTime.now().add(const Duration(days: 90))),
         });
-      } else if (choice == 'remboursement') {
-        await db.collection('refund_requests').add({
+      } else if (choice == 'remboursement' && uid != null) {
+        // ID deterministe {orderId}_{buyerId} : une seule demande de
+        // remboursement active par commande et par acheteur.
+        await db
+            .collection('refund_requests')
+            .doc('${widget.orderId}_$uid')
+            .set({
           'orderId': widget.orderId,
           'buyerId': uid,
           'amount': amount,
@@ -634,7 +668,9 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
             ? [widget.orderData['productImageUrl'] as String]
             : <String>[];
 
-    final doc = await FirebaseFirestore.instance.collection('non_conformities').add({
+    final docRef =
+        FirebaseFirestore.instance.collection('non_conformities').doc(widget.ncId);
+    await docRef.set({
       'orderId': widget.orderId,
       'productId': widget.orderData['productId'],
       'productTitle': widget.orderData['productTitle'],
@@ -647,7 +683,7 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
       'status': status,
       'createdAt': Timestamp.now(),
     });
-    return doc.id;
+    return docRef.id;
   }
 
   @override
