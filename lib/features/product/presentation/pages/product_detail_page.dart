@@ -12,6 +12,7 @@ import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 import 'package:bamako_thrift/features/product/presentation/cubit/product_cubit.dart';
+import 'package:bamako_thrift/shared/widgets/make_offer_sheet.dart';
 import 'package:bamako_thrift/shared/widgets/report_dialog.dart';
 import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
 
@@ -790,12 +791,53 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                     ],
                   ),
+                _buildMakeOfferButton(context, product),
                 const SizedBox(height: 20),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  // ── Bouton "Faire une offre" ─────────────────────────────────────────────
+  // Visible seulement si l'article est disponible, que le vendeur autorise
+  // les offres sur cet article, et que l'utilisateur courant n'est pas le
+  // vendeur lui-même. Indépendant de l'interrupteur paiement : une offre
+  // négocie un prix, elle ne débite rien.
+  Widget _buildMakeOfferButton(BuildContext context, ProductEntity product) {
+    final currentUser = context.read<AuthCubit>().currentUser;
+    if (currentUser == null || currentUser.id == product.sellerId) {
+      return const SizedBox.shrink();
+    }
+    if (!product.isAvailable || !product.offersEnabled) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: () => showMakeOfferSheet(
+            context,
+            product: product,
+            buyerId: currentUser.id,
+          ),
+          icon: const Icon(Icons.local_offer_outlined, color: Color(0xFF6B7F4D)),
+          label: const Text(
+            'Faire une offre',
+            style: TextStyle(color: Color(0xFF6B7F4D), fontWeight: FontWeight.bold),
+          ),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Color(0xFF6B7F4D)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      ),
     );
   }
 

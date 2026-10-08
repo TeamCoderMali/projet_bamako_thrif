@@ -32,6 +32,8 @@ import '../../features/notification/data/repositories/notification_repository_im
 import '../../features/notification/domain/repositories/notification_repository.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../features/product/presentation/cubit/product_cubit.dart';
+import '../../features/offers/data/repositories/offers_repository_impl.dart';
+import '../../features/offers/domain/repositories/offers_repository.dart';
 
 /// Instance globale de GetIt.
 final GetIt sl = GetIt.instance;
@@ -44,6 +46,7 @@ Future<void> configureDependencies() async {
   await _registerProduct();
   await _registerChat();
   await _registerNotification();
+  await _registerOffers();
 }
 
 // ── Core ────────────────────────────────────────────────────────────────────
@@ -127,5 +130,12 @@ Future<void> _registerNotification() async {
       sl<FirebaseAuth>(),
       FirebaseMessaging.instance,
     ),
+  );
+}
+
+// ── Offers ───────────────────────────────────────────────────────────────────
+Future<void> _registerOffers() async {
+  sl.registerLazySingleton<OffersRepository>(
+    () => OffersRepositoryImpl(sl<FirebaseFirestore>()),
   );
 }
