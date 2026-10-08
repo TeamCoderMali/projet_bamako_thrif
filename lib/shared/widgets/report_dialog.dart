@@ -2,6 +2,11 @@
 // Bouton "Signaler" réutilisable (fiche article, conversation). Écrit dans
 // la collection "reports", distincte de "non_conformities" (liée au flux
 // de commande/relais) — un signalement n'a pas besoin d'une commande.
+//
+// ID déterministe {reporterId}_{targetType}_{targetId} : un seul
+// signalement actif par personne et par objet signalé (voir audit du
+// 2026-10-08 — l'ancien schéma en ID auto-généré permettait des envois
+// illimités). L'app vérifie l'existence avant d'afficher le formulaire.
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +21,12 @@ const reportReasons = <String>[
   'Autre',
 ];
 
+String _targetTypeCode(ReportTargetType t) =>
+    t == ReportTargetType.product ? 'product' : 'chat';
+
+String _reportId(String reporterId, ReportTargetType targetType, String targetId) =>
+    '${reporterId}_${_targetTypeCode(targetType)}_$targetId';
+
 Future<void> showReportDialog(
   BuildContext context, {
   required ReportTargetType targetType,
@@ -23,6 +34,17 @@ Future<void> showReportDialog(
 }) async {
   final uid = FirebaseAuth.instance.currentUser?.uid;
   if (uid == null) return;
+
+  final reportId = _reportId(uid, targetType, targetId);
+  final existing =
+      await FirebaseFirestore.instance.collection('reports').doc(reportId).get();
+
+  if (!context.mounted) return;
+
+  if (existing.exists) {
+    await _showAlreadyReportedSheet(context, targetType);
+    return;
+  }
 
   String? selectedReason;
   final textController = TextEditingController();
@@ -96,11 +118,10 @@ Future<void> showReportDialog(
                           : () async {
                               await FirebaseFirestore.instance
                                   .collection('reports')
-                                  .add({
+                                  .doc(reportId)
+                                  .set({
                                 'reporterId': uid,
-                                'targetType': targetType == ReportTargetType.product
-                                    ? 'product'
-                                    : 'chat',
+                                'targetType': _targetTypeCode(targetType),
                                 'targetId': targetId,
                                 'reasonCode': selectedReason,
                                 'reasonText': textController.text.trim(),
@@ -135,6 +156,59 @@ Future<void> showReportDialog(
             ),
           );
         },
+      );
+    },
+  );
+}
+
+Future<void> _showAlreadyReportedSheet(
+    BuildContext context, ReportTargetType targetType) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (sheetCtx) {
+      final colors = Theme.of(sheetCtx).colorScheme;
+      return Container(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+        decoration: BoxDecoration(
+          color: Theme.of(sheetCtx).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.flag, color: Color(0xFF6B7F4D)),
+                const SizedBox(width: 8),
+                Text(
+                  'Déjà signalé',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: colors.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              targetType == ReportTargetType.product
+                  ? 'Vous avez déjà signalé cet article. Les administrateurs ont été informés.'
+                  : 'Vous avez déjà signalé cette conversation. Les administrateurs ont été informés.',
+              style: TextStyle(fontSize: 14, color: colors.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(sheetCtx),
+                child: const Text('Fermer'),
+              ),
+            ),
+          ],
+        ),
       );
     },
   );
