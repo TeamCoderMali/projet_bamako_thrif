@@ -4,6 +4,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/offer_entity.dart';
 
 class OfferModel extends OfferEntity {
+  /// Identifiant déterministe : un seul document `offers/{id}` par paire
+  /// (produit, acheteur), pour que "une seule offre en cours par acheteur
+  /// et par article" soit garanti nativement par les règles Firestore
+  /// (deux tentatives simultanées visent forcément le même document) sans
+  /// avoir besoin d'une requête d'existence par filtre, impossible à
+  /// exprimer dans les règles. Les relances après refus/annulation/
+  /// expiration réutilisent ce même document (voir PLAN_OFFRES.md §2).
+  static String buildId({required String productId, required String buyerId}) =>
+      '${productId}_$buyerId';
+
   const OfferModel({
     required super.id,
     required super.productId,

@@ -282,16 +282,19 @@ service cloud.firestore {
     // Lot A (socle) : regles ecrites et testees, AUCUN ecran ne les utilise
     // encore. Valeurs validees par Fatou le 2026-10-08 : pas de plafond de
     // nombre d'offres par defaut (illimite), pas de plafond de rounds par
-    // defaut (illimite, voir offersRoundAllowed()). "Une seule offre
-    // pending par acheteur/article" n'est PAS applique ici -- pas
-    // realisable de facon fiable en regles seules (pas de requete
-    // d'existence par filtre), voir PLAN_OFFRES.md section 2 pour les
-    // options (controle cote client, ou ID de document deterministe) :
-    // decision en attente. L'expiration (respondBy depasse) est geree par
-    // ecriture paresseuse cote client a l'ouverture d'un ecran concerne,
-    // pas par un cron serveur.
+    // defaut (illimite, voir offersRoundAllowed()). L'expiration (respondBy
+    // depasse) est geree par ecriture paresseuse cote client a l'ouverture
+    // d'un ecran concerne, pas par un cron serveur.
+    //
+    // "Une seule offre pending par acheteur/article" : garanti par un ID de
+    // document DETERMINISTE {productId}_{buyerId} (voir OfferModel.buildId,
+    // mobile) -- un seul document possible par paire, donc un seul statut
+    // possible a la fois. Une negociation refusee/annulee/expiree se relance
+    // en reutilisant CE MEME document (branche "relance" ci-dessous), pas en
+    // creant un nouveau document.
     match /offers/{offerId} {
       allow create: if isAuthenticated()
+        && offerId == request.resource.data.productId + '_' + request.resource.data.buyerId
         && request.resource.data.buyerId == request.auth.uid
         && request.resource.data.buyerId != request.resource.data.sellerId
         && request.resource.data.sellerId ==
@@ -310,8 +313,10 @@ service cloud.firestore {
             || isAdmin());
 
       // Les champs identifiants/prix de depart ne changent jamais apres
-      // creation, quelle que soit la transition. Seule la partie dont
-      // c'est le tour peut agir (verrou optimiste sur le champ "turn").
+      // creation, quelle que soit la transition (y compris une relance :
+      // originalPrice reste celui de la toute premiere offre sur cette
+      // paire, meme si le prix du produit a change depuis). Seule la
+      // partie dont c'est le tour peut agir (verrou optimiste sur "turn").
       allow update: if isAuthenticated()
         && !request.resource.data.diff(resource.data).affectedKeys()
              .hasAny(['buyerId', 'sellerId', 'productId', 'originalPrice', 'chatId'])
@@ -334,6 +339,24 @@ service cloud.firestore {
                  && resource.data.status == 'pending'
                  && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
                  && request.resource.data.status == 'cancelled')
+
+             // Relance par l'acheteur : seulement depuis un statut terminal
+             // issu d'un refus/annulation/expiration (jamais depuis
+             // "pending" ou "accepted"). Memes conditions qu'une creation
+             // (ratio, prix strictement inferieur, produit disponible,
+             // offres autorisees), retour a round 1 / turn seller.
+             // L'historique est conserve (pas remplace) par les champs
+             // globalement immuables + le fait qu'on ne touche pas
+             // "history" ici (l'app y ajoutera l'entree de relance).
+             || (resource.data.buyerId == request.auth.uid
+                 && resource.data.status in ['rejected', 'cancelled', 'expired']
+                 && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.status == 'available'
+                 && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.get('offersEnabled', true) == true
+                 && request.resource.data.status == 'pending'
+                 && request.resource.data.round == 1
+                 && request.resource.data.turn == 'seller'
+                 && request.resource.data.currentPrice < resource.data.originalPrice
+                 && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio())
 
              // Le vendeur agit quand c'est son tour.
              || (resource.data.sellerId == request.auth.uid

@@ -43,6 +43,10 @@ class OfferHistoryEntry extends Equatable {
 }
 
 class OfferEntity extends Equatable {
+  /// Déterministe : `{productId}_{buyerId}` (voir OfferModel.buildId) — un
+  /// seul document par paire acheteur/article, réutilisé à chaque relance
+  /// après refus/annulation/expiration, pour garantir nativement qu'une
+  /// seule offre "pending" existe à la fois pour cette paire.
   final String id;
   final String productId;
   final String productTitle;

@@ -82,80 +82,118 @@ function baseOffer(overrides = {}) {
   };
 }
 
+// L'ID est desormais deterministe ({productId}_{buyerId}, voir
+// OfferModel.buildId cote mobile) : la creation passe par doc(id).set(...)
+// au lieu de collection.add(...). Chaque scenario qui REUSSIT a creer un
+// document utilise un buyerId dedie pour ne pas entrer en collision avec
+// un autre test sur le meme document (les echecs ne laissent aucune trace,
+// donc peuvent partager BUYER/p1 librement).
+function offerDocId(productId, buyerId) { return `${productId}_${buyerId}`; }
+
+function createOffer(db, buyerId, overrides = {}) {
+  const productId = overrides.productId ?? 'p1';
+  return db.doc(`offers/${offerDocId(productId, buyerId)}`)
+    .set(baseOffer({ buyerId, productId, ...overrides }));
+}
+
+function freshBuyer(label) {
+  const uid = `buyer-${label}`;
+  return { uid, db: testEnv.authenticatedContext(uid).firestore() };
+}
+
 console.log('\n=== Creation : repli config/offers absent (ratio 0.3 par defaut) ===');
 
 await check('acheteur cree une offre valide (>=30%, < prix) : OK', async () => {
-  await assertSucceeds(buyerCtx().collection('offers').add(baseOffer()));
+  const b = freshBuyer('valid');
+  await assertSucceeds(createOffer(b.db, b.uid));
 });
 
 await check('offre a exactement 30% du prix : OK (limite incluse)', async () => {
-  await assertSucceeds(
-    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 3000 }))
-  );
+  const b = freshBuyer('exact-30');
+  await assertSucceeds(createOffer(b.db, b.uid, { currentPrice: 3000 }));
 });
 
 await check('offre en dessous de 30% du prix : refusee', async () => {
-  await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 2999 }))
-  );
+  await assertFails(createOffer(buyerCtx(), BUYER, { currentPrice: 2999 }));
 });
 
 await check('offre egale au prix de depart (pas strictement inferieure) : refusee', async () => {
-  await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 10000 }))
-  );
+  await assertFails(createOffer(buyerCtx(), BUYER, { currentPrice: 10000 }));
 });
 
 await check('offre au-dessus du prix de depart : refusee', async () => {
-  await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 12000 }))
-  );
+  await assertFails(createOffer(buyerCtx(), BUYER, { currentPrice: 12000 }));
 });
 
 await check('sellerId ne correspond pas au vrai vendeur du produit : refusee', async () => {
-  await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ sellerId: STRANGER }))
-  );
+  await assertFails(createOffer(buyerCtx(), BUYER, { sellerId: STRANGER }));
 });
 
 await check('produit non disponible (vendu) : refusee', async () => {
-  await assertFails(
-    buyerCtx().collection('offers').add(
-      baseOffer({ productId: 'p-sold', sellerId: SELLER })
-    )
-  );
+  await assertFails(createOffer(buyerCtx(), BUYER, { productId: 'p-sold', sellerId: SELLER }));
 });
 
 await check('round different de 1 a la creation : refusee', async () => {
-  await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ round: 2 }))
-  );
+  await assertFails(createOffer(buyerCtx(), BUYER, { round: 2 }));
 });
 
 await check('turn different de "seller" a la creation : refusee', async () => {
-  await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ turn: 'buyer' }))
-  );
+  await assertFails(createOffer(buyerCtx(), BUYER, { turn: 'buyer' }));
 });
 
 await check('buyerId usurpe (pas request.auth.uid) : refusee', async () => {
+  // L'ID doit correspondre a request.auth.uid, pas a un buyerId usurpe --
+  // ecrit donc a l'ID du vrai usurpateur pour isoler ce qu'on teste.
   await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ buyerId: OTHER_BUYER }))
+    buyerCtx().doc(`offers/${offerDocId('p1', OTHER_BUYER)}`)
+      .set(baseOffer({ buyerId: OTHER_BUYER }))
   );
 });
 
 await check('offre refusee si le vendeur a desactive les offres sur l\'article', async () => {
-  await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ productId: 'p-no-offers' }))
-  );
+  await assertFails(createOffer(buyerCtx(), BUYER, { productId: 'p-no-offers' }));
 });
 
 await check('offre sur son propre article (buyerId == sellerId) : refusee', async () => {
   await seed({ 'product/p-own': { sellerId: SELLER, title: 'Mien', status: 'available', price: 10000 } });
+  await assertFails(createOffer(sellerCtx(), SELLER, { productId: 'p-own', sellerId: SELLER }));
+});
+
+console.log('\n=== Creation : une seule offre pending par acheteur/article (ID deterministe) ===');
+
+await check('creation en double refusee (meme acheteur, meme article, deja pending)', async () => {
+  const b = freshBuyer('dup');
+  await assertSucceeds(createOffer(b.db, b.uid)); // premiere offre : OK
+  await assertFails(createOffer(b.db, b.uid)); // deuxieme tentative : meme doc, deja pending -> refusee
+});
+
+await check('relance acceptee apres un refus (meme document, remis a pending/round 1)', async () => {
+  const b = freshBuyer('relance-ok');
+  await seed({ [`offers/${offerDocId('p1', b.uid)}`]: baseOffer({ buyerId: b.uid, status: 'rejected' }) });
+  await assertSucceeds(
+    b.db.doc(`offers/${offerDocId('p1', b.uid)}`).update({
+      status: 'pending', round: 1, turn: 'seller', currentPrice: 4000,
+    })
+  );
+});
+
+await check('relance refusee pendant que l\'offre est encore pending', async () => {
+  const b = freshBuyer('relance-pending');
+  await seed({ [`offers/${offerDocId('p1', b.uid)}`]: baseOffer({ buyerId: b.uid, status: 'pending' }) });
   await assertFails(
-    sellerCtx().collection('offers').add(
-      baseOffer({ productId: 'p-own', buyerId: SELLER, sellerId: SELLER })
-    )
+    b.db.doc(`offers/${offerDocId('p1', b.uid)}`).update({
+      status: 'pending', round: 1, turn: 'seller', currentPrice: 4000,
+    })
+  );
+});
+
+await check('relance par un tiers refusee (pas l\'acheteur d\'origine)', async () => {
+  const b = freshBuyer('relance-owner');
+  await seed({ [`offers/${offerDocId('p1', b.uid)}`]: baseOffer({ buyerId: b.uid, status: 'cancelled' }) });
+  await assertFails(
+    strangerCtx().doc(`offers/${offerDocId('p1', b.uid)}`).update({
+      status: 'pending', round: 1, turn: 'seller', currentPrice: 4000,
+    })
   );
 });
 
@@ -164,15 +202,12 @@ console.log('\n=== Creation : config/offers present avec ratio personnalise ==='
 await seed({ 'config/offers': { minOfferRatio: 0.7, maxRounds: 2 } });
 
 await check('ratio personnalise (0.7) : offre a 60% refusee', async () => {
-  await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 6000 }))
-  );
+  await assertFails(createOffer(buyerCtx(), BUYER, { currentPrice: 6000 }));
 });
 
 await check('ratio personnalise (0.7) : offre a 70% acceptee', async () => {
-  await assertSucceeds(
-    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 7000 }))
-  );
+  const b = freshBuyer('custom-ratio');
+  await assertSucceeds(createOffer(b.db, b.uid, { currentPrice: 7000 }));
 });
 
 // Reinitialise config/offers avant les tests suivants : ils supposent tous
