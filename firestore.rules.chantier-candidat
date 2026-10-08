@@ -46,15 +46,22 @@ service cloud.firestore {
     // Lot "offres" (voir PLAN_OFFRES.md) : valeurs reglables depuis
     // config/offers (back-office a venir), repli en dur si document/champ
     // absent -- memes valeurs de repli que OffersConfigService (mobile).
+    // Valeurs validees par Fatou le 2026-10-08.
     function offersMinRatio() {
       return exists(/databases/$(database)/documents/config/offers)
-        ? get(/databases/$(database)/documents/config/offers).data.get('minOfferRatio', 0.5)
-        : 0.5;
+        ? get(/databases/$(database)/documents/config/offers).data.get('minOfferRatio', 0.3)
+        : 0.3;
     }
+    // Null = illimite (pas de plafond de tours), par defaut comme a
+    // l'explicite. Utiliser via offersRoundAllowed(), pas directement,
+    // pour eviter de repeter la verification de null partout.
     function offersMaxRounds() {
       return exists(/databases/$(database)/documents/config/offers)
-        ? get(/databases/$(database)/documents/config/offers).data.get('maxRounds', 3)
-        : 3;
+        ? get(/databases/$(database)/documents/config/offers).data.get('maxRounds', null)
+        : null;
+    }
+    function offersRoundAllowed(currentRound) {
+      return offersMaxRounds() == null || currentRound < offersMaxRounds();
     }
 
     // ── Collection users ───────────────────────────────────────────────────
@@ -273,12 +280,16 @@ service cloud.firestore {
     // ── Collection offers ────────────────────────────────────────────────────
     // Negociation de prix acheteur/vendeur (lot "offres", PLAN_OFFRES.md).
     // Lot A (socle) : regles ecrites et testees, AUCUN ecran ne les utilise
-    // encore. Limites assumees, non garanties ici (pas de Cloud Function
-    // transactionnelle) : plafond de 3 offres cumulatives par
-    // acheteur/article, 1 offre active a la fois -- controle cote client
-    // uniquement, meme niveau de confiance que viewCount. L'expiration
-    // (respondBy/reservedUntil depasses) est geree par ecriture paresseuse
-    // cote client a l'ouverture d'un ecran concerne, pas par un cron serveur.
+    // encore. Valeurs validees par Fatou le 2026-10-08 : pas de plafond de
+    // nombre d'offres par defaut (illimite), pas de plafond de rounds par
+    // defaut (illimite, voir offersRoundAllowed()). "Une seule offre
+    // pending par acheteur/article" n'est PAS applique ici -- pas
+    // realisable de facon fiable en regles seules (pas de requete
+    // d'existence par filtre), voir PLAN_OFFRES.md section 2 pour les
+    // options (controle cote client, ou ID de document deterministe) :
+    // decision en attente. L'expiration (respondBy depasse) est geree par
+    // ecriture paresseuse cote client a l'ouverture d'un ecran concerne,
+    // pas par un cron serveur.
     match /offers/{offerId} {
       allow create: if isAuthenticated()
         && request.resource.data.buyerId == request.auth.uid
@@ -286,6 +297,7 @@ service cloud.firestore {
         && request.resource.data.sellerId ==
              get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.sellerId
         && get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.status == 'available'
+        && get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.get('offersEnabled', true) == true
         && request.resource.data.status == 'pending'
         && request.resource.data.round == 1
         && request.resource.data.turn == 'seller'
@@ -339,7 +351,7 @@ service cloud.firestore {
                       || (request.resource.data.status == 'pending'
                           && request.resource.data.turn == 'buyer'
                           && request.resource.data.round == resource.data.round + 1
-                          && resource.data.round < offersMaxRounds()
+                          && offersRoundAllowed(resource.data.round)
                           && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio()
                           && request.resource.data.currentPrice <= resource.data.originalPrice)
                     ))
@@ -355,7 +367,7 @@ service cloud.firestore {
                       || (request.resource.data.status == 'pending'
                           && request.resource.data.turn == 'seller'
                           && request.resource.data.round == resource.data.round + 1
-                          && resource.data.round < offersMaxRounds()
+                          && offersRoundAllowed(resource.data.round)
                           && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio()
                           && request.resource.data.currentPrice <= resource.data.originalPrice)
                     ))

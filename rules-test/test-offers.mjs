@@ -62,6 +62,7 @@ await seed({
   'admin_users/admin1': { role: 'admin' },
   'product/p1': { sellerId: SELLER, title: 'Robe', status: 'available', price: 10000 },
   'product/p-sold': { sellerId: SELLER, title: 'Vendu', status: 'sold', price: 10000 },
+  'product/p-no-offers': { sellerId: SELLER, title: 'Pas negociable', status: 'available', price: 10000, offersEnabled: false },
 });
 
 function baseOffer(overrides = {}) {
@@ -81,21 +82,21 @@ function baseOffer(overrides = {}) {
   };
 }
 
-console.log('\n=== Creation : repli config/offers absent (ratio 0.5 par defaut) ===');
+console.log('\n=== Creation : repli config/offers absent (ratio 0.3 par defaut) ===');
 
-await check('acheteur cree une offre valide (>=50%, < prix) : OK', async () => {
+await check('acheteur cree une offre valide (>=30%, < prix) : OK', async () => {
   await assertSucceeds(buyerCtx().collection('offers').add(baseOffer()));
 });
 
-await check('offre a exactement 50% du prix : OK (limite incluse)', async () => {
+await check('offre a exactement 30% du prix : OK (limite incluse)', async () => {
   await assertSucceeds(
-    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 5000 }))
+    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 3000 }))
   );
 });
 
-await check('offre en dessous de 50% du prix : refusee', async () => {
+await check('offre en dessous de 30% du prix : refusee', async () => {
   await assertFails(
-    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 4999 }))
+    buyerCtx().collection('offers').add(baseOffer({ currentPrice: 2999 }))
   );
 });
 
@@ -143,6 +144,12 @@ await check('buyerId usurpe (pas request.auth.uid) : refusee', async () => {
   );
 });
 
+await check('offre refusee si le vendeur a desactive les offres sur l\'article', async () => {
+  await assertFails(
+    buyerCtx().collection('offers').add(baseOffer({ productId: 'p-no-offers' }))
+  );
+});
+
 await check('offre sur son propre article (buyerId == sellerId) : refusee', async () => {
   await seed({ 'product/p-own': { sellerId: SELLER, title: 'Mien', status: 'available', price: 10000 } });
   await assertFails(
@@ -169,7 +176,7 @@ await check('ratio personnalise (0.7) : offre a 70% acceptee', async () => {
 });
 
 // Reinitialise config/offers avant les tests suivants : ils supposent tous
-// le repli par defaut (ratio 0.5, max 3 rounds), pas le ratio/plafond
+// le repli par defaut (ratio 0.3, rounds illimites), pas le ratio/plafond
 // personnalise teste ci-dessus.
 await testEnv.withSecurityRulesDisabled(async (ctx) => {
   await ctx.firestore().doc('config/offers').delete();
@@ -229,7 +236,7 @@ await check('contre-offre du vendeur en dessous du ratio minimal : refusee', asy
   await seed({ 'offers/o-counter-too-low': baseOffer() });
   await assertFails(
     sellerCtx().doc('offers/o-counter-too-low').update({
-      currentPrice: 4999, round: 2, turn: 'buyer', status: 'pending',
+      currentPrice: 2999, round: 2, turn: 'buyer', status: 'pending',
     })
   );
 });
@@ -283,17 +290,34 @@ await check('vendeur ne peut pas agir quand ce n\'est pas son tour', async () =>
   );
 });
 
-console.log('\n=== Mise a jour : plafond de rounds (config par defaut, max 3) ===');
+console.log('\n=== Mise a jour : plafond de rounds (illimite par defaut) ===');
 
 await seed({
-  // round 3 = round max par defaut : plus de contre-offre permise, seulement accepter/refuser
-  'offers/o-max-round': baseOffer({ round: 3, turn: 'seller' }),
+  // round eleve, AUCUNE config/offers : illimite par defaut, la
+  // contre-offre doit rester possible indefiniment.
+  'offers/o-no-round-cap': baseOffer({ round: 50, turn: 'seller' }),
 });
 
-await check('contre-offre refusee une fois le plafond de rounds atteint', async () => {
+await check('pas de plafond de rounds par defaut : contre-offre a un round eleve acceptee', async () => {
+  await assertSucceeds(
+    sellerCtx().doc('offers/o-no-round-cap').update({
+      currentPrice: 7000, round: 51, turn: 'buyer', status: 'pending',
+    })
+  );
+});
+
+console.log('\n=== Mise a jour : plafond de rounds (config explicite maxRounds=2) ===');
+
+await seed({ 'config/offers': { maxRounds: 2 } });
+
+await seed({
+  'offers/o-max-round': baseOffer({ round: 2, turn: 'seller' }),
+});
+
+await check('contre-offre refusee une fois le plafond configure atteint', async () => {
   await assertFails(
     sellerCtx().doc('offers/o-max-round').update({
-      currentPrice: 7000, round: 4, turn: 'buyer', status: 'pending',
+      currentPrice: 7000, round: 3, turn: 'buyer', status: 'pending',
     })
   );
 });
@@ -302,6 +326,10 @@ await check('accepter reste possible meme au plafond de rounds', async () => {
   await assertSucceeds(
     sellerCtx().doc('offers/o-max-round').update({ status: 'accepted' })
   );
+});
+
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await ctx.firestore().doc('config/offers').delete();
 });
 
 console.log('\n=== Mise a jour : annulation par l\'acheteur ===');
