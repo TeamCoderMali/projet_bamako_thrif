@@ -282,6 +282,7 @@ service cloud.firestore {
     match /offers/{offerId} {
       allow create: if isAuthenticated()
         && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.buyerId != request.resource.data.sellerId
         && request.resource.data.sellerId ==
              get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.sellerId
         && get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.status == 'available'
@@ -304,37 +305,60 @@ service cloud.firestore {
              .hasAny(['buyerId', 'sellerId', 'productId', 'originalPrice', 'chatId'])
         && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid)
         && (
-             // Expiration paresseuse : seul le statut change, vers "expired".
-             (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+             // Expiration paresseuse : uniquement depuis "pending" (pas depuis
+             // "accepted" -- la reservation post-acceptation a son propre
+             // delai, pas encore gere par cette regle) et seulement une fois
+             // le delai de reponse du tour en cours reellement depasse. Seuls
+             // le statut et l'historique changent.
+             (resource.data.status == 'pending'
+               && request.time > resource.data.respondBy
+               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
                && request.resource.data.status == 'expired')
 
-             // L'acheteur retire son offre tant que le vendeur n'a pas repondu.
+             // L'acheteur retire son offre tant que le vendeur n'a pas repondu :
+             // seuls le statut et l'historique changent.
              || (resource.data.buyerId == request.auth.uid
                  && resource.data.turn == 'seller'
                  && resource.data.status == 'pending'
+                 && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
                  && request.resource.data.status == 'cancelled')
 
              // Le vendeur agit quand c'est son tour.
              || (resource.data.sellerId == request.auth.uid
                  && resource.data.turn == 'seller'
                  && resource.data.status == 'pending'
-                 && (request.resource.data.status == 'accepted'
-                     || request.resource.data.status == 'rejected'
-                     || (request.resource.data.status == 'pending'
-                         && request.resource.data.turn == 'buyer'
-                         && request.resource.data.round == resource.data.round + 1
-                         && resource.data.round < offersMaxRounds())))
+                 && (
+                      // Accepter/refuser : currentPrice, round et turn
+                      // restent inchanges, seuls le statut et l'historique
+                      // bougent.
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+                        && (request.resource.data.status == 'accepted' || request.resource.data.status == 'rejected'))
+
+                      // Contre-offre : prix dans les bornes [ratio min, prix
+                      // de depart], round+1, tour qui passe a l'acheteur.
+                      || (request.resource.data.status == 'pending'
+                          && request.resource.data.turn == 'buyer'
+                          && request.resource.data.round == resource.data.round + 1
+                          && resource.data.round < offersMaxRounds()
+                          && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio()
+                          && request.resource.data.currentPrice <= resource.data.originalPrice)
+                    ))
 
              // L'acheteur agit quand c'est son tour (apres une contre-offre).
              || (resource.data.buyerId == request.auth.uid
                  && resource.data.turn == 'buyer'
                  && resource.data.status == 'pending'
-                 && (request.resource.data.status == 'accepted'
-                     || request.resource.data.status == 'rejected'
-                     || (request.resource.data.status == 'pending'
-                         && request.resource.data.turn == 'seller'
-                         && request.resource.data.round == resource.data.round + 1
-                         && resource.data.round < offersMaxRounds())))
+                 && (
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+                        && (request.resource.data.status == 'accepted' || request.resource.data.status == 'rejected'))
+
+                      || (request.resource.data.status == 'pending'
+                          && request.resource.data.turn == 'seller'
+                          && request.resource.data.round == resource.data.round + 1
+                          && resource.data.round < offersMaxRounds()
+                          && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio()
+                          && request.resource.data.currentPrice <= resource.data.originalPrice)
+                    ))
            );
     }
 

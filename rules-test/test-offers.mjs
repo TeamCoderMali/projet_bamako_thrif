@@ -143,6 +143,15 @@ await check('buyerId usurpe (pas request.auth.uid) : refusee', async () => {
   );
 });
 
+await check('offre sur son propre article (buyerId == sellerId) : refusee', async () => {
+  await seed({ 'product/p-own': { sellerId: SELLER, title: 'Mien', status: 'available', price: 10000 } });
+  await assertFails(
+    sellerCtx().collection('offers').add(
+      baseOffer({ productId: 'p-own', buyerId: SELLER, sellerId: SELLER })
+    )
+  );
+});
+
 console.log('\n=== Creation : config/offers present avec ratio personnalise ===');
 
 await seed({ 'config/offers': { minOfferRatio: 0.7, maxRounds: 2 } });
@@ -212,6 +221,24 @@ await check('vendeur contre-propose (round+1, tour passe a l\'acheteur)', async 
   await assertSucceeds(
     sellerCtx().doc('offers/o-seller-counter').update({
       currentPrice: 8000, round: 2, turn: 'buyer', status: 'pending',
+    })
+  );
+});
+
+await check('contre-offre du vendeur en dessous du ratio minimal : refusee', async () => {
+  await seed({ 'offers/o-counter-too-low': baseOffer() });
+  await assertFails(
+    sellerCtx().doc('offers/o-counter-too-low').update({
+      currentPrice: 4999, round: 2, turn: 'buyer', status: 'pending',
+    })
+  );
+});
+
+await check('contre-offre du vendeur au-dessus du prix de depart : refusee', async () => {
+  await seed({ 'offers/o-counter-too-high': baseOffer() });
+  await assertFails(
+    sellerCtx().doc('offers/o-counter-too-high').update({
+      currentPrice: 10001, round: 2, turn: 'buyer', status: 'pending',
     })
   );
 });
@@ -299,26 +326,48 @@ await check('acheteur ne peut pas annuler quand c\'est a lui de repondre (son to
 
 console.log('\n=== Mise a jour : expiration paresseuse ===');
 
-await seed({ 'offers/o-expire-by-buyer': baseOffer() });
+// respondBy dans le passe : condition necessaire pour qu'une expiration soit
+// desormais acceptee (durcissement demande).
+function expiredOffer(overrides = {}) {
+  return baseOffer({ respondBy: new Date(Date.now() - 60 * 1000), ...overrides });
+}
 
-await check('l\'acheteur peut faire expirer une offre (statut uniquement)', async () => {
+await seed({ 'offers/o-expire-by-buyer': expiredOffer() });
+
+await check('l\'acheteur peut faire expirer une offre (statut uniquement, respondBy depasse)', async () => {
   await assertSucceeds(
     buyerCtx().doc('offers/o-expire-by-buyer').update({ status: 'expired' })
   );
 });
 
-await seed({ 'offers/o-expire-by-seller': baseOffer() });
+await seed({ 'offers/o-expire-by-seller': expiredOffer() });
 
-await check('le vendeur peut aussi faire expirer une offre', async () => {
+await check('le vendeur peut aussi faire expirer une offre (respondBy depasse)', async () => {
   await assertSucceeds(
     sellerCtx().doc('offers/o-expire-by-seller').update({ status: 'expired' })
   );
 });
 
 await check('un tiers ne peut pas faire expirer une offre dont il n\'est pas partie', async () => {
-  await seed({ 'offers/o-expire-stranger': baseOffer() });
+  await seed({ 'offers/o-expire-stranger': expiredOffer() });
   await assertFails(
     strangerCtx().doc('offers/o-expire-stranger').update({ status: 'expired' })
+  );
+});
+
+await check('expiration refusee avant que respondBy soit depasse', async () => {
+  await seed({ 'offers/o-expire-too-early': baseOffer() }); // respondBy dans le futur
+  await assertFails(
+    buyerCtx().doc('offers/o-expire-too-early').update({ status: 'expired' })
+  );
+});
+
+await check('impossible d\'expirer une offre deja acceptee (pas "pending")', async () => {
+  await seed({
+    'offers/o-expire-accepted': expiredOffer({ status: 'accepted' }),
+  });
+  await assertFails(
+    buyerCtx().doc('offers/o-expire-accepted').update({ status: 'expired' })
   );
 });
 
@@ -335,6 +384,13 @@ await check('le vendeur ne peut pas modifier originalPrice en acceptant', async 
 await check('le vendeur ne peut pas modifier buyerId', async () => {
   await assertFails(
     sellerCtx().doc('offers/o-immutable').update({ status: 'accepted', buyerId: OTHER_BUYER })
+  );
+});
+
+await check('le vendeur ne peut pas changer currentPrice en acceptant', async () => {
+  await seed({ 'offers/o-accept-price-change': baseOffer() });
+  await assertFails(
+    sellerCtx().doc('offers/o-accept-price-change').update({ status: 'accepted', currentPrice: 1 })
   );
 });
 
