@@ -101,41 +101,9 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
       _error = null;
     });
     try {
-      await _repo.createOrRelance(
-        productId: widget.product.id,
-        productTitle: widget.product.title,
-        productImageUrl: widget.product.mainImageUrl,
-        sellerId: widget.product.sellerId,
-        buyerId: widget.buyer.id,
-        originalPrice: widget.product.price,
-        offerPrice: amount,
-      );
-      await _postOfferMessage(amount);
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Offre envoyée au vendeur.'),
-            backgroundColor: Color(0xFF6B7F4D),
-          ),
-        );
-      }
-    } on OfferAlreadyActiveException {
-      setState(() => _error =
-          'Vous avez déjà une offre en cours sur cet article.');
-    } catch (e) {
-      setState(() => _error = 'Erreur : impossible d\'envoyer l\'offre.');
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
-  }
-
-  /// Ouvre/retrouve la conversation acheteur-vendeur et y poste la bulle
-  /// d'offre (même repository que "Contacter le vendeur" sur la fiche
-  /// article). Ne bloque pas la réussite de l'offre si ça échoue : l'offre
-  /// existe déjà en base, seule la trace dans le chat manquerait.
-  Future<void> _postOfferMessage(double amount) async {
-    try {
+      // Résout d'abord la conversation : chatId est immuable une fois
+      // l'offre créée (voir firestore.rules.chantier-candidat), il faut
+      // le connaître AVANT la création, pas l'ajouter après coup.
       final chatRepo = ChatRepositoryImpl(
         FirebaseFirestore.instance,
         FirebaseAuth.instance,
@@ -153,18 +121,48 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
         productId: widget.product.id,
         productTitle: widget.product.title,
       );
-      final offerId = OfferModel.buildId(
+
+      await _repo.createOrRelance(
         productId: widget.product.id,
+        productTitle: widget.product.title,
+        productImageUrl: widget.product.mainImageUrl,
+        sellerId: widget.product.sellerId,
         buyerId: widget.buyer.id,
-      );
-      await chatRepo.sendMessage(
+        originalPrice: widget.product.price,
+        offerPrice: amount,
         chatId: chatId,
-        content: 'Offre : ${amount.toStringAsFixed(0)} FCFA',
-        type: MessageType.offer,
-        offerId: offerId,
       );
-    } catch (_) {
-      // Pas bloquant (voir doc ci-dessus).
+
+      // Best-effort : l'offre existe déjà si l'envoi du message échoue.
+      try {
+        final offerId = OfferModel.buildId(
+          productId: widget.product.id,
+          buyerId: widget.buyer.id,
+        );
+        await chatRepo.sendMessage(
+          chatId: chatId,
+          content: 'Offre : ${amount.toStringAsFixed(0)} FCFA',
+          type: MessageType.offer,
+          offerId: offerId,
+        );
+      } catch (_) {}
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Offre envoyée au vendeur.'),
+            backgroundColor: Color(0xFF6B7F4D),
+          ),
+        );
+      }
+    } on OfferAlreadyActiveException {
+      setState(() => _error =
+          'Vous avez déjà une offre en cours sur cet article.');
+    } catch (e) {
+      setState(() => _error = 'Erreur : impossible d\'envoyer l\'offre.');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 

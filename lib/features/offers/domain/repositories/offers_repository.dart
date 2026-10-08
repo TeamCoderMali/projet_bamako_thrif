@@ -24,6 +24,11 @@ abstract class OffersRepository {
   /// historique conservé. Lève une exception si une offre est déjà en
   /// cours (pending) ou acceptée : l'appelant doit vérifier l'état via
   /// [getOffer] avant d'afficher le formulaire de saisie.
+  ///
+  /// [chatId] doit être résolu (créé/retrouvé) par l'appelant AVANT cet
+  /// appel : c'est un champ immuable une fois l'offre créée (voir les
+  /// règles Firestore), il ne peut pas être ajouté après coup sur une
+  /// relance.
   Future<void> createOrRelance({
     required String productId,
     required String productTitle,
@@ -32,6 +37,7 @@ abstract class OffersRepository {
     required String buyerId,
     required double originalPrice,
     required double offerPrice,
+    String? chatId,
   });
 
   /// Flux en direct d'une offre par son ID — pour la bulle de chat, qui

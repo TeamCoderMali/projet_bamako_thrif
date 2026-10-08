@@ -60,6 +60,7 @@ class OffersRepositoryImpl implements OffersRepository {
     required String buyerId,
     required double originalPrice,
     required double offerPrice,
+    String? chatId,
   }) async {
     final id = OfferModel.buildId(productId: productId, buyerId: buyerId);
     final docRef = _offersCol.doc(id);
@@ -87,6 +88,7 @@ class OffersRepositoryImpl implements OffersRepository {
         buyerId: buyerId,
         originalPrice: originalPrice,
         currentPrice: offerPrice,
+        chatId: chatId,
         respondBy: respondBy,
         history: [historyEntry],
         createdAt: now,
