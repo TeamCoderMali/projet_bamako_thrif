@@ -136,6 +136,6 @@ Future<void> _registerNotification() async {
 // ── Offers ───────────────────────────────────────────────────────────────────
 Future<void> _registerOffers() async {
   sl.registerLazySingleton<OffersRepository>(
-    () => OffersRepositoryImpl(sl<FirebaseFirestore>()),
+    () => OffersRepositoryImpl(sl<FirebaseFirestore>(), sl<FirebaseAuth>()),
   );
 }

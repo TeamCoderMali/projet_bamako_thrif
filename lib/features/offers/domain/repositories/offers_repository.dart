@@ -33,4 +33,29 @@ abstract class OffersRepository {
     required double originalPrice,
     required double offerPrice,
   });
+
+  /// Flux en direct d'une offre par son ID — pour la bulle de chat, qui
+  /// doit refléter l'état réel sans recharger la page.
+  Stream<OfferEntity?> watchOffer(String offerId);
+
+  /// Accepte l'offre : doit être appelé par la partie dont c'est le tour
+  /// (vérifié aussi côté règles Firestore).
+  Future<void> accept(String offerId);
+
+  /// Refuse l'offre : doit être appelé par la partie dont c'est le tour.
+  Future<void> reject(String offerId);
+
+  /// Contre-propose [newPrice] : fait passer le tour à l'autre partie et
+  /// incrémente le round. Rafraîchit `respondBy` pour donner un nouveau
+  /// délai de réponse complet à la partie qui doit désormais répondre.
+  Future<void> counter({required String offerId, required double newPrice});
+
+  /// Annule l'offre — acheteur uniquement, tant que le vendeur n'a pas
+  /// encore répondu (vérifié aussi côté règles Firestore).
+  Future<void> cancel(String offerId);
+
+  /// Fait passer l'offre à `expired` si elle est encore `pending` et que
+  /// le délai de réponse est dépassé. Ne fait rien sinon (expiration
+  /// paresseuse, pas de cron serveur).
+  Future<void> expireIfNeeded(OfferEntity offer);
 }

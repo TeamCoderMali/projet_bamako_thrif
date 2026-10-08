@@ -1,11 +1,18 @@
 // ─── Bamako Thrift — Feuille "Faire une offre" ─────────────────────────────
 // Bouton réutilisable (fiche article) : propose un prix à l'acheteur, crée
-// ou relance l'offre déterministe {productId}_{buyerId} (lot "offres", voir
-// PLAN_OFFRES.md). Pas d'intégration chat ici (lot C).
+// ou relance l'offre déterministe {productId}_{buyerId}, puis ouvre/retrouve
+// la conversation et y poste la bulle d'offre (MessageType.offer + offerId)
+// (lot "offres", voir PLAN_OFFRES.md).
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/dependency_injection/injection.dart';
 import '../../core/services/offers_config_service.dart';
+import '../../features/auth/domain/entities/user_entity.dart';
+import '../../features/chat/data/repositories/chat_repository_impl.dart';
+import '../../features/chat/domain/entities/message_entity.dart';
+import '../../features/offers/data/models/offer_model.dart';
 import '../../features/offers/domain/entities/offer_entity.dart';
 import '../../features/offers/domain/repositories/offers_repository.dart';
 import '../../features/product/domain/entities/product_entity.dart';
@@ -13,21 +20,21 @@ import '../../features/product/domain/entities/product_entity.dart';
 Future<void> showMakeOfferSheet(
   BuildContext context, {
   required ProductEntity product,
-  required String buyerId,
+  required UserEntity buyer,
 }) async {
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (sheetCtx) => _MakeOfferSheet(product: product, buyerId: buyerId),
+    builder: (sheetCtx) => _MakeOfferSheet(product: product, buyer: buyer),
   );
 }
 
 class _MakeOfferSheet extends StatefulWidget {
   final ProductEntity product;
-  final String buyerId;
+  final UserEntity buyer;
 
-  const _MakeOfferSheet({required this.product, required this.buyerId});
+  const _MakeOfferSheet({required this.product, required this.buyer});
 
   @override
   State<_MakeOfferSheet> createState() => _MakeOfferSheetState();
@@ -53,7 +60,7 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
     final config = await OffersConfigService.instance.getConfig();
     final existing = await _repo.getOffer(
       productId: widget.product.id,
-      buyerId: widget.buyerId,
+      buyerId: widget.buyer.id,
     );
     if (!mounted) return;
     setState(() {
@@ -99,10 +106,11 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
         productTitle: widget.product.title,
         productImageUrl: widget.product.mainImageUrl,
         sellerId: widget.product.sellerId,
-        buyerId: widget.buyerId,
+        buyerId: widget.buyer.id,
         originalPrice: widget.product.price,
         offerPrice: amount,
       );
+      await _postOfferMessage(amount);
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -119,6 +127,44 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
       setState(() => _error = 'Erreur : impossible d\'envoyer l\'offre.');
     } finally {
       if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  /// Ouvre/retrouve la conversation acheteur-vendeur et y poste la bulle
+  /// d'offre (même repository que "Contacter le vendeur" sur la fiche
+  /// article). Ne bloque pas la réussite de l'offre si ça échoue : l'offre
+  /// existe déjà en base, seule la trace dans le chat manquerait.
+  Future<void> _postOfferMessage(double amount) async {
+    try {
+      final chatRepo = ChatRepositoryImpl(
+        FirebaseFirestore.instance,
+        FirebaseAuth.instance,
+      );
+      final chatId = await chatRepo.createOrGetChatWithUsers(
+        participantIds: [widget.buyer.id, widget.product.sellerId],
+        participantNames: {
+          widget.buyer.id: widget.buyer.fullName,
+          widget.product.sellerId: widget.product.sellerName,
+        },
+        participantAvatars: {
+          widget.buyer.id: widget.buyer.avatarUrl,
+          widget.product.sellerId: null,
+        },
+        productId: widget.product.id,
+        productTitle: widget.product.title,
+      );
+      final offerId = OfferModel.buildId(
+        productId: widget.product.id,
+        buyerId: widget.buyer.id,
+      );
+      await chatRepo.sendMessage(
+        chatId: chatId,
+        content: 'Offre : ${amount.toStringAsFixed(0)} FCFA',
+        type: MessageType.offer,
+        offerId: offerId,
+      );
+    } catch (_) {
+      // Pas bloquant (voir doc ci-dessus).
     }
   }
 

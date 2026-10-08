@@ -2,10 +2,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/offers_config_service.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/chat/domain/entities/message_entity.dart';
+import 'package:bamako_thrift/features/offers/domain/entities/offer_entity.dart';
+import 'package:bamako_thrift/features/offers/domain/repositories/offers_repository.dart';
 import 'package:bamako_thrift/shared/widgets/report_dialog.dart';
 import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -243,6 +247,7 @@ class _ChatPageState extends State<ChatPage> {
                     return _MessageBubble(
                       message: message,
                       isMe: isMe,
+                      currentUid: currentUid,
                       onDelete: isMe ? () => _deleteMessage(message.id) : null,
                     );
                   },
@@ -308,16 +313,26 @@ class _ChatPageState extends State<ChatPage> {
 class _MessageBubble extends StatelessWidget {
   final MessageEntity message;
   final bool isMe;
+  final String currentUid;
   final VoidCallback? onDelete;
 
   const _MessageBubble({
     required this.message,
     required this.isMe,
+    required this.currentUid,
     this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (message.type == MessageType.offer && message.offerId != null) {
+      return Align(
+        child: _OfferMessageBubble(
+          offerId: message.offerId!,
+          currentUid: currentUid,
+        ),
+      );
+    }
     return GestureDetector(
       onLongPress: isMe && onDelete != null
           ? () => _showDeleteConfirmation(context)
@@ -410,5 +425,229 @@ class _MessageBubble extends StatelessWidget {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+}
+
+// ─── Bulle d'offre ──────────────────────────────────────────────────────────
+// S'abonne en direct à offers/{offerId} plutôt que d'afficher un contenu
+// figé (voir PLAN_OFFRES.md). Vérifie aussi l'expiration paresseuse à
+// chaque rendu (pas de cron serveur).
+class _OfferMessageBubble extends StatefulWidget {
+  final String offerId;
+  final String currentUid;
+
+  const _OfferMessageBubble({
+    required this.offerId,
+    required this.currentUid,
+  });
+
+  @override
+  State<_OfferMessageBubble> createState() => _OfferMessageBubbleState();
+}
+
+class _OfferMessageBubbleState extends State<_OfferMessageBubble> {
+  bool _expireChecked = false;
+  bool _acting = false;
+
+  OffersRepository get _repo => sl<OffersRepository>();
+
+  void _maybeExpire(OfferEntity offer) {
+    if (_expireChecked) return;
+    if (offer.status == OfferStatus.pending &&
+        DateTime.now().isAfter(offer.respondBy)) {
+      _expireChecked = true;
+      _repo.expireIfNeeded(offer);
+    }
+  }
+
+  Future<void> _act(Future<void> Function() action) async {
+    if (_acting) return;
+    setState(() => _acting = true);
+    try {
+      await action();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Action impossible, réessayez.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _acting = false);
+    }
+  }
+
+  Future<void> _showCounterDialog(OfferEntity offer) async {
+    final config = await OffersConfigService.instance.getConfig();
+    final minAmount = offer.originalPrice * config.minOfferRatio;
+    final controller = TextEditingController();
+    String? error;
+
+    final newPrice = await showDialog<double>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Contre-proposer'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Entre ${minAmount.toStringAsFixed(0)} et '
+                '${offer.originalPrice.toStringAsFixed(0)} FCFA.',
+                style: const TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                decoration: const InputDecoration(hintText: 'Montant (FCFA)'),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 6),
+                Text(error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final v = double.tryParse(controller.text.trim());
+                if (v == null || v < minAmount || v > offer.originalPrice) {
+                  setDialogState(() => error =
+                      'Montant hors bornes (${minAmount.toStringAsFixed(0)} - '
+                      '${offer.originalPrice.toStringAsFixed(0)} FCFA).');
+                  return;
+                }
+                Navigator.pop(ctx, v);
+              },
+              child: const Text('Proposer'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (newPrice == null) return;
+    await _act(() => _repo.counter(offerId: offer.id, newPrice: newPrice));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<OfferEntity?>(
+      stream: _repo.watchOffer(widget.offerId),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const SizedBox.shrink();
+        }
+        final offer = snapshot.data!;
+        _maybeExpire(offer);
+
+        final isBuyer = widget.currentUid == offer.buyerId;
+        final myTurn = isBuyer
+            ? offer.turn == OfferTurn.buyer
+            : offer.turn == OfferTurn.seller;
+        final colors = Theme.of(context).colorScheme;
+
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.85,
+          ),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.local_offer_outlined,
+                      color: Color(0xFF6B7F4D), size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Offre : ${offer.currentPrice.toStringAsFixed(0)} FCFA',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _statusText(offer, isBuyer, myTurn),
+                style: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
+              ),
+              if (offer.status == OfferStatus.pending) ...[
+                const SizedBox(height: 10),
+                if (_acting)
+                  const Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                else if (myTurn)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _act(() => _repo.accept(offer.id)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B7F4D),
+                        ),
+                        child: const Text('Accepter',
+                            style: TextStyle(color: Colors.white)),
+                      ),
+                      OutlinedButton(
+                        onPressed: () => _act(() => _repo.reject(offer.id)),
+                        child: const Text('Refuser'),
+                      ),
+                      OutlinedButton(
+                        onPressed: () => _showCounterDialog(offer),
+                        child: const Text('Contre-proposer'),
+                      ),
+                    ],
+                  )
+                else if (isBuyer)
+                  OutlinedButton(
+                    onPressed: () => _act(() => _repo.cancel(offer.id)),
+                    child: const Text('Annuler l\'offre'),
+                  ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _statusText(OfferEntity offer, bool isBuyer, bool myTurn) {
+    switch (offer.status) {
+      case OfferStatus.accepted:
+        return 'Offre acceptée, convenez de la remise dans le chat.';
+      case OfferStatus.rejected:
+        return 'Offre refusée.';
+      case OfferStatus.cancelled:
+        return 'Offre annulée.';
+      case OfferStatus.expired:
+        return 'Offre expirée (délai de réponse dépassé).';
+      case OfferStatus.pending:
+        return myTurn
+            ? 'À vous de répondre.'
+            : 'En attente de la réponse de l\'autre partie.';
+    }
   }
 }

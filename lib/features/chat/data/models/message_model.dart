@@ -11,6 +11,7 @@ class MessageModel extends MessageEntity {
     super.isRead,
     required super.createdAt,
     super.mediaUrl,
+    super.offerId,
   });
 
   factory MessageModel.fromFirestore(Map<String, dynamic> data, String id) {
@@ -25,6 +26,7 @@ class MessageModel extends MessageEntity {
         data['createdAt'] as int? ?? 0,
       ),
       mediaUrl: data['mediaUrl'] as String?,
+      offerId: data['offerId'] as String?,
     );
   }
 
@@ -36,6 +38,7 @@ class MessageModel extends MessageEntity {
         'isRead': isRead,
         'createdAt': createdAt.millisecondsSinceEpoch,
         'mediaUrl': mediaUrl,
+        'offerId': offerId,
       };
 
   static MessageType _parseType(String? value) => MessageType.values

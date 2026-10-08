@@ -1,5 +1,6 @@
 // ─── Bamako Thrift — Offers Repository Implementation ──────────────────────
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/services/offers_config_service.dart';
 import '../../domain/entities/offer_entity.dart';
@@ -8,13 +9,28 @@ import '../models/offer_model.dart';
 
 class OffersRepositoryImpl implements OffersRepository {
   final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
   final OffersConfigService _configService;
 
-  OffersRepositoryImpl(this._firestore, [OffersConfigService? configService])
-      : _configService = configService ?? OffersConfigService.instance;
+  OffersRepositoryImpl(
+    this._firestore, [
+    FirebaseAuth? auth,
+    OffersConfigService? configService,
+  ])  : _auth = auth ?? FirebaseAuth.instance,
+        _configService = configService ?? OffersConfigService.instance;
 
   CollectionReference<Map<String, dynamic>> get _offersCol =>
       _firestore.collection('offers');
+
+  String? get _currentUid => _auth.currentUser?.uid;
+
+  static Map<String, dynamic> _historyEntryToMap(OfferHistoryEntry e) => {
+        'round': e.round,
+        'by': e.by.name,
+        'action': e.action.name,
+        'price': e.price,
+        'at': Timestamp.fromDate(e.at),
+      };
 
   @override
   Future<OfferEntity?> getOffer({
@@ -25,6 +41,14 @@ class OffersRepositoryImpl implements OffersRepository {
     final snap = await _offersCol.doc(id).get();
     if (!snap.exists || snap.data() == null) return null;
     return OfferModel.fromFirestore(snap.data()!, id);
+  }
+
+  @override
+  Stream<OfferEntity?> watchOffer(String offerId) {
+    return _offersCol.doc(offerId).snapshots().map((snap) {
+      if (!snap.exists || snap.data() == null) return null;
+      return OfferModel.fromFirestore(snap.data()!, offerId);
+    });
   }
 
   @override
@@ -41,8 +65,7 @@ class OffersRepositoryImpl implements OffersRepository {
     final docRef = _offersCol.doc(id);
     final config = await _configService.getConfig();
     final now = DateTime.now();
-    final respondBy =
-        now.add(Duration(hours: config.responseDeadlineHours));
+    final respondBy = now.add(Duration(hours: config.responseDeadlineHours));
 
     final existing = await docRef.get();
 
@@ -73,14 +96,13 @@ class OffersRepositoryImpl implements OffersRepository {
     }
 
     final data = existing.data()!;
-    final currentStatus = OfferModel.fromFirestore(data, id).status;
-    if (currentStatus != OfferStatus.rejected &&
-        currentStatus != OfferStatus.cancelled &&
-        currentStatus != OfferStatus.expired) {
-      throw OfferAlreadyActiveException(currentStatus);
+    final currentOffer = OfferModel.fromFirestore(data, id);
+    if (currentOffer.status != OfferStatus.rejected &&
+        currentOffer.status != OfferStatus.cancelled &&
+        currentOffer.status != OfferStatus.expired) {
+      throw OfferAlreadyActiveException(currentOffer.status);
     }
 
-    final previousHistory = OfferModel.fromFirestore(data, id).history;
     await docRef.update({
       'status': OfferStatus.pending.name,
       'round': 1,
@@ -88,15 +110,141 @@ class OffersRepositoryImpl implements OffersRepository {
       'currentPrice': offerPrice,
       'respondBy': Timestamp.fromDate(respondBy),
       'updatedAt': Timestamp.fromDate(now),
-      'history': [...previousHistory, historyEntry]
-          .map((e) => {
-                'round': e.round,
-                'by': e.by.name,
-                'action': e.action.name,
-                'price': e.price,
-                'at': Timestamp.fromDate(e.at),
-              })
+      'history': [...currentOffer.history, historyEntry]
+          .map(_historyEntryToMap)
           .toList(),
     });
+  }
+
+  /// Qui agit : compare l'uid courant au couple acheteur/vendeur de
+  /// l'offre. Les règles Firestore vérifient déjà que seule la bonne
+  /// partie peut écrire ; ceci sert uniquement à renseigner "by" dans
+  /// l'historique.
+  OfferTurn _actorOf(OfferEntity offer) {
+    return _currentUid == offer.buyerId ? OfferTurn.buyer : OfferTurn.seller;
+  }
+
+  @override
+  Future<void> accept(String offerId) async {
+    final docRef = _offersCol.doc(offerId);
+    final snap = await docRef.get();
+    if (!snap.exists) return;
+    final offer = OfferModel.fromFirestore(snap.data()!, offerId);
+
+    final entry = OfferHistoryEntry(
+      round: offer.round,
+      by: _actorOf(offer),
+      action: OfferHistoryAction.accept,
+      price: offer.currentPrice,
+      at: DateTime.now(),
+    );
+    await docRef.update({
+      'status': OfferStatus.accepted.name,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+      'history': [...offer.history, entry].map(_historyEntryToMap).toList(),
+    });
+  }
+
+  @override
+  Future<void> reject(String offerId) async {
+    final docRef = _offersCol.doc(offerId);
+    final snap = await docRef.get();
+    if (!snap.exists) return;
+    final offer = OfferModel.fromFirestore(snap.data()!, offerId);
+
+    final entry = OfferHistoryEntry(
+      round: offer.round,
+      by: _actorOf(offer),
+      action: OfferHistoryAction.reject,
+      price: offer.currentPrice,
+      at: DateTime.now(),
+    );
+    await docRef.update({
+      'status': OfferStatus.rejected.name,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+      'history': [...offer.history, entry].map(_historyEntryToMap).toList(),
+    });
+  }
+
+  @override
+  Future<void> counter({
+    required String offerId,
+    required double newPrice,
+  }) async {
+    final docRef = _offersCol.doc(offerId);
+    final snap = await docRef.get();
+    if (!snap.exists) return;
+    final offer = OfferModel.fromFirestore(snap.data()!, offerId);
+    final config = await _configService.getConfig();
+    final now = DateTime.now();
+
+    final actor = _actorOf(offer);
+    final newTurn = actor == OfferTurn.seller ? OfferTurn.buyer : OfferTurn.seller;
+
+    final entry = OfferHistoryEntry(
+      round: offer.round + 1,
+      by: actor,
+      action: OfferHistoryAction.counter,
+      price: newPrice,
+      at: now,
+    );
+    await docRef.update({
+      'status': OfferStatus.pending.name,
+      'round': offer.round + 1,
+      'turn': newTurn.name,
+      'currentPrice': newPrice,
+      // Nouveau délai complet pour la partie qui doit désormais répondre.
+      'respondBy':
+          Timestamp.fromDate(now.add(Duration(hours: config.responseDeadlineHours))),
+      'updatedAt': Timestamp.fromDate(now),
+      'history': [...offer.history, entry].map(_historyEntryToMap).toList(),
+    });
+  }
+
+  @override
+  Future<void> cancel(String offerId) async {
+    final docRef = _offersCol.doc(offerId);
+    final snap = await docRef.get();
+    if (!snap.exists) return;
+    final offer = OfferModel.fromFirestore(snap.data()!, offerId);
+
+    final entry = OfferHistoryEntry(
+      round: offer.round,
+      by: OfferTurn.buyer,
+      action: OfferHistoryAction.cancel,
+      price: offer.currentPrice,
+      at: DateTime.now(),
+    );
+    await docRef.update({
+      'status': OfferStatus.cancelled.name,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+      'history': [...offer.history, entry].map(_historyEntryToMap).toList(),
+    });
+  }
+
+  @override
+  Future<void> expireIfNeeded(OfferEntity offer) async {
+    if (offer.status != OfferStatus.pending) return;
+    if (!DateTime.now().isAfter(offer.respondBy)) return;
+
+    final entry = OfferHistoryEntry(
+      round: offer.round,
+      by: offer.turn,
+      action: OfferHistoryAction.expire,
+      price: offer.currentPrice,
+      at: DateTime.now(),
+    );
+    try {
+      await _offersCol.doc(offer.id).update({
+        'status': OfferStatus.expired.name,
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+        'history':
+            [...offer.history, entry].map(_historyEntryToMap).toList(),
+      });
+    } catch (_) {
+      // Une autre partie a peut-être déjà fait expirer l'offre entre
+      // temps, ou la lecture a changé : pas bloquant, prochaine ouverture
+      // réessaiera.
+    }
   }
 }

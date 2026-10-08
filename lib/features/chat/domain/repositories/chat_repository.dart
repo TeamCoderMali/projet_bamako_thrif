@@ -13,6 +13,7 @@ abstract class ChatRepository {
     required String content,
     MessageType type = MessageType.text,
     String? mediaUrl,
+    String? offerId,
   });
   Future<void> markAsRead(String chatId);
   Stream<List<MessageEntity>> watchMessages(String chatId);

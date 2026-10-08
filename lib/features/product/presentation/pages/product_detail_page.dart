@@ -822,7 +822,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           onPressed: () => showMakeOfferSheet(
             context,
             product: product,
-            buyerId: currentUser.id,
+            buyer: currentUser,
           ),
           icon: const Icon(Icons.local_offer_outlined, color: Color(0xFF6B7F4D)),
           label: const Text(

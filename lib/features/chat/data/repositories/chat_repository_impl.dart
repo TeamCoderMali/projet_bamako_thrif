@@ -142,6 +142,7 @@ class ChatRepositoryImpl implements ChatRepository {
     required String content,
     MessageType type = MessageType.text,
     String? mediaUrl,
+    String? offerId,
   }) async {
     final now = FieldValue.serverTimestamp();
 
@@ -154,6 +155,7 @@ class ChatRepositoryImpl implements ChatRepository {
       'isRead': false,
       'createdAt': now,
       'mediaUrl': mediaUrl,
+      'offerId': offerId,
     });
 
     // Mettre à jour le dernier message du chat

@@ -6,12 +6,57 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/constants/feature_flags.dart';
+import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/payment_config_service.dart';
+import 'package:bamako_thrift/features/offers/data/models/offer_model.dart';
+import 'package:bamako_thrift/features/offers/domain/repositories/offers_repository.dart';
 
-class MyListingsPage extends StatelessWidget {
+/// Wrapper qui ne fait qu'une chose au premier chargement : balayer les
+/// offres pending du vendeur et faire expirer celles dont le délai de
+/// réponse (72h) est dépassé (expiration paresseuse, voir PLAN_OFFRES.md).
+/// Tout le reste de l'écran est inchangé, dans [_MyListingsView].
+class MyListingsPage extends StatefulWidget {
   const MyListingsPage({super.key});
+
+  @override
+  State<MyListingsPage> createState() => _MyListingsPageState();
+}
+
+class _MyListingsPageState extends State<MyListingsPage> {
+  @override
+  void initState() {
+    super.initState();
+    _expireStaleOffers();
+  }
+
+  Future<void> _expireStaleOffers() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final repo = sl<OffersRepository>();
+      final snap = await FirebaseFirestore.instance
+          .collection('offers')
+          .where('sellerId', isEqualTo: uid)
+          .where('status', isEqualTo: 'pending')
+          .get();
+      for (final doc in snap.docs) {
+        final offer = OfferModel.fromFirestore(doc.data(), doc.id);
+        await repo.expireIfNeeded(offer);
+      }
+    } catch (_) {
+      // Best-effort : une tentative échouée sera retentée au prochain
+      // chargement de cet écran ou de la bulle de chat correspondante.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => const _MyListingsView();
+}
+
+class _MyListingsView extends StatelessWidget {
+  const _MyListingsView();
 
   String _fmtPrice(dynamic p) {
     final price = (p is num) ? p.toDouble() : 0.0;
@@ -74,6 +119,26 @@ class MyListingsPage extends StatelessWidget {
         SnackBar(
           content: Text(
               newStatus == 'available' ? 'Annonce publiée' : 'Annonce masquée'),
+          backgroundColor: const Color(0xFF6B7F4D),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // ── Autoriser/bloquer les offres de prix sur cet article ───────────────
+  Future<void> _toggleOffersEnabled(
+      BuildContext context, String docId, bool currentlyEnabled) async {
+    await FirebaseFirestore.instance
+        .collection('product')
+        .doc(docId)
+        .update({'offersEnabled': !currentlyEnabled});
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(currentlyEnabled
+              ? 'Offres désactivées pour cet article'
+              : 'Offres autorisées pour cet article'),
           backgroundColor: const Color(0xFF6B7F4D),
           duration: const Duration(seconds: 2),
         ),
@@ -276,6 +341,8 @@ class MyListingsPage extends StatelessWidget {
                     final canRevertToAvailable = (status == 'sold' ||
                             status == 'reserved') &&
                         !paymentEnabled;
+                    final offersEnabled =
+                        data['offersEnabled'] as bool? ?? true;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -437,6 +504,24 @@ class MyListingsPage extends StatelessWidget {
                                   onPressed: () => _markStatus(
                                       context, docId, 'available'),
                                 ),
+                              IconButton(
+                                icon: Icon(
+                                  offersEnabled
+                                      ? Icons.local_offer_outlined
+                                      : Icons.local_offer,
+                                  color: offersEnabled
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant
+                                      : Colors.red,
+                                  size: 20,
+                                ),
+                                tooltip: offersEnabled
+                                    ? 'Désactiver les offres'
+                                    : 'Autoriser les offres',
+                                onPressed: () => _toggleOffersEnabled(
+                                    context, docId, offersEnabled),
+                              ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,
                                     color: Colors.red, size: 20),

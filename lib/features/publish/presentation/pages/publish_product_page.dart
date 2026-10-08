@@ -33,6 +33,9 @@ class _PublishProductPageState extends State<PublishProductPage> {
   ProductCategory _selectedCategory = ProductCategory.women;
   ProductCondition _selectedCondition = ProductCondition.bon;
   bool _pressingRequested = false;
+  // Autoriser les offres de prix sur cet article (lot "offres"). Défaut
+  // autorisé, cohérent avec ProductEntity.offersEnabled.
+  bool _offersEnabled = true;
 
   final List<File> _selectedImages = [];
   bool _isPublishing = false;
@@ -161,6 +164,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
             ? ProductStatus.enAttenteVerification
             : ProductStatus.available,
         verifie: false,
+        offersEnabled: _offersEnabled,
         createdAt: DateTime.now(),
       );
 
@@ -356,6 +360,8 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           const SizedBox(height: 18),
                           _buildPressingOption(),
                         ],
+                        const SizedBox(height: 18),
+                        _buildOffersToggle(),
                       ],
                     ),
                   ],
@@ -768,6 +774,50 @@ class _PublishProductPageState extends State<PublishProductPage> {
       );
 
   // ── Option pressing : vérification / remise en état avant publication ────
+  // ── Autoriser les offres de prix (lot "offres") ─────────────────────────
+  Widget _buildOffersToggle() {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Autoriser les offres de prix',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: colors.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _offersEnabled
+                      ? 'Les acheteurs peuvent proposer un prix pour cet article.'
+                      : 'Les acheteurs ne pourront pas négocier le prix de cet article.',
+                  style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _offersEnabled,
+            activeThumbColor: const Color(0xFF6B7F4D),
+            onChanged: (v) => setState(() => _offersEnabled = v),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPressingOption() {
     return Container(
       padding: const EdgeInsets.all(14),

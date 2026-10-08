@@ -11,6 +11,11 @@ class MessageEntity extends Equatable {
   final DateTime createdAt;
   final String? mediaUrl;
 
+  /// Référence vers `offers/{offerId}` quand [type] == [MessageType.offer] :
+  /// la bulle s'abonne en direct à ce document plutôt que d'afficher un
+  /// contenu figé (voir PLAN_OFFRES.md).
+  final String? offerId;
+
   const MessageEntity({
     required this.id,
     required this.chatId,
@@ -20,6 +25,7 @@ class MessageEntity extends Equatable {
     this.isRead = false,
     required this.createdAt,
     this.mediaUrl,
+    this.offerId,
   });
 
   @override
