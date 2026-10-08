@@ -1,5 +1,10 @@
 {
   "firestore": {
     "rules": "firestore.rules.chantier-candidat"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8123
+    }
   }
 }
