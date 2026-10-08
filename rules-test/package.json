@@ -1,0 +1,13 @@
+{
+  "name": "rules-test",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Tests des regles Firestore candidates (firestore.rules.chantier-candidat), via emulateur local. Necessite un JDK 21+ pour l'emulateur Firestore (voir README.md).",
+  "scripts": {
+    "test:offers": "node test-offers.mjs"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4"
+  }
+}
