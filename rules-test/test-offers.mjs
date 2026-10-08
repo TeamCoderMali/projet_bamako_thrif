@@ -457,6 +457,26 @@ await check('le vendeur ne peut pas changer currentPrice en acceptant', async ()
   );
 });
 
+console.log('\n=== Message de chat avec offerId (regle chat/message existante, inchangee) ===');
+
+await seed({
+  'chat/c1': { participantIds: [BUYER, SELLER] },
+});
+
+await check('le createur d\'une offre peut poster un message type=offer avec offerId', async () => {
+  await assertSucceeds(
+    buyerCtx().collection('chat/c1/message').add({
+      chatId: 'c1',
+      senderId: BUYER,
+      content: 'Offre : 6000 FCFA',
+      type: 'offer',
+      offerId: offerDocId('p1', BUYER),
+      isRead: false,
+      createdAt: new Date(),
+    })
+  );
+});
+
 console.log(`\n=== Resultat : ${passed} OK, ${failed} FAIL ===\n`);
 await testEnv.cleanup();
 process.exit(failed > 0 ? 1 : 0);
