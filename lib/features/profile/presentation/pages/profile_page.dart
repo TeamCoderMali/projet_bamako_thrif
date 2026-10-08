@@ -290,6 +290,14 @@ class ProfilePage extends StatelessWidget {
                             ),
                             _buildMenuItem(
                               context,
+                              icon: Icons.local_offer_outlined,
+                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
+                              iconColor: const Color(0xFF6B7F4D),
+                              title: 'Mes offres',
+                              onTap: () => context.push(RouteNames.myOffers),
+                            ),
+                            _buildMenuItem(
+                              context,
                               icon: Icons.favorite_border,
                               iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
                               iconColor: const Color(0xFF6B7F4D),

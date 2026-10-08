@@ -51,6 +51,7 @@ import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/profile/presentation/pages/wallet_page.dart';
 import '../../features/profile/presentation/pages/history_page.dart';
 import '../../features/profile/presentation/pages/my_listings_page.dart';
+import '../../features/offers/presentation/pages/my_offers_page.dart';
 import '../../features/profile/presentation/pages/favorites_page.dart';
 import '../../features/profile/presentation/pages/support_page.dart';
 
@@ -295,6 +296,11 @@ final GoRouter appRouter = GoRouter(
           path: 'listings',
           name: 'myListings',
           builder: (context, state) => const MyListingsPage(),
+        ),
+        GoRoute(
+          path: 'offers',
+          name: 'myOffers',
+          builder: (context, state) => const MyOffersPage(),
         ),
         GoRoute(
           path: 'history',

@@ -30,6 +30,7 @@ abstract class RouteNames {
   static const String editProfile = '/profile/edit';
   static const String wallet = '/profile/wallet';
   static const String myListings = '/profile/listings';
+  static const String myOffers = '/profile/offers';
   static const String history = '/profile/history';
   static const String favorites = '/profile/favorites';
   static const String support = '/profile/support';

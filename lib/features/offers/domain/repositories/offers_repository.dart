@@ -44,6 +44,10 @@ abstract class OffersRepository {
   /// doit refléter l'état réel sans recharger la page.
   Stream<OfferEntity?> watchOffer(String offerId);
 
+  /// Flux en direct de toutes les offres faites par cet acheteur (écran
+  /// "Mes offres"), triées de la plus récente à la plus ancienne.
+  Stream<List<OfferEntity>> watchBuyerOffers(String buyerId);
+
   /// Accepte l'offre : doit être appelé par la partie dont c'est le tour
   /// (vérifié aussi côté règles Firestore).
   Future<void> accept(String offerId);

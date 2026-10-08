@@ -52,6 +52,21 @@ class OffersRepositoryImpl implements OffersRepository {
   }
 
   @override
+  Stream<List<OfferEntity>> watchBuyerOffers(String buyerId) {
+    // Tri côté client (pas de orderBy serveur) : évite de dépendre d'un
+    // champ (updatedAt) absent sur les offres jamais encore modifiées.
+    return _offersCol.where('buyerId', isEqualTo: buyerId).snapshots().map(
+        (snap) {
+      final list = snap.docs
+          .map((d) => OfferModel.fromFirestore(d.data(), d.id))
+          .toList();
+      list.sort((a, b) =>
+          (b.updatedAt ?? b.createdAt).compareTo(a.updatedAt ?? a.createdAt));
+      return list;
+    });
+  }
+
+  @override
   Future<void> createOrRelance({
     required String productId,
     required String productTitle,
