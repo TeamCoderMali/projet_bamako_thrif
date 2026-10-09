@@ -237,7 +237,34 @@ service cloud.firestore {
       allow create: if isAuthenticated()
         && request.resource.data.buyerId == request.auth.uid
         && ncId == request.resource.data.orderId + '_' + request.resource.data.buyerId;
-      allow read, update: if isAuthenticated()
+      // !exists(...) restreint a ncId.split('_')[1] == auth.uid (sa propre
+      // place, ncId = orderId + '_' + buyerId) : meme bug que sur
+      // offers/{offerId} (resource.data plante quand le document n'existe
+      // pas encore) -- ici il cassait la verification de doublon dans
+      // order_tracking_page.dart:137-140 (.doc(ncId).get() avant toute
+      // premiere declaration sur une commande). Trouve/corrige le
+      // 2026-10-09 en repondant a la meme question pour les 3 collections
+      // a ID deterministe.
+      //
+      // "read" et "update" separes (c'etaient les memes conditions sous
+      // un "allow read, update" avant le 2026-10-09) : la clause de
+      // champs immuables ci-dessous reference request.resource, qui
+      // n'existe QUE pour les ecritures -- combinee a "read", elle
+      // plantait TOUTE lecture par un non-admin, meme d'un document
+      // existant (pas seulement le cas "n'existe pas encore" ci-dessus).
+      // Ca cassait aussi silencieusement la fiche vendeur "Validation
+      // remise en etat" (notifications_page.dart:183-187, StreamBuilder
+      // reste bloque en chargement infini) -- jamais remarque faute de
+      // test de lecture pure sur cette collection avant aujourd'hui.
+      allow read: if isAuthenticated()
+        && ((!exists(/databases/$(database)/documents/non_conformities/$(ncId))
+             && ncId.split('_')[1] == request.auth.uid)
+            || resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isRelayManager()
+            || isAdmin());
+
+      allow update: if isAuthenticated()
         && (resource.data.buyerId == request.auth.uid
             || resource.data.sellerId == request.auth.uid
             || isRelayManager()
@@ -279,7 +306,7 @@ service cloud.firestore {
     // non_conformities (lié à une commande) et de disputes (litige
     // acheteur/vendeur). Tout utilisateur connecté peut créer un
     // signalement avec son propre reporterId ; seuls les admins le
-    // lisent et le traitent.
+    // traitent (update).
     // ID deterministe {reporterId}_{targetType}_{targetId} (audit du
     // 2026-10-08) : un seul signalement actif par personne et par objet
     // signale. Une seconde tentative sur le meme objet est traitee comme
@@ -289,7 +316,20 @@ service cloud.firestore {
       allow create: if isAuthenticated()
         && request.resource.data.reporterId == request.auth.uid
         && id == request.resource.data.reporterId + '_' + request.resource.data.targetType + '_' + request.resource.data.targetId;
-      allow read, update: if isAdmin();
+      // id.split('_')[0] == auth.uid : l'ID commence TOUJOURS par le
+      // reporterId (impose a la creation ci-dessus), donc cette seule
+      // verification suffit pour "est-ce ma propre place ?", que le
+      // document existe deja ou non -- pas besoin d'un exists() separe,
+      // contrairement a offers/non_conformities ou un second role
+      // (vendeur) a aussi besoin de lire resource.data. Corrige le
+      // 2026-10-09 : la regle precedente (isAdmin() seul) interdisait a
+      // l'auteur de lire SON PROPRE signalement, existant ou non --
+      // report_dialog.dart fait un .get() sans try/catch avant meme
+      // d'afficher le formulaire, donc CHAQUE signalement (pas seulement
+      // les doublons) echouait avec permission-denied en production.
+      allow read: if isAdmin()
+        || (isAuthenticated() && id.split('_')[0] == request.auth.uid);
+      allow update: if isAdmin();
     }
 
     // ── Collection config ───────────────────────────────────────────────────
@@ -332,8 +372,20 @@ service cloud.firestore {
         && request.resource.data.currentPrice < request.resource.data.originalPrice
         && request.resource.data.currentPrice >= request.resource.data.originalPrice * offersMinRatio();
 
+      // !exists(...) : un "get" sur un document qui n'existe pas encore
+      // (ex. un acheteur qui n'a jamais fait d'offre sur ce produit) doit
+      // renvoyer exists=false, pas permission-denied -- sinon "resource"
+      // vaut null et resource.data plante l'evaluation de la regle avant
+      // meme d'atteindre les conditions de proprietaire. Restreint a
+      // offerId.split('_')[1] == auth.uid (sa PROPRE place, puisque
+      // offerId = productId + '_' + buyerId) : un tiers qui sonde la
+      // place d'un autre acheteur reste refuse, meme si le document
+      // n'existe pas. Bug trouve le 2026-10-09 en testant le flux "Faire
+      // une offre" sur un premier contact (aucune offre existante).
       allow read: if isAuthenticated()
-        && (resource.data.buyerId == request.auth.uid
+        && ((!exists(/databases/$(database)/documents/offers/$(offerId))
+             && offerId.split('_')[1] == request.auth.uid)
+            || resource.data.buyerId == request.auth.uid
             || resource.data.sellerId == request.auth.uid
             || isAdmin());
 
@@ -390,9 +442,15 @@ service cloud.firestore {
                  && (
                       // Accepter/refuser : currentPrice, round et turn
                       // restent inchanges, seuls le statut et l'historique
-                      // bougent.
+                      // bougent. Accepter exige en plus que le produit
+                      // soit toujours disponible au moment T (empeche
+                      // d'accepter une offre devenue perimee si l'article
+                      // a ete vendu/reserve entre-temps, lot D) ; refuser
+                      // reste possible dans tous les cas.
                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
-                        && (request.resource.data.status == 'accepted' || request.resource.data.status == 'rejected'))
+                        && ((request.resource.data.status == 'accepted'
+                             && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.status == 'available')
+                            || request.resource.data.status == 'rejected'))
 
                       // Contre-offre : prix dans les bornes [ratio min, prix
                       // de depart], round+1, tour qui passe a l'acheteur.
@@ -409,8 +467,12 @@ service cloud.firestore {
                  && resource.data.turn == 'buyer'
                  && resource.data.status == 'pending'
                  && (
+                      // Memes conditions que pour le vendeur ci-dessus :
+                      // accepter exige le produit toujours disponible.
                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
-                        && (request.resource.data.status == 'accepted' || request.resource.data.status == 'rejected'))
+                        && ((request.resource.data.status == 'accepted'
+                             && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.status == 'available')
+                            || request.resource.data.status == 'rejected'))
 
                       || (request.resource.data.status == 'pending'
                           && request.resource.data.turn == 'seller'

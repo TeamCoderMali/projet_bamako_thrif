@@ -136,24 +136,49 @@ await check('signalement en double sur le meme objet : refuse (deja existant)', 
 
 console.log('\n=== reports : lecture / traitement ===');
 
+// ID au format reel {reporterId}_{targetType}_{targetId} (pas un ID
+// arbitraire "r1") : necessaire depuis le 2026-10-09, la regle de
+// lecture du signaleur se base sur ce format (id.split('_')[0]).
 await seed({
-  'reports/r1': { reporterId: BUYER, targetType: 'product', targetId: 'p1', reasonCode: 'Autre', status: 'nouveau' },
+  'reports/buyer1_product_p1': { reporterId: BUYER, targetType: 'product', targetId: 'p1', reasonCode: 'Autre', status: 'nouveau' },
 });
 
 await check('admin peut lire un signalement', async () => {
-  await assertSucceeds(adminCtx().doc('reports/r1').get());
+  await assertSucceeds(adminCtx().doc('reports/buyer1_product_p1').get());
 });
 
 await check('admin peut marquer un signalement traite', async () => {
-  await assertSucceeds(adminCtx().doc('reports/r1').update({ status: 'traite' }));
+  await assertSucceeds(adminCtx().doc('reports/buyer1_product_p1').update({ status: 'traite' }));
 });
 
-await check('le signaleur lui-meme NE PEUT PAS relire son signalement (admin uniquement)', async () => {
-  await assertFails(buyerCtx().doc('reports/r1').get());
+// Corrige le 2026-10-09 : le signaleur doit pouvoir relire SON PROPRE
+// signalement (report_dialog.dart fait un .get() avant meme d'afficher
+// le formulaire, pour detecter un doublon -- avec l'ancienne regle
+// isAdmin()-seul, CE .get() echouait a chaque fois, meme sur un premier
+// signalement jamais fait, cassant la fonctionnalite entiere).
+await check('le signaleur peut relire son propre signalement existant', async () => {
+  await assertSucceeds(buyerCtx().doc('reports/buyer1_product_p1').get());
 });
 
-await check('relais NE PEUT PAS lire un signalement (admin uniquement selon la consigne)', async () => {
-  await assertFails(relayCtx().doc('reports/r1').get());
+await check('le signaleur peut verifier sa propre place avant tout signalement (exists=false, pas permission-denied)', async () => {
+  const snap = await assertSucceeds(buyerCtx().doc('reports/buyer1_product_jamais-signale').get());
+  if (snap.exists) throw new Error('le document ne devrait pas exister');
+});
+
+await check('un tiers NE PEUT PAS lire le signalement de quelqu\'un d\'autre (existant)', async () => {
+  await assertFails(sellerCtx().doc('reports/buyer1_product_p1').get());
+});
+
+await check('un tiers NE PEUT PAS sonder la place de signalement d\'un autre (inexistante)', async () => {
+  await assertFails(sellerCtx().doc('reports/buyer1_product_jamais-signale-2').get());
+});
+
+await check('relais NE PEUT PAS lire le signalement de quelqu\'un d\'autre (admin uniquement selon la consigne)', async () => {
+  await assertFails(relayCtx().doc('reports/buyer1_product_p1').get());
+});
+
+await check('le signaleur ne peut toujours pas traiter (update) son propre signalement', async () => {
+  await assertFails(buyerCtx().doc('reports/buyer1_product_p1').update({ status: 'traite' }));
 });
 
 console.log('\n=== non_conformities : ID deterministe (audit du 2026-10-08) ===');
@@ -201,6 +226,25 @@ await check('un tiers NE PEUT PAS creer une non-conformite en usurpant un autre 
   );
 });
 
+// Corrige le 2026-10-09 : "allow read, update" combinait les deux
+// operations sous une seule condition qui reference request.resource
+// (valide seulement pour une ecriture) -- une lecture pure plantait
+// TOUJOURS ("Property resource is undefined"), meme sur un document
+// existant. Cassait notamment la fiche vendeur "Validation remise en
+// etat" (notifications_page.dart:183-187, StreamBuilder bloque en
+// chargement infini). Jamais teste avant (seulement des update()).
+await check('vendeur peut lire une non-conformite existante le concernant (fiche "Validation remise en etat")', async () => {
+  await assertSucceeds(sellerCtx().doc('non_conformities/o-nc1_buyer1').get());
+});
+
+await check('acheteur peut relire sa propre non-conformite existante', async () => {
+  await assertSucceeds(buyerCtx().doc('non_conformities/o-nc1_buyer1').get());
+});
+
+await check('un tiers NE PEUT PAS lire une non-conformite dont il n\'est pas partie', async () => {
+  await assertFails(otherSellerCtx().doc('non_conformities/o-nc1_buyer1').get());
+});
+
 await check('le vendeur peut mettre a jour le statut (transition existante preservee)', async () => {
   await assertSucceeds(
     sellerCtx().doc('non_conformities/o-nc1_buyer1').update({ status: 'seller_accepted' })
@@ -211,6 +255,21 @@ await check('un non-admin NE PEUT PAS changer les champs identifiants via update
   await assertFails(
     sellerCtx().doc('non_conformities/o-nc1_buyer1').update({ buyerId: OTHER_SELLER })
   );
+});
+
+// Corrige le 2026-10-09 : order_tracking_page.dart:137-140 fait un
+// .doc(ncId).get() avant TOUTE premiere declaration de probleme sur une
+// commande, pour detecter un doublon. Avec l'ancienne regle (resource.data
+// sans garde), ce .get() plantait des le premier essai sur chaque
+// commande, pas seulement sur les doublons.
+await check('acheteur peut verifier sa propre place avant toute declaration (exists=false, pas permission-denied)', async () => {
+  await seed({ 'order/o-nc-jamais': { buyerId: BUYER, sellerId: SELLER, productId: 'p1' } });
+  const snap = await assertSucceeds(buyerCtx().doc('non_conformities/o-nc-jamais_buyer1').get());
+  if (snap.exists) throw new Error('le document ne devrait pas exister');
+});
+
+await check('un tiers NE PEUT PAS sonder la place de non-conformite d\'un autre acheteur (inexistante)', async () => {
+  await assertFails(otherSellerCtx().doc('non_conformities/o-nc-jamais_buyer1').get());
 });
 
 console.log('\n=== refund_requests : ID deterministe (audit du 2026-10-08) ===');

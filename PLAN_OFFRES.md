@@ -216,6 +216,189 @@ Aucune notification push — uniquement le badge non-lu du chat existant.
 
 ---
 
+## 8. Lot D — réservation 24h après offre acceptée (audit, 2026-10-09)
+
+**Décision Fatou (2026-10-09) :** une offre acceptée réserve l'article à
+l'acheteur pendant **24h**, puis il redevient disponible automatiquement ;
+notification in-app aux deux parties. Phase de test limitée à ~20
+vendeuses. **Rien codé, rien déployé — audit seul, en attente d'accord.**
+
+### 1. Réservation à l'acceptation (règle `product`)
+
+`ProductEntity` n'a aujourd'hui **aucun champ de réservation**
+(`lib/features/product/domain/entities/product_entity.dart:4-69`) : seul
+`ProductStatus.reserved` existe comme valeur d'enum, posée manuellement
+par le vendeur (voir §4). Il faut ajouter deux champs nullables,
+`reservedUntil` (Timestamp) et `reservedFor` (uid acheteur) — même
+pattern que `offers.reservedUntil`, déjà présent mais jamais rempli
+(`lib/features/offers/domain/entities/offer_entity.dart:78`,
+`lib/features/offers/data/models/offer_model.dart:31,52,75-76`).
+
+`OffersRepositoryImpl.accept()` (ligne 144-163) ne touche aujourd'hui que
+le document `offers/{id}` — confirmé par la lecture du code : aucune
+écriture sur `product` n'a lieu à l'acceptation. Il faudra que cette
+méthode écrive **les deux documents** (offer + product), idéalement via
+un batch/transaction Firestore côté client (pas de Cloud Function) pour
+limiter le risque d'écriture partielle, déclenchable par **n'importe quelle
+partie** puisque l'acceptation peut venir du vendeur ou de l'acheteur
+(règle actuelle `offers`, lignes 387-421 de `firestore.rules.chantier-candidat`,
+autorise déjà les deux sens).
+
+Règle `product` proposée (ajout à `allow update`, inchangé sinon) —
+**esquisse, pas de syntaxe garantie à 100%, à valider en test avant tout
+déploiement** :
+```
+// Réservation automatique suite à une offre acceptée (Lot D)
+|| (resource.data.status == 'available'
+    && request.resource.data.status == 'reserved'
+    && request.resource.data.diff(resource.data).affectedKeys()
+         .hasOnly(['status', 'reservedUntil', 'reservedFor', 'updatedAt'])
+    && request.resource.data.reservedFor is string
+    && request.resource.data.reservedUntil is timestamp
+    && (request.auth.uid == request.resource.data.reservedFor
+        || request.auth.uid == resource.data.sellerId)
+    && get(/databases/$(database)/documents/offers/$(productId + '_' + request.resource.data.reservedFor)).data.status == 'accepted'
+    && get(/databases/$(database)/documents/offers/$(productId + '_' + request.resource.data.reservedFor)).data.sellerId == resource.data.sellerId
+    && get(/databases/$(database)/documents/offers/$(productId + '_' + request.resource.data.reservedFor)).data.reservedUntil == request.resource.data.reservedUntil)
+```
+Champs limités à `status/reservedUntil/reservedFor/updatedAt` (même
+discipline que les autres branches). Le `get()` croisé sur `offers/{id}`
+empêche un vendeur/acheteur de poser une réservation fantaise sans offre
+`accepted` réelle derrière.
+
+**Manque à combler côté règle `offers`** (trouvé en relisant le fichier
+pour cet audit) : la branche "accepter" (lignes 387-395 et 408-413) ne
+vérifie pas que `product.status == 'available'` au moment d'accepter —
+contrairement à la création (ligne 327) et à la relance (ligne 378). Sans
+ce garde-fou, une offre pourrait être acceptée sur un article déjà
+vendu/réservé entre-temps (voir §4). À ajouter dans le même mouvement que
+la réservation.
+
+### 2. Libération après 24h (paresseuse, sans Cloud Function)
+
+Même principe que l'expiration d'offre déjà en prod
+(`OffersRepositoryImpl.expireIfNeeded`, lignes 242-260) : le client
+compare `DateTime.now()` à la deadline et tente l'update ; la règle
+revérifie `request.time` côté serveur pour empêcher la triche.
+
+Règle `product` proposée (nouvelle branche `allow update`) :
+```
+// Libération paresseuse de la réservation (Lot D)
+|| (resource.data.status == 'reserved'
+    && request.time > resource.data.reservedUntil
+    && request.resource.data.status == 'available'
+    && request.resource.data.diff(resource.data).affectedKeys()
+         .hasOnly(['status', 'reservedUntil', 'reservedFor', 'updatedAt']))
+```
+N'importe quel utilisateur authentifié peut déclencher la libération
+(comme l'expiration d'offre) — c'est un simple passage de relais, pas un
+droit particulier.
+
+**Points d'appel paresseux proposés** — mêmes trois écrans que pour
+`expireIfNeeded` déjà câblés aujourd'hui (confirmé par grep) :
+- fiche produit (`product_detail_page.dart`, à l'ouverture),
+- `my_listings_page.dart` (vendeur, ligne 46 a déjà `expireIfNeeded` au
+  même endroit — ajouter la vérification produit juste à côté),
+- `my_offers_page.dart` (acheteur, ligne 31, même pattern).
+
+### 3. Notifications
+
+Les types `offerAccepted`/`offerRejected`/`newOffer` existent déjà dans
+`NotificationType` (`notification_entity.dart:29-45`) et sont déjà
+branchés côté affichage (icônes/couleurs dans `notification_tile.dart` et
+`notifications_page.dart`) — **mais ne sont jamais créés nulle part** :
+`NotificationRepositoryImpl` (data/repositories/notification_repository_impl.dart)
+n'expose **aucune méthode de création**, seulement lecture/lu/suppression.
+Aucun appelant dans tout `lib/features` ne construit de
+`NotificationModel` pour l'écrire. C'est un circuit mort aujourd'hui, pas
+spécifique aux offres.
+
+Il faudra : (a) ajouter une méthode `create()` au repository, (b)
+l'appeler des deux côtés au moment de l'acceptation (notifie le vendeur
+ET l'acheteur) et à la libération (notifie les deux), (c) ajouter un
+nouveau type `NotificationType.reservationExpired` (absent aujourd'hui).
+Règle Firestore : **aucun changement nécessaire** — `allow create: if
+isAuthenticated();` sur `/notification` (ligne 191) est déjà assez large
+pour qu'une partie crée une notification adressée à l'autre (même
+principe que `/wallet`, déjà toléré faute de Cloud Function — même
+réserve de sécurité à durcir plus tard).
+
+Confirmé : **aucun push n'est possible sans passer sur le plan Blaze**
+(Cloud Functions requis pour déclencher FCM côté serveur) — ce sera donc
+strictement in-app, cohérent avec le reste de l'app (badge non-lu du chat,
+déjà listé en §7 comme limite acceptée "sans Blaze").
+
+### 4. Interaction avec la réservation manuelle existante
+
+Le vendeur peut déjà marquer manuellement vendu/réservé/annuler
+(`my_listings_page.dart`, `_markStatus` ligne 153-172,
+`canRevertToAvailable` ligne 341-343) — **mais uniquement si le paiement
+est désactivé** (`!paymentEnabled`), ce qui est le cas actuellement. Cette
+porte est **inconditionnelle sur le statut de départ** : rien n'empêche
+aujourd'hui un vendeur de cliquer "Remettre disponible" sur un article
+`reserved` **pendant** la fenêtre des 24h d'une réservation issue d'une
+offre acceptée, sans que l'offre `accepted` correspondante ne soit
+touchée — elle resterait affichée "Acceptée" indéfiniment dans "Mes
+offres" de l'acheteur, déconnectée de la réalité du produit. Symétrique
+pour "Marquer vendu" : rien ne referme l'offre.
+
+C'est une vraie question à trancher, pas une simple note : trois options,
+aucune codée :
+- **(a)** laisser tel quel pour la phase ~20 vendeuses (le vendeur garde
+  la main, l'incohérence "Mes offres" reste visuelle seulement) ;
+- **(b)** faire que le changement manuel de statut d'un produit dont
+  `reservedFor` est non-nul mette aussi à jour l'offre liée (ex. statut
+  `cancelled` avec une raison "produit marqué vendu/disponible
+  manuellement") — un peu de code client en plus, pas de Cloud Function ;
+- **(c)** interdire le bouton manuel tant qu'une réservation active existe
+  (`reservedFor != null`), en renvoyant vers le flux normal
+  (attendre l'expiration ou traiter la vente via la commande).
+
+Je recommande (b) : évite l'état incohérent sans bloquer le vendeur, peu
+de code. Mais c'est ta décision, pas la mienne à prendre seule.
+
+### 5. Risques de sécurité, tests prévus, diff proposé
+
+**Risques identifiés sur les deux règles produit** :
+- Sans le `get()` croisé vers `offers/{id}.status == 'accepted'`, n'importe
+  qui pourrait poser une "réservation" fantôme sur un article d'autrui —
+  d'où l'obligation de cette vérification dans la règle §1.
+- Le croisement `offers.reservedUntil == request.resource.data.reservedUntil`
+  (égalité stricte) empêche un des deux partis de choisir une durée plus
+  longue que celle réellement écrite sur l'offre au moment de
+  l'acceptation — sans cette égalité, un acheteur pourrait tenter de poser
+  une date de libération arbitrairement lointaine.
+- La règle de libération (§2) est volontairement ouverte à "n'importe
+  quel utilisateur connecté" comme l'expiration d'offre — c'est déjà le
+  modèle accepté pour `offers`, donc cohérent, mais à redire explicitement
+  puisque ça touche `product` cette fois (collection plus visible/large).
+- Le garde-fou manquant côté `offers` (accepter uniquement si
+  `product.status == 'available'`, §1) est un vrai trou à combler avant
+  tout déploiement, indépendamment de la réservation elle-même.
+
+**Tests prévus** (mêmes suites que le lot offres, nouveaux scénarios dans
+`rules-test/test-offers.mjs` et un nouveau bloc `product` réservation) :
+acceptation par le vendeur → produit réservé ; acceptation par
+l'acheteur → produit réservé ; tentative de réservation sans offre
+`accepted` réelle → refusée ; tentative avec `reservedUntil` différent de
+celui de l'offre → refusée ; libération avant l'échéance → refusée ;
+libération après l'échéance → acceptée, par n'importe quel utilisateur
+connecté ; acceptation d'une offre sur un produit déjà non-disponible →
+refusée (nouveau garde-fou) ; non-partie à l'offre ne peut ni réserver ni
+libérer en dehors des règles ci-dessus.
+
+**Diff proposé** : deux nouvelles branches dans `allow update` de
+`match /product/{productId}` (réservation + libération, esquissées en §1
+et §2), une condition supplémentaire dans la branche "accepter" de
+`match /offers/{offerId}` (`product.status == 'available'`), aucune
+modification des autres collections. Rien n'est appliqué — fichier
+`firestore.rules.chantier-candidat` non modifié par cet audit.
+
+**Non codé, non déployé.** En attente de ton accord avant d'écrire la
+moindre ligne.
+
+---
+
 ## Statut
 
 Valeurs validées par Fatou. Lot A codé, durci, testé (voir commits

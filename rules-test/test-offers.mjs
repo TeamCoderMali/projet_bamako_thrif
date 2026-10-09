@@ -239,6 +239,21 @@ await check('un tiers ne peut pas lire l\'offre', async () => {
   await assertFails(strangerCtx().doc('offers/o1').get());
 });
 
+await check('acheteur peut verifier sa propre place avant toute offre (exists=false, pas permission-denied)', async () => {
+  // Bug corrige le 2026-10-09 : un acheteur qui n'a jamais fait d'offre
+  // sur ce produit doit pouvoir verifier "ai-je deja une offre en cours ?"
+  // sans que resource.data (null car le doc n'existe pas) fasse planter
+  // la regle. Restreint a offerId.split('_')[1] == auth.uid (sa PROPRE
+  // place) depuis la demande d'Ali du 2026-10-09 -- voir test suivant
+  // pour la confirmation qu'un tiers reste refuse sur ce meme cas.
+  const snap = await assertSucceeds(buyerCtx().doc(`offers/p1_${BUYER}`).get());
+  if (snap.exists) throw new Error('le document ne devrait pas exister');
+});
+
+await check('un tiers NE PEUT PAS sonder la place d\'offre d\'un autre acheteur (inexistante)', async () => {
+  await assertFails(strangerCtx().doc(`offers/p1_${BUYER}`).get());
+});
+
 console.log('\n=== Mise a jour : tour du vendeur ===');
 
 await seed({ 'offers/o-seller-turn': baseOffer() });
@@ -323,6 +338,48 @@ await check('vendeur ne peut pas agir quand ce n\'est pas son tour', async () =>
   await assertFails(
     sellerCtx().doc('offers/o-not-seller-turn').update({ status: 'accepted' })
   );
+});
+
+console.log('\n=== Mise a jour : accepter exige un produit toujours disponible (lot D) ===');
+
+await seed({
+  'product/p-became-sold': { sellerId: SELLER, title: 'Devenu indisponible', status: 'available', price: 10000 },
+});
+
+await check('vendeur ne peut pas accepter si le produit est devenu indisponible entre-temps', async () => {
+  await seed({
+    'offers/o-seller-accept-stale': baseOffer({ productId: 'p-became-sold' }),
+  });
+  // Le produit change de statut independamment de l'offre (ex. vendeur
+  // a marque vendu via le bouton manuel pendant que l'offre etait en
+  // attente) -- ecriture hors regles, comme le reste des fixtures.
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await ctx.firestore().doc('product/p-became-sold').update({ status: 'sold' });
+  });
+  await assertFails(
+    sellerCtx().doc('offers/o-seller-accept-stale').update({ status: 'accepted' })
+  );
+});
+
+await check('vendeur peut toujours refuser meme si le produit est devenu indisponible', async () => {
+  await assertSucceeds(
+    sellerCtx().doc('offers/o-seller-accept-stale').update({ status: 'rejected' })
+  );
+});
+
+await check('acheteur ne peut pas accepter si le produit est devenu indisponible entre-temps', async () => {
+  await seed({
+    'offers/o-buyer-accept-stale': baseOffer({
+      productId: 'p-became-sold', turn: 'buyer', round: 2, currentPrice: 8000,
+    }),
+  });
+  await assertFails(
+    buyerCtx().doc('offers/o-buyer-accept-stale').update({ status: 'accepted' })
+  );
+});
+
+await testEnv.withSecurityRulesDisabled(async (ctx) => {
+  await ctx.firestore().doc('product/p-became-sold').update({ status: 'available' });
 });
 
 console.log('\n=== Mise a jour : plafond de rounds (illimite par defaut) ===');
