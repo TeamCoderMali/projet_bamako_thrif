@@ -230,20 +230,39 @@ service cloud.firestore {
     // Signalement acheteur (remplace l'ancienne inspection relais). Le relais
     // (et l'admin) doivent voir et traiter tous les signalements, pas
     // seulement ceux où ils sont partie prenante.
+    // ID deterministe {orderId}_{buyerId} (audit du 2026-10-08) : un seul
+    // signalement actif par commande et par acheteur -- l'ancien ID
+    // auto-genere permettait des envois illimites sur la meme commande.
     match /non_conformities/{ncId} {
       allow create: if isAuthenticated()
-        && request.resource.data.buyerId == request.auth.uid;
+        && request.resource.data.buyerId == request.auth.uid
+        && ncId == request.resource.data.orderId + '_' + request.resource.data.buyerId;
       allow read, update: if isAuthenticated()
         && (resource.data.buyerId == request.auth.uid
             || resource.data.sellerId == request.auth.uid
             || isRelayManager()
-            || isAdmin());
+            || isAdmin())
+        // Pour un non-admin : ni les champs identifiants, ni le contenu
+        // du signalement (fourni une seule fois a la creation) ne
+        // changent -- empeche de reutiliser "update" pour resoumettre un
+        // nouveau motif/description/photos sur le meme document (ce qui
+        // contournerait sinon l'ID deterministe). Les transitions de
+        // statut existantes (evaluation du cout, acceptation vendeur via
+        // notifications_page.dart) ne touchent jamais ces champs, donc
+        // restent inchangees.
+        && (isAdmin() || !request.resource.data.diff(resource.data)
+             .affectedKeys().hasAny(['orderId', 'buyerId', 'sellerId', 'productId',
+                                      'reason', 'description', 'photoUrls',
+                                      'listingPhotoUrls', 'createdAt']));
     }
 
     // ── Collection refund_requests ─────────────────────────────────────────
+    // ID deterministe {orderId}_{buyerId} (audit du 2026-10-08) : une
+    // seule demande de remboursement active par commande et par acheteur.
     match /refund_requests/{id} {
       allow create: if isAuthenticated()
-        && request.resource.data.buyerId == request.auth.uid;
+        && request.resource.data.buyerId == request.auth.uid
+        && id == request.resource.data.orderId + '_' + request.resource.data.buyerId;
       allow read: if isAuthenticated()
         && (resource.data.buyerId == request.auth.uid || isAdmin());
     }
@@ -261,9 +280,15 @@ service cloud.firestore {
     // acheteur/vendeur). Tout utilisateur connecté peut créer un
     // signalement avec son propre reporterId ; seuls les admins le
     // lisent et le traitent.
+    // ID deterministe {reporterId}_{targetType}_{targetId} (audit du
+    // 2026-10-08) : un seul signalement actif par personne et par objet
+    // signale. Une seconde tentative sur le meme objet est traitee comme
+    // un "update" (le document existe deja) et refusee a un non-admin --
+    // aucune regle update n'existe pour eux, ni aucune regle delete.
     match /reports/{id} {
       allow create: if isAuthenticated()
-        && request.resource.data.reporterId == request.auth.uid;
+        && request.resource.data.reporterId == request.auth.uid
+        && id == request.resource.data.reporterId + '_' + request.resource.data.targetType + '_' + request.resource.data.targetId;
       allow read, update: if isAdmin();
     }
 
