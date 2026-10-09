@@ -131,15 +131,24 @@ du bon type, côté dont c'est le tour.
 
 ---
 
-## 4. Frais de service — audit (2026-10-08, aucun code touché)
+## 4. Frais de service — décision de Fatou (2026-10-09)
 
-**Décision de Fatou** : les frais de service doivent se calculer sur le
-**prix accepté** d'une offre, pas le prix affiché initial, une fois les
-lots B/C en place. **En attente du choix de Fatou sur le modèle de frais
-— rien à coder pour l'instant.**
+**Modèle retenu** : frais de service = **8 % du prix, minimum 200 FCFA**,
+**payés par l'acheteur** (ajoutés au prix affiché — le vendeur reçoit
+intégralement le prix qu'il a fixé). Prix libres (pas de plancher/plafond
+produit lié aux frais). Pour une offre acceptée, les frais se calculent
+sur le **prix négocié** (`offer.currentPrice`), pas le prix affiché
+initial (`product.price`).
 
-Constat de l'audit : aujourd'hui, **aucun calcul réel de frais n'existe
-nulle part**, trois concepts déconnectés coexistent :
+**Rien codé maintenant — le paiement reste désactivé.** Cette décision
+remplace la question ouverte posée dans l'audit du 2026-10-08 (ci-dessous,
+conservé pour mémoire) ; le modèle "commission %" est donc le bon, pas le
+flat 1000 FCFA.
+
+### Audit (2026-10-08, toujours valable comme état des lieux du code)
+
+Aujourd'hui, **aucun calcul réel de frais n'existe nulle part**, trois
+concepts déconnectés coexistent :
 1. `payment_page.dart:258-272` affiche un flat "1 000 FCFA" ajouté au
    total à l'écran, mais `_createOrder()` (ligne 119) écrit
    `totalAmount: product.price` **sans jamais y inclure ce montant**.
@@ -149,14 +158,29 @@ nulle part**, trois concepts déconnectés coexistent :
    rien n'est réellement déduit.
 3. Back-office : un champ `commissionRate` (%, défaut 5,
    `settings.component.ts:12,26,87`) **jamais lu nulle part** (mobile ou
-   back-office) — complètement mort.
+   back-office) — complètement mort, mais c'est le bon CONCEPT (commission
+   %) — à réutiliser/corriger avec la valeur 8 %, pas à remplacer par un
+   autre champ.
 
-Pour utiliser le prix accepté d'une offre, il faudra : choisir un seul
-modèle de frais (flat 1000 FCFA vs commission %, décision Fatou), puis
-faire en sorte que la future création de commande à partir d'une offre
-acceptée (lot B/C, pas construit) utilise `offer.currentPrice` au lieu
-de `product.price`. Rappel : le paiement est désactivé actuellement
-(phase de test), ce code n'est pas exécutable en pratique aujourd'hui.
+### À faire avant de réactiver le paiement (pas maintenant)
+
+1. Calculer les frais avec la formule validée : `max(prix * 0.08, 200)`,
+   où "prix" = `offer.currentPrice` si la commande vient d'une offre
+   acceptée, sinon `product.price`.
+2. Remplacer le `commissionRate` mort du back-office (`settings.component.ts`)
+   par ce calcul (ou le réutiliser avec la valeur 8 %, au lieu de 5 et
+   jamais lu) — à trancher à l'implémentation.
+3. Aligner `payment_page.dart` : le texte affiché ("Frais de service :
+   1 000 FCFA") doit utiliser le vrai calcul, pas le flat actuel.
+4. Aligner `_createOrder()` : `totalAmount` doit inclure le prix réel
+   (négocié ou affiché) **et** les frais calculés, de façon cohérente
+   avec ce qui est montré à l'écran — le total affiché à l'acheteur doit
+   être exactement le montant enregistré en base (c'est la source de
+   l'incohérence trouvée dans l'audit : écran et données divergent déjà
+   aujourd'hui avec le flat 1000 FCFA).
+5. Vérifier `order_tracking_page.dart` (annulation/remboursement) pour
+   que le montant remboursé reflète lui aussi la bonne base (frais
+   déduits ou non, à confirmer avec Fatou au moment de l'implémentation).
 
 ---
 
