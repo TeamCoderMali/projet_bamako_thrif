@@ -22,11 +22,7 @@ class ProfilePage extends StatelessWidget {
       builder: (context, state) {
         final user = state is AuthAuthenticated ? state.user : null;
 
-        return PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, result) {
-            if (!didPop) context.go(RouteNames.home);
-          },
+        return TabRootBackHandler(
           child: Scaffold(
             body: SafeArea(
               child: SingleChildScrollView(

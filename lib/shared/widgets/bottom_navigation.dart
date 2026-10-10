@@ -2,6 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
+/// Comportement retour Android uniforme pour les 5 écrans racine de la barre
+/// du bas (Accueil, Parcourir, Vendre, Messages, Profil) : depuis Accueil le
+/// retour ferme l'appli (comportement Android par défaut, rien à faire) ;
+/// depuis les 4 autres onglets, il ramène à l'Accueil. Widget partagé pour
+/// éviter 5 copies du même PopScope — voir audit navigation retour,
+/// 2026-10-10.
+class TabRootBackHandler extends StatelessWidget {
+  final Widget child;
+  final bool isHomeTab;
+  // Permet a un ecran de desactiver temporairement le retour (ex. publication
+  // en cours) sans changer la regle commune. true = comportement normal.
+  final bool canRedirectHome;
+  const TabRootBackHandler({
+    super.key,
+    required this.child,
+    this.isHomeTab = false,
+    this.canRedirectHome = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isHomeTab) return child;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && canRedirectHome) context.go(RouteNames.home);
+      },
+      child: child,
+    );
+  }
+}
+
 /// Barre de navigation principale de l'application (5 onglets), partagée par
 /// tous les écrans racine pour éviter les 5 copies divergentes qui existaient
 /// avant (icônes actives manquantes sur certains onglets, libellés

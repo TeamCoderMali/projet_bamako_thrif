@@ -125,7 +125,7 @@ class _OfferTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: offer.chatId != null
-            ? () => context.go('/messages/${offer.chatId}')
+            ? () => context.push('/messages/${offer.chatId}')
             : null,
         child: Padding(
           padding: const EdgeInsets.all(14),

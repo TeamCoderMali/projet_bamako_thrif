@@ -132,7 +132,7 @@ class OrdersPage extends StatelessWidget {
                     final date = data['createdAt'];
 
                     return GestureDetector(
-                      onTap: () => context.go('/orders/$orderId/track'),
+                      onTap: () => context.push('/orders/$orderId/track'),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),

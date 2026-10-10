@@ -348,7 +348,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         productTitle: product.title,
       );
 
-      if (mounted) context.go('/messages/$chatId');
+      if (mounted) context.push('/messages/$chatId');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -785,7 +785,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () =>
-                              context.go('/payment', extra: product),
+                              context.push('/payment', extra: product),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF6B7F4D),
                             shape: RoundedRectangleBorder(

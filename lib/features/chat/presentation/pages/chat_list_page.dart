@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/chat/domain/entities/message_entity.dart';
@@ -33,11 +32,7 @@ class _ChatListPageState extends State<ChatListPage> {
   Widget build(BuildContext context) {
     final currentUid = context.read<AuthCubit>().currentUser?.id ?? '';
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) context.go(RouteNames.home);
-      },
+    return TabRootBackHandler(
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: const Color(0xFF6B7F4D),
@@ -136,7 +131,7 @@ class _ChatListPageState extends State<ChatListPage> {
                 final unread = chat.unreadCount[currentUid] ?? 0;
 
                 return GestureDetector(
-                  onTap: () => context.go('/messages/${chat.id}'),
+                  onTap: () => context.push('/messages/${chat.id}'),
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(16),

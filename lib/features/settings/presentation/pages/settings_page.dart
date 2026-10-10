@@ -44,11 +44,11 @@ class _SettingsPageState extends State<SettingsPage> {
           _sectionLabel('Compte'),
           _card([
             _item(context, Icons.person_outline, 'Modifier le profil',
-                () => context.go(RouteNames.editProfile)),
+                () => context.push(RouteNames.editProfile)),
             _item(context, Icons.lock_outline, 'Changer le mot de passe',
                 () => context.push(RouteNames.changePassword)),
             _item(context, Icons.privacy_tip_outlined, 'Confidentialité',
-                () => context.go(RouteNames.privacy)),
+                () => context.push(RouteNames.privacy)),
           ]),
           const SizedBox(height: 22),
           _sectionLabel('Préférences'),
@@ -86,7 +86,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _sectionLabel('À propos'),
           _card([
             _item(context, Icons.info_outline, 'À propos de l\'app',
-                () => context.go(RouteNames.about)),
+                () => context.push(RouteNames.about)),
             _item(context, Icons.help_outline, 'Aide & Support',
                 () => context.push(RouteNames.support)),
             _item(context, Icons.star_outline, 'Noter l\'application', () {

@@ -54,7 +54,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back,
               color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => context.go(RouteNames.home),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(RouteNames.home),
         ),
         title: Text(
           'Notifications',

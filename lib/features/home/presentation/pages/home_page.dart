@@ -60,7 +60,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TabRootBackHandler(
+      isHomeTab: true,
+      child: Scaffold(
       body: SafeArea(
         child: Column(
           children: [
@@ -125,6 +127,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       bottomNavigationBar: const AppBottomNav(currentIndex: 0),
+      ),
     );
   }
 
@@ -457,7 +460,7 @@ class _ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.go('/product/${product.id}'),
+      onTap: () => context.push('/product/${product.id}'),
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,

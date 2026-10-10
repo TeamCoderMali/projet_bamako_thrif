@@ -103,7 +103,7 @@ class _NewChatPageState extends State<NewChatPage> {
           user['id'] as String: user['avatarUrl'] as String?,
         },
       );
-      if (mounted) context.go('/messages/$chatId');
+      if (mounted) context.push('/messages/$chatId');
     } catch (e) {
       if (mounted) {
         setState(() => _isStartingChat = false);

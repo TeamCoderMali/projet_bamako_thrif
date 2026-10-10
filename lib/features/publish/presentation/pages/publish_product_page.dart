@@ -214,11 +214,8 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && !_isPublishing) context.go(RouteNames.home);
-      },
+    return TabRootBackHandler(
+      canRedirectHome: !_isPublishing,
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F4EE),
         appBar: AppBar(

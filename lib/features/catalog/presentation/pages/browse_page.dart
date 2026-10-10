@@ -82,7 +82,8 @@ class _BrowsePageState extends State<BrowsePage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Scaffold(
+    return TabRootBackHandler(
+      child: Scaffold(
       body: SafeArea(
         child: Column(
           children: [
@@ -134,6 +135,7 @@ class _BrowsePageState extends State<BrowsePage> {
         ),
       ),
       bottomNavigationBar: const AppBottomNav(currentIndex: 1),
+      ),
     );
   }
 
