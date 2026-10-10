@@ -141,7 +141,9 @@ class _ChatPageState extends State<ChatPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back,
               color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => context.go(RouteNames.messages),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(RouteNames.messages),
         ),
         title: Row(
           children: [

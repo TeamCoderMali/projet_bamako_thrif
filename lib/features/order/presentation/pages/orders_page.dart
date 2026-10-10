@@ -90,7 +90,8 @@ class OrdersPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.go(RouteNames.home),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(RouteNames.home),
         ),
         title: const Text(
           'Mes commandes',

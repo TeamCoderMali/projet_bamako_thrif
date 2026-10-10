@@ -34,7 +34,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.push(RouteNames.settings),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(RouteNames.settings),
         ),
         title: const Text(
           'Confidentialité',

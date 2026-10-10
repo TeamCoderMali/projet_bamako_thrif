@@ -184,7 +184,9 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.push(RouteNames.orders),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.push(RouteNames.orders),
         ),
         title: const Text(
           'Suivi de commande',

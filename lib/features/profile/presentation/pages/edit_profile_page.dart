@@ -199,7 +199,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   borderRadius: BorderRadius.circular(12)),
             ),
           );
-          context.go(RouteNames.profile);
+          context.canPop() ? context.pop() : context.go(RouteNames.settings);
         } else {
           final state = context.read<AuthCubit>().state;
           final msg =
@@ -229,7 +229,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   color: Theme.of(context).colorScheme.onSurface),
               onPressed: (isLoading || _isUploadingAvatar)
                   ? null
-                  : () => context.go(RouteNames.profile),
+                  : () => context.canPop()
+                      ? context.pop()
+                      : context.go(RouteNames.settings),
             ),
             title: Text(
               'Modifier le profil',

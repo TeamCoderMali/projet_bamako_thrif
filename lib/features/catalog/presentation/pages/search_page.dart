@@ -93,19 +93,17 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) context.go(RouteNames.home);
-      },
-      child: Scaffold(
+    // Search est toujours ouverte en push() (Parcourir/Catalogue) : il y a
+    // toujours un ecran precedent, pas besoin de filet "retour -> accueil".
+    return Scaffold(
         appBar: AppBar(
           elevation: 0,
           titleSpacing: 0,
           leading: IconButton(
             icon: Icon(Icons.arrow_back,
                 color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () => context.go(RouteNames.home),
+            onPressed: () =>
+                context.canPop() ? context.pop() : context.go(RouteNames.home),
           ),
           title: Container(
             margin: const EdgeInsets.only(right: 12),
@@ -273,7 +271,6 @@ class _SearchPageState extends State<SearchPage> {
             );
           },
         ),
-      ),
     );
   }
 

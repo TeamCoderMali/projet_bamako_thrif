@@ -103,7 +103,9 @@ class _SupportPageState extends State<SupportPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.go(RouteNames.profile),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(RouteNames.profile),
         ),
         title: const Text(
           'Aide & Support',

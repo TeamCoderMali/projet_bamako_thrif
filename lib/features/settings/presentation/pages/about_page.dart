@@ -33,7 +33,9 @@ class _AboutPageState extends State<AboutPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back,
               color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => context.push(RouteNames.settings),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(RouteNames.settings),
         ),
         title: Text(
           'À propos',
