@@ -2,7 +2,7 @@ name: bamako_thrift
 description: "DANAYA – Seconde main, première confiance."
 publish_to: 'none'
 
-version: 1.0.0+7
+version: 1.0.0+8
 
 environment:
   sdk: ^3.6.2
