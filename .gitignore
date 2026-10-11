@@ -68,6 +68,7 @@ lib/core/dependency_injection/injection.config.dart
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 *.jks
+*.keystore
 
 # ── Firebase ───────────────────────────────────────────────────────────────
 google-services.json
