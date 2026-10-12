@@ -188,6 +188,13 @@ concepts déconnectés coexistent :
    même une fois le paiement réactivé. Ne pas toucher `sold`, qui doit
    continuer à passer par le flux commande une fois le paiement actif.
 
+### Autre tâche notée ici (sans rapport avec le paiement)
+
+- Passer le thème en Poppins : ajouter Poppins-Bold.ttf dans
+  assets/fonts + pubspec, changer app_text_styles.dart (2 lignes), puis
+  QA écran par écran (boutons à hauteur fixe, titres AppBar), avec
+  accord de Fatou.
+
 ---
 
 ## 5. Cas limites
