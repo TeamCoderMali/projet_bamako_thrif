@@ -639,7 +639,7 @@ class _OfferMessageBubbleState extends State<_OfferMessageBubble> {
   String _statusText(OfferEntity offer, bool isBuyer, bool myTurn) {
     switch (offer.status) {
       case OfferStatus.accepted:
-        return 'Offre acceptée, convenez de la remise dans le chat.';
+        return 'Offre acceptée, mets-toi d\'accord sur la remise dans le chat.';
       case OfferStatus.rejected:
         return 'Offre refusée.';
       case OfferStatus.cancelled:
@@ -648,7 +648,7 @@ class _OfferMessageBubbleState extends State<_OfferMessageBubble> {
         return 'Offre expirée (délai de réponse dépassé).';
       case OfferStatus.pending:
         return myTurn
-            ? 'À vous de répondre.'
+            ? 'À toi de répondre.'
             : 'En attente de la réponse de l\'autre partie.';
     }
   }

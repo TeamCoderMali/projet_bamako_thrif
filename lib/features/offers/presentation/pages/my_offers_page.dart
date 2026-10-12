@@ -52,7 +52,7 @@ class _MyOffersPageState extends State<MyOffersPage> {
         ),
       ),
       body: buyerId == null
-          ? const Center(child: Text('Connectez-vous pour voir vos offres'))
+          ? const Center(child: Text('Connecte-toi pour voir tes offres'))
           : StreamBuilder<List<OfferEntity>>(
               stream: _repo.watchBuyerOffers(buyerId),
               builder: (context, snapshot) {
