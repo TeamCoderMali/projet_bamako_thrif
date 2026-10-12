@@ -70,7 +70,7 @@ class HomeCubit extends Cubit<HomeState> {
           ProductCategory.men,
           ProductCategory.shoes,
           ProductCategory.accessories,
-          ProductCategory.bags,
+          ProductCategory.beauty,
         ],
       ));
     } catch (e) {

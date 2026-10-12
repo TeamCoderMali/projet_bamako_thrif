@@ -80,8 +80,8 @@ class _CatalogPageState extends State<CatalogPage> {
         Icons.do_not_step_outlined),
     _QuickCat(ProductCategory.accessories, ProductCategory.accessories.label,
         Icons.watch_outlined),
-    _QuickCat(
-        ProductCategory.bags, ProductCategory.bags.label, Icons.shopping_bag_outlined),
+    _QuickCat(ProductCategory.beauty, ProductCategory.beauty.label,
+        Icons.spa_outlined),
   ];
 
   @override

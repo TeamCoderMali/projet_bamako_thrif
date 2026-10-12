@@ -28,6 +28,10 @@ class _SearchPageState extends State<SearchPage> {
   // Libellés centralises (ProductCategoryLabel, lot 8) : corrige au passage
   // "Tradition" -> "Tenues traditionnelles" (incoherent avec les autres
   // ecrans avant ce lot).
+  // "Sacs"/"Bijoux" retirés de la liste affichée (fusion cosmétique dans
+  // Accessoires, lot 2, 2026-10-12) : gardés dans le switch ci-dessous
+  // (exhaustivité exigée sur tout ProductCategory, indépendamment de cette
+  // liste) mais plus proposés comme rubrique séparée.
   final List<Map<String, dynamic>> _categories = [
     for (final c in [
       ProductCategory.women,
@@ -35,8 +39,6 @@ class _SearchPageState extends State<SearchPage> {
       ProductCategory.children,
       ProductCategory.shoes,
       ProductCategory.accessories,
-      ProductCategory.bags,
-      ProductCategory.jewelry,
       ProductCategory.sportswear,
       ProductCategory.traditional,
       ProductCategory.beauty,

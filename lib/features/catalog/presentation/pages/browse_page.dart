@@ -4,11 +4,14 @@
 // Chaque tuile ouvre le catalogue filtré sur la catégorie correspondante.
 //
 // Seules 7 des 10 catégories du modèle produit sont affichées ici (décision
-// Ali) : bags/jewelry/traditional/other restent valides pour les articles
-// existants et le formulaire de vente, juste pas de tuile dédiée pour
-// jewelry/traditional/other sur cet écran. Pas de repli générique
-// silencieux : un asset manquant (svgAsset null) affiche une erreur visible
-// au lieu d'une icône grise qui masquerait le problème.
+// Ali) : traditional/other restent valides pour les articles existants et
+// le formulaire de vente, juste pas de tuile dédiée sur cet écran. "Sacs"
+// et "Bijoux" n'ont plus de tuile dédiée non plus (fusion cosmétique dans
+// Accessoires, lot 2, 2026-10-12) : la tuile Accessoires inclut déjà ces
+// anciens articles via whereIn côté requête (productCategoriesFor(),
+// product_remote_datasource_impl.dart) — rien à ajouter ici pour ça. Pas de
+// repli générique silencieux : un asset manquant (svgAsset null) affiche
+// une erreur visible au lieu d'une icône grise qui masquerait le problème.
 // Illustrations centrées dans chaque tuile (taille régulière), nom sous le
 // dessin.
 import 'package:flutter/material.dart';
@@ -49,10 +52,6 @@ const _categoryTiles = <_CategoryTile>[
   _CategoryTile(
     category: ProductCategory.accessories,
     svgAsset: 'assets/images/categories/accessoires.svg',
-  ),
-  _CategoryTile(
-    category: ProductCategory.bags,
-    svgAsset: 'assets/images/categories/sacs.svg',
   ),
   _CategoryTile(
     category: ProductCategory.sportswear,
