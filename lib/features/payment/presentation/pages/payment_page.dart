@@ -418,8 +418,8 @@ class _PaymentPageState extends State<PaymentPage> {
               const SizedBox(height: 6),
               Text(
                 _method == 'orange_money'
-                    ? 'Un message de confirmation vous sera envoyé via Orange Money'
-                    : 'Un message de confirmation vous sera envoyé via Moov Money',
+                    ? 'Un message de confirmation te sera envoyé via Orange Money'
+                    : 'Un message de confirmation te sera envoyé via Moov Money',
                 style: const TextStyle(color: Colors.grey, fontSize: 11),
               ),
             ],

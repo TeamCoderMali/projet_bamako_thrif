@@ -142,7 +142,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Vous avez déjà déclaré un problème pour cette commande.'),
+            content: Text('Tu as déjà déclaré un problème pour cette commande.'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -294,7 +294,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Étapes de votre commande',
+                    'Étapes de ta commande',
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,

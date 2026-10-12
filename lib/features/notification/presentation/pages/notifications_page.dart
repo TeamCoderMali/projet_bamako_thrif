@@ -246,7 +246,7 @@ class _RepairValidationSheet extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    Text('Montant à votre charge',
+                    Text('Montant à ta charge',
                         style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 12)),

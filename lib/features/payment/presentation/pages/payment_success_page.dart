@@ -127,7 +127,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Votre commande a bien été enregistrée.',
+                      'Ta commande a bien été enregistrée.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
