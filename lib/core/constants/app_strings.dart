@@ -168,4 +168,13 @@ abstract class AppStrings {
   static const String passwordsDoNotMatch = 'Les mots de passe ne correspondent pas';
   static const String invalidPhoneNumber = 'Numéro de téléphone invalide';
   static const String priceMustBePositive = 'Le prix doit être positif';
+
+  // ── Notifications (textes préparés, lot 1 — PAS câblés) ──────────────────
+  // Rien n'écrit aujourd'hui dans la collection Firestore "notification"
+  // (ni l'app, ni le back-office) : ces textes sont prêts pour un futur lot
+  // qui créera réellement ces notifications, ils ne sont utilisés nulle
+  // part pour l'instant.
+  static const String notifProductSold = 'Ton article est vendu';
+  static const String notifProductFavorited = 'Ton article a été mis en favori';
+  static const String notifNewMessage = 'Tu as reçu un nouveau message';
 }
