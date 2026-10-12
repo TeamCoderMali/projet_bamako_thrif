@@ -7,61 +7,74 @@ import 'package:bamako_thrift/core/services/payment_config_service.dart';
 class FaqItem {
   final String question;
   final String answer;
-  const FaqItem(this.question, this.answer);
+  // Marque les questions liées au pressing (badge "Vérifié"), masquées tant
+  // que pressingEnabled=false — un champ dédié plutôt qu'une comparaison de
+  // texte, pour ne pas dépendre du libellé exact de la question (fragile :
+  // les deux variantes ci-dessous n'utilisent déjà plus la même formulation
+  // pour cette question depuis le lot 1, 2026-10-12).
+  final bool requiresPressing;
+  const FaqItem(this.question, this.answer, {this.requiresPressing = false});
 }
 
 // ─── Contenu FAQ, centralisé ici (seul endroit à modifier) ─────────────────
 // Deux variantes selon l'interrupteur de paiement (config/payment, lu via
 // PaymentConfigService — même repli que le bouton Acheter : actif par
-// défaut). "Comment vendre un article ?" est identique dans les deux.
+// défaut).
 
-// Variante "paiement sécurisé" = textes ACTUELS, volontairement non modifiés
-// ici. Fatou les réécrira elle-même avant la réactivation du paiement.
+// Variante "paiement sécurisé" = textes ACTUELS, passés en tutoiement
+// (lot 1, 2026-10-12). Contenu pas réécrit : Fatou le fera elle-même avant
+// la réactivation du paiement.
 const _faqPaiementSecurise = <FaqItem>[
   FaqItem(
     'Comment vendre un article ?',
-    'Cliquez sur "Publier" en bas de l\'écran, ajoutez des photos, remplissez les informations et publiez gratuitement.',
+    'Clique sur "Publier" en bas de l\'écran, ajoute des photos, remplis les informations et publie gratuitement.',
   ),
   FaqItem(
     'Comment fonctionne le paiement ?',
-    'L\'argent est bloqué jusqu\'à validation par notre équipe. Vous pouvez payer via Orange Money, Moov Money ou votre avoir.',
+    'L\'argent est bloqué jusqu\'à validation par notre équipe. Tu peux payer via Orange Money, Moov Money ou ton avoir.',
   ),
   FaqItem(
     'Qu\'est-ce que le badge Vérifié ?',
     'Le badge Vérifié signifie que notre équipe a inspecté, lavé et repassé le vêtement avant remise à l\'acheteur.',
+    requiresPressing: true,
   ),
   FaqItem(
     'Que faire si mon colis ne correspond pas ?',
-    'Vous pouvez refuser le vêtement et être remboursé, ou accepter avec une remise en état à la charge du vendeur.',
+    'Tu peux refuser le vêtement et être remboursé, ou accepter avec une remise en état à la charge du vendeur.',
   ),
   FaqItem(
     'Combien de temps pour récupérer mon article ?',
-    'Vous avez 7 jours après notification pour récupérer votre article. Des frais de garde s\'appliquent à partir du 8e jour.',
+    'Tu as 7 jours après notification pour récupérer ton article. Des frais de garde s\'appliquent à partir du 8e jour.',
   ),
 ];
 
-// Variante "paiement désactivé" (phase test) — textes exacts fournis par
-// Fatou, aucun mot changé.
+// Variante "paiement désactivé" (phase test) — texte validé par Fatou
+// (2026-10-12), tutoiement, aucun mot changé.
 const _faqPaiementDesactive = <FaqItem>[
   FaqItem(
-    'Comment vendre un article ?',
-    'Cliquez sur "Publier" en bas de l\'écran, ajoutez des photos, remplissez les informations et publiez gratuitement.',
+    'Comment publier un article ?',
+    'Clique sur « Je publie », ajoute des photos, décris ton article et son état, fixe ton prix. Ton annonce est en ligne en quelques minutes.',
   ),
   FaqItem(
-    'Comment fonctionne le paiement ?',
-    'Pour l\'instant, Danaya est en phase de test : le paiement se fait directement entre l\'acheteur et le vendeur, en dehors de l\'app. Transaction directe — non sécurisée par Danaya. Danaya ne garantit ni le paiement ni la livraison. Contactez le vendeur via la messagerie pour vous mettre d\'accord.',
+    'Comment contacter un vendeur ou un acheteur ?',
+    'Depuis la fiche de l\'article, clique sur « Contacter le vendeur » pour lui envoyer un message. Les acheteurs te contactent de la même façon.',
   ),
   FaqItem(
-    'Qu\'est-ce que le badge Vérifié ?',
-    'Le badge Vérifié signifie que notre équipe a inspecté, lavé et repassé le vêtement avant remise à l\'acheteur.',
+    'Comment faire une offre ?',
+    'Sur la fiche d\'un article, clique sur « Faire une offre » et propose ton prix. Le vendeur a 72 heures pour te répondre : il peut accepter, refuser ou te faire une contre-offre.',
   ),
   FaqItem(
-    'Que faire si mon colis ne correspond pas ?',
-    'Contactez d\'abord le vendeur via la messagerie pour trouver une solution ensemble. Si le problème persiste, utilisez le bouton « Signaler ». Pendant la phase de test, Danaya ne peut pas rembourser les transactions.',
+    'Que faire en cas de problème avec un article ?',
+    'Signale-le-nous directement depuis la conversation ou la fiche de l\'article. On ne peut pas intervenir sur la transaction elle-même, mais si c\'est frauduleux ou suspect, on peut mettre en garde contre le vendeur, surtout s\'il s\'agit d\'un Vendeur Pro.',
   ),
   FaqItem(
-    'Combien de temps pour récupérer mon article ?',
-    'La remise de l\'article (rendez-vous ou livraison) s\'organise directement avec le vendeur via la messagerie.',
+    'Comment fonctionne le badge Vérifié ?',
+    'Il est attribué aux articles vérifiés et remis en état par notre pressing partenaire avant publication.',
+    requiresPressing: true,
+  ),
+  FaqItem(
+    'Le paiement est-il sécurisé dans l\'app ?',
+    'Pas encore : pour l\'instant, tu t\'arranges directement avec le vendeur pour le paiement et la remise de l\'article. Le paiement intégré arrive bientôt !',
   ),
 ];
 
@@ -94,7 +107,7 @@ class _SupportPageState extends State<SupportPage> {
     // Le partenaire pressing n'existe pas encore pour Fatou : la question est
     // masquée (texte conservé dans les listes ci-dessus) sans rien supprimer.
     final faq = (_paymentEnabled ? _faqPaiementSecurise : _faqPaiementDesactive)
-        .where((item) => pressingEnabled || item.question != 'Qu\'est-ce que le badge Vérifié ?')
+        .where((item) => pressingEnabled || !item.requiresPressing)
         .toList();
 
     return Scaffold(
