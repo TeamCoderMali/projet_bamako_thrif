@@ -181,6 +181,12 @@ concepts déconnectés coexistent :
 5. Vérifier `order_tracking_page.dart` (annulation/remboursement) pour
    que le montant remboursé reflète lui aussi la bonne base (frais
    déduits ou non, à confirmer avec Fatou au moment de l'implémentation).
+6. Garder réserver/déréserver libres (découpler `reserved` de
+   `paymentDisabled()` dans `productOwnerEditAllowed()`,
+   `firestore.rules`) — décision Fatou du lot « Mes annonces »
+   (2026-10-12) : le vendeur doit garder la main sur réserver/déréserver
+   même une fois le paiement réactivé. Ne pas toucher `sold`, qui doit
+   continuer à passer par le flux commande une fois le paiement actif.
 
 ---
 
