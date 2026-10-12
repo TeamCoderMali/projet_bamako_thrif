@@ -46,6 +46,11 @@ class _HomePageState extends State<HomePage> {
       'value': ProductCategory.accessories,
       'icon': Icons.watch_outlined
     },
+    {
+      'label': 'Beauté',
+      'value': ProductCategory.beauty,
+      'icon': Icons.spa_outlined
+    },
   ];
 
   @override

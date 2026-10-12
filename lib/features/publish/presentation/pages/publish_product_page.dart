@@ -42,24 +42,13 @@ class _PublishProductPageState extends State<PublishProductPage> {
   double _uploadProgress = 0.0;
   String _publishStep = '';
 
-  // Libelles centralises (ProductCategoryLabel, lot 8). La valeur stockee
-  // (ProductCategory) ne change pas, seul le texte affiche change. Ordre
-  // d'origine conserve (ne correspond pas a l'ordre de declaration de
-  // l'enum : Femme avant Homme).
+  // Liste centralisee (product_entity.dart, lot 2) pour rester synchronisee
+  // avec filter_page.dart. "Sacs"/"Bijoux" n'y figurent plus (fusion
+  // cosmétique dans Accessoires) : un nouvel article ne peut plus être
+  // publié directement sous ces deux catégories, mais les articles
+  // existants ne sont pas touchés.
   final List<Map<String, dynamic>> _categories = [
-    for (final c in [
-      ProductCategory.women,
-      ProductCategory.men,
-      ProductCategory.children,
-      ProductCategory.shoes,
-      ProductCategory.accessories,
-      ProductCategory.bags,
-      ProductCategory.jewelry,
-      ProductCategory.sportswear,
-      ProductCategory.traditional,
-      ProductCategory.other,
-    ])
-      {'label': c.label, 'value': c},
+    for (final c in selectableProductCategories) {'label': c.label, 'value': c},
   ];
 
   // ── 4 états exacts du cahier des charges (section 4.3) ──────────────────

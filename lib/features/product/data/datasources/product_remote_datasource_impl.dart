@@ -34,7 +34,10 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         .limit(minPrice != null || maxPrice != null ? 200 : limit);
 
     if (category != null) {
-      query = query.where('category', isEqualTo: category.name);
+      final values = productCategoriesFor(category);
+      query = values.length > 1
+          ? query.where('category', whereIn: values)
+          : query.where('category', isEqualTo: values.first);
     }
     if (condition != null) {
       query = query.where('condition', isEqualTo: condition.name);
@@ -205,7 +208,10 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         .limit(20);
 
     if (category != null) {
-      query = query.where('category', isEqualTo: category.name);
+      final values = productCategoriesFor(category);
+      query = values.length > 1
+          ? query.where('category', whereIn: values)
+          : query.where('category', isEqualTo: values.first);
     }
 
     return query.snapshots().map((snapshot) {

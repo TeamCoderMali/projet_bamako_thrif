@@ -98,7 +98,11 @@ class ProductModel extends ProductEntity {
     // Compatibilité : anciens produits publiés avec l'ancien système à 5 états
     const legacyMap = {
       'newWithTags': ProductCondition.neufAvecEtiquette,
-      'newWithoutTags': ProductCondition.tresSatisfaisant,
+      // Lot 2 (2026-10-12) : "neuf sans étiquette" a maintenant sa propre
+      // valeur d'enum — un ancien article "newWithoutTags" s'affiche donc
+      // désormais correctement ainsi, au lieu d'être confondu avec "Très
+      // bon état". Changement d'affichage seulement, aucune donnée touchée.
+      'newWithoutTags': ProductCondition.neufSansEtiquette,
       'veryGood': ProductCondition.tresSatisfaisant,
       'good': ProductCondition.bon,
       'fair': ProductCondition.satisfaisant,

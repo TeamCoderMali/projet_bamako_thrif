@@ -75,10 +75,17 @@ enum ProductCategory {
   children,
   shoes,
   accessories,
+  // bags/jewelry : fusion cosmétique dans Accessoires (lot 2, 2026-10-12).
+  // Gardées comme valeurs d'enum valides pour ne pas perdre les articles
+  // déjà publiés sous ces catégories (aucune migration de données) ; ne
+  // sont simplement plus proposées dans les sélecteurs, voir
+  // selectableProductCategories ci-dessous. Le filtrage par "Accessoires"
+  // doit matcher les 3 valeurs (whereIn), pas seulement `accessories`.
   bags,
   jewelry,
   sportswear,
   traditional,
+  beauty,
   other,
 }
 
@@ -97,14 +104,51 @@ extension ProductCategoryLabel on ProductCategory {
         ProductCategory.jewelry => 'Bijoux',
         ProductCategory.sportswear => 'Sports',
         ProductCategory.traditional => 'Tenues traditionnelles',
+        ProductCategory.beauty => 'Beauté',
         ProductCategory.other => 'Autres',
       };
 }
+
+/// Catégories proposées à l'utilisateur (formulaire de vente et filtres),
+/// dans l'ordre d'affichage — centralisé ici pour que
+/// publish_product_page.dart et filter_page.dart restent synchronisés
+/// (lot 2, 2026-10-12 ; même risque de divergence déjà trouvé au lot 8).
+/// "Sacs" et "Bijoux" n'y figurent plus (fusionnés dans "Accessoires"),
+/// mais les articles existants sous ces catégories restent affichés :
+/// voir productCategoriesFor() dans product_remote_datasource_impl.dart
+/// pour le whereIn qui les inclut toujours au filtrage.
+const List<ProductCategory> selectableProductCategories = [
+  ProductCategory.women,
+  ProductCategory.men,
+  ProductCategory.children,
+  ProductCategory.shoes,
+  ProductCategory.accessories,
+  ProductCategory.beauty,
+  ProductCategory.sportswear,
+  ProductCategory.traditional,
+  ProductCategory.other,
+];
+
+/// Valeurs Firestore (`category.name`) à matcher pour filtrer sur [category]
+/// — un filtre "Accessoires" doit aussi inclure les anciens articles postés
+/// sous "Sacs"/"Bijoux" avant la fusion cosmétique (lot 2), d'où plusieurs
+/// valeurs pour ce seul cas. Utilisé avec `whereIn` côté requête Firestore
+/// quand la liste a plus d'un élément, `isEqualTo` sinon.
+List<String> productCategoriesFor(ProductCategory category) =>
+    switch (category) {
+      ProductCategory.accessories => [
+          ProductCategory.accessories.name,
+          ProductCategory.bags.name,
+          ProductCategory.jewelry.name,
+        ],
+      _ => [category.name],
+    };
 
 enum ProductCondition {
   satisfaisant,       // État satisfaisant — porté, quelques signes d'usure visibles
   bon,                // Bon état — légèrement porté, très bon aspect général
   tresSatisfaisant,   // Très satisfaisant — quasi neuf, porté très peu de fois
+  neufSansEtiquette,  // Neuf sans étiquette — jamais porté, étiquette d'origine absente (lot 2)
   neufAvecEtiquette,  // État 99 avec étiquette — jamais porté, étiquette d'origine présente
 }
 
@@ -115,6 +159,7 @@ extension ProductConditionLabel on ProductCondition {
         ProductCondition.satisfaisant => 'Satisfaisant',
         ProductCondition.bon => 'Bon état',
         ProductCondition.tresSatisfaisant => 'Très bon état',
+        ProductCondition.neufSansEtiquette => 'Neuf sans étiquette',
         ProductCondition.neufAvecEtiquette => 'Neuf avec étiquette',
       };
 }

@@ -58,6 +58,10 @@ const _categoryTiles = <_CategoryTile>[
     category: ProductCategory.sportswear,
     svgAsset: 'assets/images/categories/sport.svg',
   ),
+  _CategoryTile(
+    category: ProductCategory.beauty,
+    svgAsset: 'assets/images/categories/beaute.svg',
+  ),
 ];
 
 class BrowsePage extends StatefulWidget {

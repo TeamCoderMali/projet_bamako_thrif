@@ -200,28 +200,21 @@ class _Item<T> {
   const _Item(this.value, this.label);
 }
 
-// Libelles centralises (ProductCategoryLabel, lot 8). Ajoute au passage
-// "Autres" (ProductCategory.other), absent de cette liste jusqu'ici — aucun
-// filtre ne permettait de le selectionner.
+// Liste centralisee (product_entity.dart, lot 2) pour rester synchronisee
+// avec publish_product_page.dart. "Sacs"/"Bijoux" n'apparaissent plus comme
+// chips séparées (fusion cosmétique dans "Accessoires") : filtrer par
+// "Accessoires" doit matcher les 3 valeurs d'enum (whereIn côté requête
+// Firestore, voir product_remote_datasource_impl.dart), pas seulement
+// ProductCategory.accessories — sinon les anciens articles Sacs/Bijoux
+// deviendraient invisibles au filtrage.
 final _catItems = [
-  for (final c in [
-    ProductCategory.women,
-    ProductCategory.men,
-    ProductCategory.children,
-    ProductCategory.shoes,
-    ProductCategory.accessories,
-    ProductCategory.bags,
-    ProductCategory.jewelry,
-    ProductCategory.sportswear,
-    ProductCategory.traditional,
-    ProductCategory.other,
-  ])
-    _Item(c, c.label),
+  for (final c in selectableProductCategories) _Item(c, c.label),
 ];
 
 final _condItems = [
   for (final c in [
     ProductCondition.neufAvecEtiquette,
+    ProductCondition.neufSansEtiquette,
     ProductCondition.tresSatisfaisant,
     ProductCondition.bon,
     ProductCondition.satisfaisant,
