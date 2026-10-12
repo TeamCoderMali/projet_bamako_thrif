@@ -722,8 +722,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
                 const SizedBox(height: 32),
                 if (!_paymentEnabled) ...[
-                  _buildNoPaymentBanner(context),
-                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -849,36 +847,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
-      ),
-    );
-  }
-
-  // ── Bannière phase sans paiement intégré (interrupteur désactivé) ──────
-  Widget _buildNoPaymentBanner(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.orange.shade700, width: 1.2),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded,
-              color: Colors.orange.shade800, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Transaction directe — non sécurisée par Danaya',
-              style: TextStyle(
-                color: Colors.orange.shade900,
-                fontWeight: FontWeight.bold,
-                fontSize: 12.5,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
