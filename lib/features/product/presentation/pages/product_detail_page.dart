@@ -288,7 +288,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         context.read<ProductCubit>().loadProductDetail(widget.productId);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Merci pour votre note ⭐'),
+            content: Text('Merci pour ta note ⭐'),
             backgroundColor: Color(0xFF6B7F4D),
             duration: Duration(seconds: 1),
           ),
@@ -323,7 +323,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       if (currentUser.id == product.sellerId) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Vous ne pouvez pas vous contacter vous-même.'),
+            content: Text('Tu ne peux pas te contacter toi-même.'),
             backgroundColor: Colors.orange,
           ),
         );

@@ -96,7 +96,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
     final authState = context.read<AuthCubit>().state;
     if (authState is! AuthAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vous devez être connecté pour publier')),
+        const SnackBar(content: Text('Tu dois être connecté pour publier')),
       );
       return;
     }
@@ -242,7 +242,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     _formSection(
                       title: 'Photos (max 5)',
                       subtitle:
-                          'Des photos de qualité augmentent vos chances de vente.',
+                          'Des photos de qualité augmentent tes chances de vente.',
                       children: [_buildImagePicker()],
                     ),
                     _formSection(
@@ -310,7 +310,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           maxLines: 4,
                           style: const TextStyle(color: Colors.black87),
                           decoration: _inputDeco(
-                              'Décrivez votre article : état, utilisation, taille exacte...'),
+                              'Décris ton article : état, utilisation, taille exacte...'),
                           validator: (v) => (v == null || v.trim().isEmpty)
                               ? 'La description est requise'
                               : null,
@@ -857,8 +857,8 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     const SizedBox(height: 4),
                     Text(
                       _pressingRequested
-                          ? 'Votre article sera visible après vérification et affichera le badge « Vérifié ».'
-                          : 'Optionnel. Votre article reste publié directement, comme aujourd\'hui.',
+                          ? 'Ton article sera visible après vérification et affichera le badge « Vérifié ».'
+                          : 'Optionnel. Ton article reste publié directement, comme aujourd\'hui.',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
