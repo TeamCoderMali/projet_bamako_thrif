@@ -39,6 +39,7 @@ class _SearchPageState extends State<SearchPage> {
       ProductCategory.jewelry,
       ProductCategory.sportswear,
       ProductCategory.traditional,
+      ProductCategory.beauty,
       ProductCategory.other,
     ])
       {
@@ -54,6 +55,7 @@ class _SearchPageState extends State<SearchPage> {
           ProductCategory.jewelry => '💍',
           ProductCategory.sportswear => '⚽',
           ProductCategory.traditional => '🎋',
+          ProductCategory.beauty => '💄',
           ProductCategory.other => '📦',
         },
       },
