@@ -45,7 +45,7 @@ class WalletPage extends StatelessWidget {
         ),
       ),
       body: uid == null
-          ? const Center(child: Text('Connectez-vous'))
+          ? const Center(child: Text('Connecte-toi'))
           : StreamBuilder<QuerySnapshot>(
               // Toutes les transactions pilotent l'affichage : le solde
               // disponible est recalculé en direct en excluant les crédits
@@ -270,7 +270,7 @@ class WalletPage extends StatelessWidget {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Une partie de votre solde expire le ${_fmtDate(Timestamp.fromDate(nextExpiry!))} si non utilisée (validité 3 mois).',
+                                      'Une partie de ton solde expire le ${_fmtDate(Timestamp.fromDate(nextExpiry!))} si non utilisée (validité 3 mois).',
                                       style: TextStyle(
                                           color: Colors.orange.shade800,
                                           fontSize: 12),

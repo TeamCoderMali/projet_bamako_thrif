@@ -62,11 +62,11 @@ class _PrivacyPageState extends State<PrivacyPage> {
             ),
             _buildSection(
               'Utilisation des données',
-              'Vos données sont utilisées pour gérer votre compte, sécuriser vos transactions et améliorer votre expérience sur la plateforme.',
+              'Tes données sont utilisées pour gérer ton compte, sécuriser tes transactions et améliorer ton expérience sur la plateforme.',
             ),
             _buildSection(
               'Sécurité',
-              'Toutes vos données sont chiffrées et stockées de manière sécurisée. Nous ne partageons jamais vos informations avec des tiers.',
+              'Toutes tes données sont chiffrées et stockées de manière sécurisée. Nous ne partageons jamais tes informations avec des tiers.',
             ),
             _buildSection(
               'Paiements',
@@ -75,8 +75,8 @@ class _PrivacyPageState extends State<PrivacyPage> {
                   : 'Pendant la phase de test, Danaya n\'intervient pas dans le paiement : il se fait directement entre l\'acheteur et le vendeur, en dehors de l\'app.',
             ),
             _buildSection(
-              'Vos droits',
-              'Vous pouvez demander la suppression de votre compte et de vos données à tout moment en contactant notre support.',
+              'Tes droits',
+              'Tu peux demander la suppression de ton compte et de tes données à tout moment en contactant notre support.',
             ),
             const SizedBox(height: 24),
             const Text(

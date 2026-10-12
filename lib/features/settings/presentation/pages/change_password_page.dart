@@ -74,7 +74,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           message = 'Le nouveau mot de passe est trop faible.';
           break;
         case 'requires-recent-login':
-          message = 'Veuillez vous reconnecter puis réessayer.';
+          message = 'Reconnecte-toi puis réessaie.';
           break;
         case 'no-user':
           message = 'Aucun utilisateur connecté.';

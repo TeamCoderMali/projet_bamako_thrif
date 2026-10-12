@@ -223,7 +223,7 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Se déconnecter ?'),
-        content: const Text('Voulez-vous vraiment quitter votre compte ?'),
+        content: const Text('Veux-tu vraiment quitter ton compte ?'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(

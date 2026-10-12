@@ -249,7 +249,7 @@ class _MyListingsView extends StatelessWidget {
         ],
       ),
       body: uid == null
-          ? const Center(child: Text('Connectez-vous pour voir vos annonces'))
+          ? const Center(child: Text('Connecte-toi pour voir tes annonces'))
           : FutureBuilder<bool>(
               future: PaymentConfigService.instance.isPaymentEnabled(),
               builder: (context, paymentSnap) {

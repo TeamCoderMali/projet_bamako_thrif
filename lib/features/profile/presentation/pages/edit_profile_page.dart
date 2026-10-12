@@ -425,7 +425,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     maxLength: 150,
                     decoration: InputDecoration(
                       labelText: 'Bio',
-                      hintText: 'Parlez un peu de vous...',
+                      hintText: 'Parle un peu de toi...',
                       prefixIcon: const Padding(
                         padding: EdgeInsets.only(bottom: 40),
                         child: Icon(Icons.info_outline),

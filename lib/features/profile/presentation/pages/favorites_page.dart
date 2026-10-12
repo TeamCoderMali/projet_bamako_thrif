@@ -144,7 +144,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Ajoutez des articles à vos favoris\npour les retrouver ici.',
+                        'Ajoute des articles à tes favoris\npour les retrouver ici.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
