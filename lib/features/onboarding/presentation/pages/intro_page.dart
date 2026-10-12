@@ -34,36 +34,29 @@ class _IntroPageState extends State<IntroPage> {
   // paiement). Slide 3 : decrit le paiement (gouverne par _paymentEnabled).
   // Lot 9 : textes "equipe"/"escrow"/paiement integre retires tant que ces
   // fonctionnalites ne sont pas actives.
-  List<Map<String, String>> get _slides => [
-        {
-          'title': 'Achète. Vends. Économise.',
-          'description':
-              'La meilleure façon d\'acheter et vendre de la seconde main à Bamako.',
-        },
+  // Lot 1 (2026-10-12) : nouvelles accroches validées par Fatou, sans
+  // description en dessous — description laissée nullable (pas de '!')
+  // pour ne pas planter si une variante future n'en fournit pas.
+  List<_OnboardingSlide> get _slides => [
+        const _OnboardingSlide(title: 'Chinez, vendez, en toute simplicité'),
         if (pressingEnabled)
-          {
-            'title': 'Vêtements vérifiés & lavés',
-            'description':
+          const _OnboardingSlide(
+            title: 'Vêtements vérifiés & lavés',
+            description:
                 'Chaque article est inspecté et lavé par notre équipe avant la remise.',
-          }
+          )
         else
-          {
-            'title': 'Articles de seconde main, choisis avec soin',
-            'description':
-                'Chaque vendeur décrit précisément l\'état de son article avant publication.',
-          },
+          const _OnboardingSlide(
+            title: 'Articles neufs et seconde main, choisis avec soin',
+          ),
         if (_paymentEnabled)
-          {
-            'title': 'Paiement 100% sécurisé',
-            'description':
+          const _OnboardingSlide(
+            title: 'Paiement 100% sécurisé',
+            description:
                 'Orange Money, Moov Money et portefeuille virtuel disponibles.',
-          }
+          )
         else
-          {
-            'title': 'Mise en relation directe',
-            'description':
-                'Discutez avec le vendeur dans l\'app et mettez-vous d\'accord sur la remise de l\'article.',
-          },
+          const _OnboardingSlide(title: 'Un message, et c\'est à toi !'),
       ];
 
   @override
@@ -128,7 +121,7 @@ class _IntroPageState extends State<IntroPage> {
                         ),
                         const SizedBox(height: 40),
                         Text(
-                          _slides[index]['title']!,
+                          _slides[index].title,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 24,
@@ -136,15 +129,18 @@ class _IntroPageState extends State<IntroPage> {
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _slides[index]['description']!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        if (_slides[index].description != null) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            _slides[index].description!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   );
@@ -215,4 +211,13 @@ class _IntroPageState extends State<IntroPage> {
       ),
     );
   }
+}
+
+// Description optionnelle : certaines accroches n'ont plus de texte en
+// dessous (lot 1, 2026-10-12) — pas de '!' sur un champ qui pourrait
+// être absent.
+class _OnboardingSlide {
+  final String title;
+  final String? description;
+  const _OnboardingSlide({required this.title, this.description});
 }
