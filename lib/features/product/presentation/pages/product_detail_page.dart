@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:bamako_thrift/core/constants/brand.dart';
 import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/payment_config_service.dart';
@@ -368,7 +369,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     Share.share(
       '🛍️ ${product.title}\n'
       '💰 ${product.price.toStringAsFixed(0)} FCFA\n\n'
-      'Disponible sur DANAYA – Seconde main, première confiance.',
+      'Disponible sur DANAYA – $danayaSlogan.',
     );
   }
 

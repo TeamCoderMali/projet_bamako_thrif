@@ -2,6 +2,7 @@ import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/constants/brand.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
 class LoginPage extends StatefulWidget {
@@ -63,12 +64,24 @@ class _LoginPageState extends State<LoginPage> {
                     // ── Logo ──────────────────────────────────────────────
                     Center(
                       child: Image.asset(
-                        'assets/images/logo_danaya.png',
+                        'assets/images/logo_danaya_no_tagline.png',
                         width: 200,
                         fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
+                    Center(
+                      child: Text(
+                        danayaSlogan,
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
 
                     // ── Titre ─────────────────────────────────────────────
                     Center(

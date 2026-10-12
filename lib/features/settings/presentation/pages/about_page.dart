@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/constants/brand.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/payment_config_service.dart';
 
@@ -51,10 +52,20 @@ class _AboutPageState extends State<AboutPage> {
           children: [
             // Logo
             Image.asset(
-              'assets/images/logo_danaya.png',
+              'assets/images/logo_danaya_no_tagline.png',
               width: 180,
               height: 180,
             ),
+            const Text(
+              danayaSlogan,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF6B7F4D),
+              ),
+            ),
+            const SizedBox(height: 8),
             Text(
               'Version 1.0.0',
               style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),

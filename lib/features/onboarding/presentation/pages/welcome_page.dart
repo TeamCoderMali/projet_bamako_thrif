@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/constants/brand.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
 class WelcomePage extends StatefulWidget {
@@ -58,11 +59,21 @@ class _WelcomePageState extends State<WelcomePage>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/logo_danaya.png',
+                    'assets/images/logo_danaya_no_tagline.png',
                     width: 240,
                     fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 56),
+                  const SizedBox(height: 8),
+                  const Text(
+                    danayaSlogan,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF6B7F4D),
+                    ),
+                  ),
+                  const SizedBox(height: 48),
                   SizedBox(
                     width: 28,
                     height: 28,
