@@ -57,7 +57,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Entrez votre email pour recevoir un lien de réinitialisation.',
+                'Entre ton email pour recevoir un lien de réinitialisation.',
                 style: TextStyle(color: Colors.grey, height: 1.5),
               ),
               const SizedBox(height: 40),
@@ -91,7 +91,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                            '✓ Email de réinitialisation envoyé ! Vérifiez votre boîte mail.'),
+                            '✓ Email de réinitialisation envoyé ! Vérifie ta boîte mail.'),
                         backgroundColor: Color(0xFF6B7F4D),
                       ),
                     );

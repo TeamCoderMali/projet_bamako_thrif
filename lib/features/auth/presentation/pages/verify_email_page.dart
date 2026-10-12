@@ -37,7 +37,7 @@ class VerifyEmailPage extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               Text(
-                'Vérifiez votre email',
+                'Vérifie ton email',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -46,7 +46,7 @@ class VerifyEmailPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Un lien de vérification a été envoyé à votre adresse email. Cliquez dessus pour activer votre compte.',
+                'Un lien de vérification a été envoyé à ton adresse email. Clique dessus pour activer ton compte.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,

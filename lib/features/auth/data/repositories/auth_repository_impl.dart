@@ -498,11 +498,11 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
       case 'user-disabled':
         return 'Ce compte a été désactivé.';
       case 'too-many-requests':
-        return 'Trop de tentatives. Réessayez plus tard.';
+        return 'Trop de tentatives. Réessaie plus tard.';
       case 'network-request-failed':
-        return 'Erreur réseau. Vérifiez votre connexion.';
+        return 'Erreur réseau. Vérifie ta connexion.';
       default:
-        return 'Une erreur est survenue. Réessayez.';
+        return 'Une erreur est survenue. Réessaie.';
     }
   }
 }
