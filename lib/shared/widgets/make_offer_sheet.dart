@@ -158,7 +158,7 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
       }
     } on OfferAlreadyActiveException {
       setState(() => _error =
-          'Vous avez déjà une offre en cours sur cet article.');
+          'Tu as déjà une offre en cours sur cet article.');
     } catch (e) {
       setState(() => _error = 'Erreur : impossible d\'envoyer l\'offre.');
     } finally {
@@ -199,7 +199,7 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
         colors: colors,
         icon: Icons.hourglass_top,
         title: 'Offre en attente',
-        message: 'Vous avez déjà proposé '
+        message: 'Tu as déjà proposé '
             '${existing.currentPrice.toStringAsFixed(0)} FCFA pour cet '
             'article. En attente de la réponse du vendeur.',
       );
@@ -210,9 +210,9 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
         colors: colors,
         icon: Icons.check_circle_outline,
         title: 'Offre acceptée',
-        message: 'Le vendeur a accepté votre offre de '
+        message: 'Le vendeur a accepté ton offre de '
             '${existing.currentPrice.toStringAsFixed(0)} FCFA. '
-            'Convenez de la remise avec lui.',
+            'Mets-toi d\'accord sur la remise avec lui.',
       );
     }
 
@@ -242,7 +242,7 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
           autofocus: true,
           style: TextStyle(color: colors.onSurface),
           decoration: InputDecoration(
-            hintText: 'Votre montant (FCFA)',
+            hintText: 'Ton montant (FCFA)',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),

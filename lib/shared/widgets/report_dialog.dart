@@ -195,8 +195,8 @@ Future<void> _showAlreadyReportedSheet(
             const SizedBox(height: 8),
             Text(
               targetType == ReportTargetType.product
-                  ? 'Vous avez déjà signalé cet article. Les administrateurs ont été informés.'
-                  : 'Vous avez déjà signalé cette conversation. Les administrateurs ont été informés.',
+                  ? 'Tu as déjà signalé cet article. Les administrateurs ont été informés.'
+                  : 'Tu as déjà signalé cette conversation. Les administrateurs ont été informés.',
               style: TextStyle(fontSize: 14, color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
