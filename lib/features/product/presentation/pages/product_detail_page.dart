@@ -793,7 +793,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                           child: const Text(
-                            'Acheter',
+                            'Je craque',
                             style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold),

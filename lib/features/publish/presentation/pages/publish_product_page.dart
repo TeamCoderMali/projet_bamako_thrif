@@ -480,7 +480,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                                     color: Colors.white, size: 20),
                                 SizedBox(width: 8),
                                 Text(
-                                  'Publier gratuitement',
+                                  'Je publie',
                                   style: TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.bold,

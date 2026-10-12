@@ -233,7 +233,7 @@ class _LoginPageState extends State<LoginPage> {
                             ? const CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2)
                             : const Text(
-                                'Se connecter',
+                                'On y va !',
                                 style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.bold,

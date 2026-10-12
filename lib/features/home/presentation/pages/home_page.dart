@@ -78,7 +78,7 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Recommandés pour vous',
+                    'Recommandé pour toi',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
