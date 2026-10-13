@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/offers_config_service.dart';
@@ -43,6 +44,64 @@ class _ChatPageState extends State<ChatPage> {
     // Marquer comme lu au chargement
     _chatRepo.markAsRead(widget.chatId).catchError((_) {});
     _loadOtherParticipant();
+    _maybeShowWarningDialog();
+  }
+
+  // Lot 4 (2026-10-13) : avertissement affiché une seule fois par
+  // conversation et par utilisateur — clé locale (SharedPreferences), pas
+  // un champ Firestore : simple repli "déjà vu", pas une donnée à
+  // synchroniser entre appareils.
+  Future<void> _maybeShowWarningDialog() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    if (uid.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'warning_seen_${uid}_${widget.chatId}';
+    if (prefs.getBool(key) == true) return;
+    await prefs.setBool(key, true);
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        // Le bouton retour du téléphone ne doit pas fermer ce pop-up :
+        // seule la croix (pop explicite) le ferme.
+        canPop: false,
+        child: Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 12, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      tooltip: 'Fermer',
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, right: 8, bottom: 4),
+                  child: Text(
+                    'Danaya ne garantit pas les transactions entre vous, '
+                    'et n\'intervient pas en cas de retour ou de litige',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      color: Theme.of(ctx).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   // Le document chat dénormalise déjà nom/avatar des participants (pas de
