@@ -89,6 +89,9 @@ secrets/
 coverage/
 lcov.info
 
+# ── Firebase CLI (cache local de déploiement) ───────────────────────────────
+.firebase/
+
 # ── Fastlane ───────────────────────────────────────────────────────────────
 **/fastlane/report.xml
 **/fastlane/Preview.html
