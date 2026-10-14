@@ -3,7 +3,7 @@ import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -57,52 +57,62 @@ Future<void> main() async {
   logger.info('DANAYA — Démarrage');
 
   // ── Firebase Messaging (notifications push) ─────────────────────────────
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // Désactivé sur le web (2026-10-14) : messaging.getToken() y enregistre un
+  // service worker à firebase-messaging-sw.js par défaut ; ce fichier
+  // n'existe pas (pas de push web configuré) et la règle de rewrite SPA du
+  // Hosting renvoie du HTML à la place, ce que le navigateur refuse
+  // ("unsupported MIME type") — exception non interceptée qui bloquait
+  // runApp() (splash figé). Aucun push n'est de toute façon possible
+  // aujourd'hui, web ou mobile (plan Blaze requis, voir PLAN_OFFRES.md §7).
+  // Android/iOS inchangés.
+  if (!kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  final messaging = FirebaseMessaging.instance;
+    final messaging = FirebaseMessaging.instance;
 
-  final settings = await messaging.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-  logger.info('Permission notifications: ${settings.authorizationStatus}');
+    final settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    logger.info('Permission notifications: ${settings.authorizationStatus}');
 
-  final fcmToken = await messaging.getToken();
-  logger.info('FCM Token: $fcmToken');
+    final fcmToken = await messaging.getToken();
+    logger.info('FCM Token: $fcmToken');
 
-  // Notification reçue pendant que l'app est ouverte (premier plan).
-  // Par défaut, iOS/Android n'affichent RIEN automatiquement dans ce cas,
-  // il faut donc gérer l'affichage soi-même (SnackBar, dialog, etc.)
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    logger.info(
-        'Notification reçue (premier plan): ${message.notification?.title}');
-    final messengerState = AppKeys.scaffoldMessengerKey.currentState;
-    final context = AppKeys.scaffoldMessengerKey.currentContext;
-    if (messengerState != null && context != null && message.notification != null) {
-      messengerState.showSnackBar(
-        SnackBar(
-          content: Text(
-            '${message.notification!.title}\n${message.notification!.body}',
+    // Notification reçue pendant que l'app est ouverte (premier plan).
+    // Par défaut, iOS/Android n'affichent RIEN automatiquement dans ce cas,
+    // il faut donc gérer l'affichage soi-même (SnackBar, dialog, etc.)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      logger.info(
+          'Notification reçue (premier plan): ${message.notification?.title}');
+      final messengerState = AppKeys.scaffoldMessengerKey.currentState;
+      final context = AppKeys.scaffoldMessengerKey.currentContext;
+      if (messengerState != null && context != null && message.notification != null) {
+        messengerState.showSnackBar(
+          SnackBar(
+            content: Text(
+              '${message.notification!.title}\n${message.notification!.body}',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-        ),
-      );
+        );
+      }
+    });
+
+    // Notification cliquée alors que l'app était en arrière-plan (pas fermée)
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      logger.info('Notification ouverte depuis l\'arrière-plan: ${message.data}');
+      // TODO: naviguer vers l'écran concerné selon message.data si besoin
+    });
+
+    // Notification cliquée alors que l'app était complètement fermée
+    final initialMessage = await messaging.getInitialMessage();
+    if (initialMessage != null) {
+      logger.info(
+          'App ouverte depuis une notif (app fermée): ${initialMessage.data}');
+      // TODO: naviguer vers l'écran concerné selon initialMessage.data si besoin
     }
-  });
-
-  // Notification cliquée alors que l'app était en arrière-plan (pas fermée)
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    logger.info('Notification ouverte depuis l\'arrière-plan: ${message.data}');
-    // TODO: naviguer vers l'écran concerné selon message.data si besoin
-  });
-
-  // Notification cliquée alors que l'app était complètement fermée
-  final initialMessage = await messaging.getInitialMessage();
-  if (initialMessage != null) {
-    logger.info(
-        'App ouverte depuis une notif (app fermée): ${initialMessage.data}');
-    // TODO: naviguer vers l'écran concerné selon initialMessage.data si besoin
   }
 
   // ── Dependency Injection ─────────────────────────────────────────────────
