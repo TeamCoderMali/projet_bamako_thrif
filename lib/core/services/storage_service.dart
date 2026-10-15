@@ -1,25 +1,39 @@
-// ─── Bamako Thrift — Storage Service (Firebase Storage upload) ───────────────
-// putData(bytes) plutôt que putFile(File) : dart:io.File n'est pas vraiment
-// disponible sur le web (putFile y jetait UnimplementedError — lot
-// "putFile web", 2026-10-15). XFile.readAsBytes() fonctionne identiquement
-// sur Android/iOS/web.
-import 'package:firebase_storage/firebase_storage.dart';
+// ─── Bamako Thrift — Storage Service (Supabase Storage upload) ───────────────
+// Upload direct vers l'API REST de Supabase Storage via dio (pas de SDK).
+// Remplace Firebase Storage : le bucket n'a jamais été provisionné sur ce
+// projet (forfait Spark, voir l'audit du 2026-10-15). Interface publique
+// inchangée pour les appelants (uploadProductImage, uploadAvatar,
+// deleteByUrl) — on pourra revenir à Firebase Storage plus tard sans
+// toucher au reste de l'appli.
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
+import '../constants/supabase_storage_config.dart';
+import 'logger_service.dart';
+
+/// Photo ni décodable (ex. HEIC non converti par le navigateur) ni dans un
+/// format accepté tel quel (jpeg/png/webp, < 5 Mo) — message dédié affiché
+/// côté UI, distinct d'une simple erreur réseau.
+class UnsupportedImageException implements Exception {
+  const UnsupportedImageException();
+}
+
 class StorageService {
-  final FirebaseStorage _storage;
   final FirebaseAuth _auth;
   final _uuid = const Uuid();
+  final Dio _dio = Dio();
 
-  StorageService(this._storage, this._auth);
+  static const int _maxBytes = 5 * 1024 * 1024;
+
+  StorageService(this._auth);
 
   String get _currentUid => _auth.currentUser!.uid;
 
-  /// Type MIME déduit de l'extension du fichier choisi (la compression/
-  /// redimensionnement d'image_picker ne change pas le format). Repli sur
-  /// jpeg, comme le contentType fixe d'avant.
   String _mimeTypeFor(String path) {
     final ext = path.toLowerCase().split('.').last.split('?').first;
     switch (ext) {
@@ -27,10 +41,6 @@ class StorageService {
         return 'image/png';
       case 'webp':
         return 'image/webp';
-      case 'heic':
-        return 'image/heic';
-      case 'gif':
-        return 'image/gif';
       case 'jpg':
       case 'jpeg':
       default:
@@ -38,80 +48,98 @@ class StorageService {
     }
   }
 
-  // ── Upload plusieurs images produit ──────────────────────────────────────
-  /// Retourne la liste des URLs de téléchargement.
-  Future<List<String>> uploadProductImages(List<XFile> images) async {
-    final urls = <String>[];
-    for (final file in images) {
-      final url = await uploadProductImage(file);
-      urls.add(url);
+  /// Redimensionne (largeur max 1600px) et recompresse en JPEG ~80%. Si le
+  /// décodage échoue (ex. HEIC que le navigateur n'a pas converti), repli
+  /// sur le fichier original SEULEMENT s'il est déjà jpeg/png/webp et
+  /// < 5 Mo ; sinon lève UnsupportedImageException.
+  Future<(Uint8List, String)> _prepareImage(
+      Uint8List original, String path) async {
+    try {
+      final decoded = img.decodeImage(original);
+      if (decoded != null) {
+        final resized = decoded.width > 1600
+            ? img.copyResize(decoded, width: 1600)
+            : decoded;
+        final jpg = Uint8List.fromList(img.encodeJpg(resized, quality: 80));
+        if (jpg.length <= _maxBytes) {
+          return (jpg, 'image/jpeg');
+        }
+        // Repli très rare (image compressée encore trop lourde) : on
+        // retente juste la logique de repli ci-dessous sur l'original.
+      }
+    } catch (_) {
+      // Décodage impossible (ex. HEIC) — on tente le repli ci-dessous.
     }
-    return urls;
+
+    final mime = _mimeTypeFor(path);
+    final supported = {'image/jpeg', 'image/png', 'image/webp'}.contains(mime);
+    if (supported && original.length <= _maxBytes) {
+      return (original, mime);
+    }
+    throw const UnsupportedImageException();
+  }
+
+  Future<String> _upload(
+    Uint8List bytes,
+    String contentType,
+    String objectPath, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final uri =
+        '${SupabaseStorageConfig.projectUrl}/storage/v1/object/${SupabaseStorageConfig.bucket}/$objectPath';
+    await _dio.post<void>(
+      uri,
+      data: bytes,
+      options: Options(
+        headers: {
+          'apikey': SupabaseStorageConfig.publishableKey,
+          'Authorization': 'Bearer ${SupabaseStorageConfig.publishableKey}',
+          'Content-Type': contentType,
+          'x-upsert': 'false',
+        },
+      ),
+      onSendProgress: (sent, total) {
+        if (total > 0) onProgress?.call(sent / total);
+      },
+    );
+    return '${SupabaseStorageConfig.projectUrl}/storage/v1/object/public/${SupabaseStorageConfig.bucket}/$objectPath';
   }
 
   // ── Upload une image produit ─────────────────────────────────────────────
-  Future<String> uploadProductImage(XFile file) async {
-    final fileName = '${_uuid.v4()}.jpg';
-    final ref = _storage
-        .ref('product_images')
-        .child(_currentUid)
-        .child(fileName);
-
-    final bytes = await file.readAsBytes();
-    final metadata = SettableMetadata(
-      contentType: _mimeTypeFor(file.path),
-      customMetadata: {'uploadedBy': _currentUid},
-    );
-
-    final task = await ref.putData(bytes, metadata);
-    return task.ref.getDownloadURL();
+  Future<String> uploadProductImage(
+    XFile file, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final original = await file.readAsBytes();
+    final (bytes, contentType) = await _prepareImage(original, file.path);
+    final objectPath = 'product_images/$_currentUid/${_uuid.v4()}.jpg';
+    return _upload(bytes, contentType, objectPath, onProgress: onProgress);
   }
 
   // ── Upload avatar profil ─────────────────────────────────────────────────
-  Future<String> uploadAvatar(XFile file) async {
-    final ref = _storage.ref('avatars').child('$_currentUid.jpg');
-
-    final bytes = await file.readAsBytes();
-    final metadata = SettableMetadata(contentType: _mimeTypeFor(file.path));
-    final task = await ref.putData(bytes, metadata);
-    return task.ref.getDownloadURL();
+  // Nom de fichier unique (uuid) comme pour les articles : évite tout
+  // conflit d'écrasement (la policy n'autorise que l'INSERT, pas l'UPDATE —
+  // un nom fixe réutilisé échouerait dès le 2e changement d'avatar).
+  // L'ancien avatar reste orphelin sur Supabase (cohérent avec la décision
+  // "pas de suppression distante", voir deleteByUrl).
+  Future<String> uploadAvatar(
+    XFile file, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final original = await file.readAsBytes();
+    final (bytes, contentType) = await _prepareImage(original, file.path);
+    final objectPath = 'avatars/$_currentUid/${_uuid.v4()}.jpg';
+    return _upload(bytes, contentType, objectPath, onProgress: onProgress);
   }
 
-  // ── Supprimer une image depuis son URL ───────────────────────────────────
+  // ── Suppression ───────────────────────────────────────────────────────────
+  // Décision (2026-10-15, option a) : la clé publishable ne peut de toute
+  // façon pas supprimer (policy INSERT seule, par design). On retire juste
+  // la référence côté Firestore ailleurs dans le code ; le fichier reste
+  // orphelin sur Supabase. No-op journalisé pour garder une trace si
+  // quelqu'un l'appelle plus tard.
   Future<void> deleteByUrl(String url) async {
-    try {
-      final ref = _storage.refFromURL(url);
-      await ref.delete();
-    } catch (_) {
-      // Ignore si l'image n'existe plus
-    }
-  }
-
-  // ── Upload avec progression (pour afficher un ProgressIndicator) ─────────
-  Stream<double> uploadProductImageWithProgress(XFile file, {
-    required void Function(String url) onComplete,
-    required void Function(String error) onError,
-  }) async* {
-    final fileName = '${_uuid.v4()}.jpg';
-    final ref = _storage
-        .ref('product_images')
-        .child(_currentUid)
-        .child(fileName);
-
-    final bytes = await file.readAsBytes();
-    final task = ref.putData(
-        bytes, SettableMetadata(contentType: _mimeTypeFor(file.path)));
-
-    await for (final snapshot in task.snapshotEvents) {
-      final progress = snapshot.bytesTransferred / snapshot.totalBytes;
-      yield progress;
-      if (snapshot.state == TaskState.success) {
-        final url = await ref.getDownloadURL();
-        onComplete(url);
-      }
-      if (snapshot.state == TaskState.error) {
-        onError('Erreur lors de l\'upload');
-      }
-    }
+    logger.info(
+        'Suppression distante ignorée (Supabase Storage, option a — pas de suppression) : $url');
   }
 }
