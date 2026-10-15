@@ -62,6 +62,7 @@ import '../../features/notification/presentation/pages/notifications_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/privacy_page.dart';
 import '../../features/settings/presentation/pages/about_page.dart';
+import '../../features/settings/presentation/pages/blocked_sellers_page.dart';
 import 'package:bamako_thrift/features/settings/presentation/pages/change_password_page.dart';
 
 // ── Admin ──────────────────────────────────────────────────────────────────
@@ -337,6 +338,11 @@ final GoRouter appRouter = GoRouter(
           path: 'about',
           name: 'about',
           builder: (context, state) => const AboutPage(),
+        ),
+        GoRoute(
+          path: 'blocked-sellers',
+          name: 'blocked-sellers',
+          builder: (context, state) => const BlockedSellersPage(),
         ),
       ],
     ),

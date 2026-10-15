@@ -92,6 +92,14 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // Sous-collection blocked_sellers : vendeurs bloqués par cet acheteur
+      // (lot blocage vendeur, 2026-10-16) — même forme que favorites
+      // ci-dessus, propriétaire uniquement, aucun autre utilisateur n'y a
+      // accès.
+      match /blocked_sellers/{sellerId} {
+        allow read, write: if isOwner(userId);
+      }
+
       // Sous-collection privée : email, téléphone, statut de vérification
       // email, token FCM — jamais exposés aux autres utilisateurs
       // (contrairement au reste du profil, public pour la marketplace/chat).

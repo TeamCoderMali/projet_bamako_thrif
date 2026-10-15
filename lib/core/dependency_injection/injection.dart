@@ -16,6 +16,7 @@ import '../services/navigation_service.dart';
 import '../services/loading_service.dart';
 import '../services/permission_service.dart';
 import '../services/storage_service.dart';
+import '../services/blocked_users_service.dart';
 
 
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
@@ -72,6 +73,9 @@ Future<void> _registerCore() async {
   sl.registerLazySingleton<StorageService>(
     () => StorageService(sl<FirebaseAuth>()),
   );
+  sl.registerLazySingleton<BlockedUsersService>(
+    () => BlockedUsersService(sl<FirebaseFirestore>(), sl<FirebaseAuth>()),
+  );
 
   // Network
   sl.registerLazySingleton<DioClient>(() => DioClient());
@@ -112,7 +116,10 @@ Future<void> _registerProduct() async {
     ),
   );
   sl.registerFactory<ProductCubit>(
-    () => ProductCubit(repository: sl<ProductRepository>()),
+    () => ProductCubit(
+      repository: sl<ProductRepository>(),
+      blockedUsers: sl<BlockedUsersService>(),
+    ),
   );
 }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/dependency_injection/injection.dart';
+import 'package:bamako_thrift/core/services/blocked_users_service.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/chat/domain/entities/message_entity.dart';
@@ -18,6 +20,7 @@ class ChatListPage extends StatefulWidget {
 
 class _ChatListPageState extends State<ChatListPage> {
   late final ChatRepositoryImpl _chatRepo;
+  final BlockedUsersService _blockedUsers = sl<BlockedUsersService>();
 
   @override
   void initState() {
@@ -53,7 +56,11 @@ class _ChatListPageState extends State<ChatListPage> {
             ),
           ],
         ),
-        body: StreamBuilder<List<ChatEntity>>(
+        body: StreamBuilder<Set<String>>(
+          stream: _blockedUsers.watchBlockedSellerIds(),
+          builder: (context, blockedSnapshot) {
+            final blockedIds = blockedSnapshot.data ?? const <String>{};
+            return StreamBuilder<List<ChatEntity>>(
           stream: _chatRepo.watchChats(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -78,7 +85,15 @@ class _ChatListPageState extends State<ChatListPage> {
               );
             }
 
-            final chats = snapshot.data ?? [];
+            // Conversations avec un vendeur bloqué par l'acheteur courant :
+            // retirées de l'affichage (limite connue : le vendeur bloqué
+            // garde techniquement accès à la conversation elle-même, voir
+            // BlockedUsersService).
+            final chats = (snapshot.data ?? []).where((c) {
+              final otherUid = c.participantIds
+                  .firstWhere((id) => id != currentUid, orElse: () => '');
+              return !blockedIds.contains(otherUid);
+            }).toList();
 
             if (chats.isEmpty) {
               return Center(
@@ -284,6 +299,8 @@ class _ChatListPageState extends State<ChatListPage> {
                 );
               },
             );
+          },
+        );
           },
         ),
         bottomNavigationBar: const AppBottomNav(currentIndex: 3),

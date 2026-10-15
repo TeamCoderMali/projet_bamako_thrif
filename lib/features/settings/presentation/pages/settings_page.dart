@@ -50,6 +50,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 () => context.push(RouteNames.changePassword)),
             _item(context, Icons.privacy_tip_outlined, 'Confidentialité',
                 () => context.push(RouteNames.privacy)),
+            _item(context, Icons.block, 'Vendeurs bloqués',
+                () => context.push(RouteNames.blockedSellers)),
           ]),
           const SizedBox(height: 22),
           _sectionLabel('Préférences'),

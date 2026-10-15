@@ -1,6 +1,7 @@
 // ─── Bamako Thrift — Product Cubit & State ─────────────────────────────────
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/blocked_users_service.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../domain/repositories/product_repository.dart';
 
@@ -83,10 +84,24 @@ class ProductSearchResult extends ProductState {
 // ── Cubit ────────────────────────────────────────────────────────────────────
 class ProductCubit extends Cubit<ProductState> {
   final ProductRepository _repository;
+  final BlockedUsersService _blockedUsers;
 
-  ProductCubit({required ProductRepository repository})
-      : _repository = repository,
+  ProductCubit({
+    required ProductRepository repository,
+    required BlockedUsersService blockedUsers,
+  })  : _repository = repository,
+        _blockedUsers = blockedUsers,
         super(const ProductInitial());
+
+  // Articles des vendeurs bloqués par l'acheteur courant : retirés après
+  // coup plutôt que dans la requête Firestore elle-même (pas de règle à
+  // changer, pas de nouvelle requête composée — voir BlockedUsersService).
+  Future<List<ProductEntity>> _withoutBlockedSellers(
+      List<ProductEntity> products) async {
+    final blocked = await _blockedUsers.getBlockedSellerIds();
+    if (blocked.isEmpty) return products;
+    return products.where((p) => !blocked.contains(p.sellerId)).toList();
+  }
 
   // ── Charger les produits ──────────────────────────────────────────────────
   Future<void> loadProducts({
@@ -97,7 +112,8 @@ class ProductCubit extends Cubit<ProductState> {
       emit(const ProductLoading());
     }
     try {
-      final products = await _repository.getProducts(category: category);
+      final products =
+          await _withoutBlockedSellers(await _repository.getProducts(category: category));
       emit(ProductLoaded(products: products, hasMore: products.length == 20));
     } catch (e) {
       emit(ProductError(e.toString()));
@@ -113,12 +129,12 @@ class ProductCubit extends Cubit<ProductState> {
   }) async {
     emit(const ProductLoading());
     try {
-      final products = await _repository.getProducts(
+      final products = await _withoutBlockedSellers(await _repository.getProducts(
         category: category,
         condition: condition,
         minPrice: minPrice,
         maxPrice: maxPrice,
-      );
+      ));
       emit(ProductLoaded(products: products, hasMore: products.length == 20));
     } catch (e) {
       emit(ProductError(e.toString()));
@@ -142,7 +158,8 @@ class ProductCubit extends Cubit<ProductState> {
   Future<void> searchProducts(String query) async {
     emit(const ProductLoading());
     try {
-      final products = await _repository.searchProducts(query);
+      final products =
+          await _withoutBlockedSellers(await _repository.searchProducts(query));
       emit(ProductSearchResult(results: products, query: query));
     } catch (e) {
       emit(ProductError(e.toString()));

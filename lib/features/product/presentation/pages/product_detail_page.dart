@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:bamako_thrift/core/constants/brand.dart';
 import 'package:bamako_thrift/core/constants/feature_flags.dart';
+import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/blocked_users_service.dart';
 import 'package:bamako_thrift/core/services/payment_config_service.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
@@ -364,6 +366,59 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
+  // ── Bloquer le vendeur ────────────────────────────────────────────────────
+  // Limite connue (voir BlockedUsersService) : ne change que l'affichage
+  // côté acheteur, pas les droits d'écriture du vendeur bloqué.
+  void _confirmBlockSeller(BuildContext context, ProductEntity product) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Bloquer ce vendeur ?'),
+        content: Text(
+          'Tu ne verras plus les articles de ${product.sellerName} dans le '
+          'catalogue, ni vos conversations passées. Tu pourras le débloquer '
+          'depuis les paramètres à tout moment.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await sl<BlockedUsersService>()
+                    .block(product.sellerId, sellerName: product.sellerName);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${product.sellerName} a été bloqué.'),
+                      backgroundColor: const Color(0xFF6B7F4D),
+                    ),
+                  );
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Le blocage a échoué. Vérifie ta connexion et réessaie.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Bloquer', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Partager le produit ────────────────────────────────────────────────
   void _shareProduct(ProductEntity product) {
     Share.share(
@@ -498,6 +553,20 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 child: const Icon(Icons.flag_outlined, color: Colors.black),
               ),
             ),
+            // ── Bloquer le vendeur ─────────────────────────────────────
+            if (context.read<AuthCubit>().currentUser?.id != product.sellerId)
+              GestureDetector(
+                onTap: () => _confirmBlockSeller(context, product),
+                child: Container(
+                  margin: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.block, color: Colors.black),
+                ),
+              ),
           ],
           flexibleSpace: FlexibleSpaceBar(
             background: _buildImageGallery(product),
@@ -738,8 +807,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      if (context.read<AuthCubit>().currentUser?.id !=
+                          product.sellerId)
+                        TextButton.icon(
+                          onPressed: () => _confirmBlockSeller(context, product),
+                          icon: const Icon(Icons.block, size: 16, color: Colors.red),
+                          label: const Text('Bloquer',
+                              style: TextStyle(color: Colors.red, fontSize: 12)),
+                        )
+                      else
+                        Icon(Icons.chevron_right,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ],
                   ),
                 ),
