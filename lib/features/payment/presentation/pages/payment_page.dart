@@ -134,10 +134,11 @@ class _PaymentPageState extends State<PaymentPage> {
     });
 
     // ⚠️ Le crédit du portefeuille vendeur ne se fait PAS ici.
-    // Il est fait uniquement par le point relais, quand la commande passe
-    // au statut "completed" (récupérée) — c'est le principe du tiers de
-    // confiance : l'argent reste bloqué jusqu'à la remise effective de
-    // l'article (cahier des charges 1.2 et 2.1).
+    // Il est fait quand l'acheteur confirme la réception (statut
+    // "completed", voir _confirmReceipt() dans order_tracking_page.dart) —
+    // c'est le principe du tiers de confiance : l'argent reste bloqué
+    // jusqu'à la remise effective de l'article (cahier des charges 1.2 et
+    // 2.1). Remise en main propre entre acheteur et vendeur, sans relais.
     // Le portefeuille de l'acheteur n'est pas débité ici non plus, car il
     // vient de payer via un moyen externe (Orange Money/Moov Money/Wave/
     // carte) — le portefeuille DANAYA n'est utilisé que si l'acheteur choisit
@@ -297,31 +298,6 @@ class _PaymentPageState extends State<PaymentPage> {
                             style: TextStyle(
                               fontSize: 11,
                               color: Color(0xFF5A6B3E),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF7E6),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.local_shipping_outlined,
-                            size: 14, color: Color(0xFFB8860B)),
-                        SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Livraison (à payer au livreur) : ~1 000-2 000 FCFA selon la zone',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF8A6A1A),
                             ),
                           ),
                         ),
