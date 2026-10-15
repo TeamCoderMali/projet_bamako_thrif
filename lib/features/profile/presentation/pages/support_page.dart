@@ -30,6 +30,10 @@ const _faqPaiementSecurise = <FaqItem>[
     'Clique sur "Publier" en bas de l\'écran, ajoute des photos, remplis les informations et publie gratuitement.',
   ),
   FaqItem(
+    'Comment se passe la remise de l\'article ?',
+    'La remise de l\'article se fait en main propre, directement avec le vendeur. Mets-toi d\'accord avec lui sur le lieu et l\'heure.',
+  ),
+  FaqItem(
     'Comment fonctionne le paiement ?',
     'L\'argent est bloqué jusqu\'à validation par notre équipe. Tu peux payer via Orange Money, Moov Money ou ton avoir.',
   ),
@@ -62,6 +66,10 @@ const _faqPaiementDesactive = <FaqItem>[
   FaqItem(
     'Comment faire une offre ?',
     'Sur la fiche d\'un article, clique sur « Faire une offre » et propose ton prix. Le vendeur a 72 heures pour te répondre : il peut accepter, refuser ou te faire une contre-offre.',
+  ),
+  FaqItem(
+    'Comment se passe la remise de l\'article ?',
+    'La remise de l\'article se fait en main propre, directement avec le vendeur. Mets-toi d\'accord avec lui sur le lieu et l\'heure.',
   ),
   FaqItem(
     'Que faire en cas de problème avec un article ?',
