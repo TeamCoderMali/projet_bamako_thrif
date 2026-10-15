@@ -69,6 +69,7 @@ class FakeAuthRepository implements AuthRepository {
   Future<UserEntity> updateProfile({
     String? fullName,
     String? bio,
+    String? city,
     String? phoneNumber,
     String? avatarUrl,
   }) =>

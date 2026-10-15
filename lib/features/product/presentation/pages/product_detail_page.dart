@@ -713,6 +713,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 ],
                               ],
                             ),
+                            if (product.sellerCity != null) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Icon(Icons.location_on_outlined,
+                                      size: 12,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    product.sellerCity!,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),

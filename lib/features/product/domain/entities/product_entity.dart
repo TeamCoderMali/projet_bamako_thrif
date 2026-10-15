@@ -6,6 +6,10 @@ class ProductEntity extends Equatable {
   final String sellerId;
   final String sellerName;
   final String? sellerAvatarUrl;
+  // Ville du vendeur au moment de la publication (copie de users/{uid}.city,
+  // liste fixe — lot 6, 2026-10-15). Même principe que sellerName/
+  // sellerAvatarUrl : dénormalisé pour éviter une lecture par carte article.
+  final String? sellerCity;
   final String title;
   final String description;
   final double price;
@@ -36,6 +40,7 @@ class ProductEntity extends Equatable {
     required this.sellerId,
     required this.sellerName,
     this.sellerAvatarUrl,
+    this.sellerCity,
     required this.title,
     required this.description,
     required this.price,

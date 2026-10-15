@@ -624,14 +624,20 @@ class _ProductCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                        if (product.location != null) ...[
+                        if ((product.sellerCity ?? product.location) !=
+                            null) ...[
                           const SizedBox(width: 4),
                           Icon(Icons.location_on_outlined,
                               size: 10,
                               color: Theme.of(context).colorScheme.onSurfaceVariant),
                           Flexible(
                             child: Text(
-                              product.location!,
+                              // Ville du vendeur (lot 6) si disponible, sinon
+                              // repli sur l'ancienne localisation libre de
+                              // l'article (anciennes annonces, pas de
+                              // migration) — même emplacement visuel, pas de
+                              // doublon.
+                              product.sellerCity ?? product.location!,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                               style: TextStyle(

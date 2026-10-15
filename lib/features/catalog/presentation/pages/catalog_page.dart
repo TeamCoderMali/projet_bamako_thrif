@@ -489,6 +489,28 @@ class _ProductCard extends StatelessWidget {
                       ],
                     ],
                   ),
+                  if (product.sellerCity != null) ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined,
+                            size: 10,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 2),
+                        Flexible(
+                          child: Text(
+                            product.sellerCity!,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

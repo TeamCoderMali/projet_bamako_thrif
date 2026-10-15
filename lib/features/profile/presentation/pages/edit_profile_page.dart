@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:bamako_thrift/core/constants/mali_cities.dart';
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/services/storage_service.dart';
 import 'package:bamako_thrift/features/auth/domain/entities/user_entity.dart';
@@ -22,10 +24,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late final TextEditingController _nomController;
   late final TextEditingController _phoneController;
   late final TextEditingController _bioController;
+  String? _selectedCity;
   bool _initialized = false;
 
-  // Avatar
-  File? _selectedAvatar; // fichier local sélectionné
+  // Avatar — XFile (pas dart:io.File), lisible en octets sur toutes
+  // plateformes y compris le web (lot "putFile web", 2026-10-15).
+  XFile? _selectedAvatar;
   bool _isUploadingAvatar = false;
   bool _isSaving = false;
 
@@ -38,6 +42,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _nomController = TextEditingController(text: user?.fullName ?? '');
       _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
       _bioController = TextEditingController(text: user?.bio ?? '');
+      _selectedCity = user?.city;
       _initialized = true;
     }
   }
@@ -59,15 +64,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final picked = await picker.pickImage(source: source, imageQuality: 80);
     if (picked == null || !mounted) return;
 
-    final file = File(picked.path);
     setState(() {
-      _selectedAvatar = file;
+      _selectedAvatar = picked;
       _isUploadingAvatar = true;
     });
 
     try {
       final storageService = sl<StorageService>();
-      final avatarUrl = await storageService.uploadAvatar(file);
+      final avatarUrl = await storageService.uploadAvatar(picked);
 
       // Mettre à jour Firestore avec la nouvelle URL d'avatar
       await context.read<AuthCubit>().updateProfile(avatarUrl: avatarUrl);
@@ -180,6 +184,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             bio: _bioController.text.trim().isEmpty
                 ? null
                 : _bioController.text.trim(),
+            city: _selectedCity,
           );
 
       if (mounted) {
@@ -418,6 +423,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   const SizedBox(height: 16),
 
+                  // ── Ville ──────────────────────────────────────────────
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedCity,
+                    decoration: InputDecoration(
+                      labelText: 'Ville',
+                      hintText: 'Dans quelle ville te trouves-tu ?',
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                      filled: true,
+                      fillColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: Color(0xFF6B7F4D), width: 1.5),
+                      ),
+                    ),
+                    items: [
+                      for (final city in maliCities)
+                        DropdownMenuItem(value: city, child: Text(city)),
+                    ],
+                    onChanged: (v) => setState(() => _selectedCity = v),
+                  ),
+                  const SizedBox(height: 16),
+
                   // ── Bio ────────────────────────────────────────────────
                   TextFormField(
                     controller: _bioController,
@@ -488,8 +521,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   // ── Afficher l'avatar : local d'abord, puis Firestore, puis initiales ────
   Widget _buildAvatar(UserEntity? user) {
     if (_selectedAvatar != null) {
-      return Image.file(_selectedAvatar!, fit: BoxFit.cover,
-          width: 100, height: 100);
+      // XFile.path est un blob: URL sur le web (Image.network), un vrai
+      // chemin de fichier sur Android/iOS (Image.file).
+      return kIsWeb
+          ? Image.network(_selectedAvatar!.path,
+              fit: BoxFit.cover, width: 100, height: 100)
+          : Image.file(File(_selectedAvatar!.path),
+              fit: BoxFit.cover, width: 100, height: 100);
     }
     if (user?.avatarUrl != null) {
       return CachedNetworkImage(

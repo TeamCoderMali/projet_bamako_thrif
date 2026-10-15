@@ -8,6 +8,9 @@ class UserEntity extends Equatable {
   final String? phoneNumber;
   final String? avatarUrl;
   final String? bio;
+  // Ville du vendeur (liste fixe, pas de champ libre — voir
+  // maliCities dans edit_profile_page.dart). Lot 6, 2026-10-15.
+  final String? city;
   final UserRole role;
   final bool isEmailVerified;
   final bool isActive;
@@ -26,6 +29,7 @@ class UserEntity extends Equatable {
     this.phoneNumber,
     this.avatarUrl,
     this.bio,
+    this.city,
     this.role = UserRole.buyer,
     this.isEmailVerified = false,
     this.isActive = true,
@@ -56,6 +60,7 @@ class UserEntity extends Equatable {
         phoneNumber,
         avatarUrl,
         bio,
+        city,
         role,
         isEmailVerified,
         isActive,
