@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../domain/entities/user_entity.dart';
@@ -24,7 +25,19 @@ class AccountSanctionedException implements Exception {
 class FirebaseAuthRepositoryImpl implements AuthRepository {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // Sur le web, google_sign_in_web exige un clientId explicite (meta tag ou
+  // paramètre) — sans ça : "Null check operator used on a null value" en
+  // release (le garde-fou du plugin est un assert(), muet hors debug).
+  // Client OAuth "Web" déjà existant du projet bamako-thrif (Firebase
+  // Authentication > Google), le même que celui utilisé par Firebase Auth
+  // côté serveur — rien de nouveau créé. Android/iOS inchangés : clientId
+  // reste null, ils utilisent leur config native (google-services.json /
+  // GoogleService-Info.plist).
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb
+        ? '84148343844-k6k8d8sv4ppskucc1s7mdjllk2e12buk.apps.googleusercontent.com'
+        : null,
+  );
 
   FirebaseAuthRepositoryImpl(this._auth, this._firestore);
 
@@ -320,8 +333,11 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
       return user;
     } on FirebaseAuthException catch (e) {
       throw Exception(_mapFirebaseAuthError(e.code));
-    } catch (e) {
-      throw Exception('Connexion Google impossible : ${e.toString()}');
+    } catch (_) {
+      // Jamais le message technique brut à l'écran (ex. "Null check
+      // operator used on a null value" côté web) — texte simple, tutoiement.
+      throw Exception(
+          'Connexion Google impossible pour le moment. Réessaie ou connecte-toi avec ton email.');
     }
   }
 
@@ -361,6 +377,7 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
   Future<UserEntity> updateProfile({
     String? fullName,
     String? bio,
+    String? city,
     String? phoneNumber,
     String? avatarUrl,
   }) async {
@@ -372,6 +389,7 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     };
     if (fullName != null) updates['fullName'] = fullName.trim();
     if (bio != null) updates['bio'] = bio.trim();
+    if (city != null) updates['city'] = city.trim();
     if (avatarUrl != null) updates['avatarUrl'] = avatarUrl;
     await _usersCol.doc(uid).update(updates);
 
