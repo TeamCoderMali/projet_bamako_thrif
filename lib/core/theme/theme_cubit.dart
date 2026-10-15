@@ -9,7 +9,11 @@ class ThemeCubit extends Cubit<ThemeMode> {
   // supprimée au premier lancement suivant cette mise à jour.
   static const _legacyKey = 'dark_mode';
 
-  ThemeCubit() : super(ThemeMode.system) {
+  // Défaut = clair (pas "system") : l'appli ne doit pas démarrer en mode
+  // sombre selon le thème de l'appareil tant que l'utilisateur n'a rien
+  // choisi explicitement. Un choix stocké (y compris "system" choisi à la
+  // main) prime toujours sur ce défaut, voir _load().
+  ThemeCubit() : super(ThemeMode.light) {
     _load();
   }
 
@@ -28,7 +32,7 @@ class ThemeCubit extends Cubit<ThemeMode> {
         emit(mode);
         return;
       }
-      emit(ThemeMode.system);
+      emit(ThemeMode.light);
       return;
     }
 
