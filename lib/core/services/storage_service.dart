@@ -132,6 +132,21 @@ class StorageService {
     return _upload(bytes, contentType, objectPath, onProgress: onProgress);
   }
 
+  // ── Upload photo de signalement de litige ────────────────────────────────
+  // Nom de fichier unique (uuid), même logique que les articles/avatars —
+  // migration depuis Firebase Storage (bucket jamais provisionné, voir
+  // uploadProductImage ci-dessus), préfixe disputes/ autorisé en INSERT
+  // seule par une policy dédiée côté Supabase (2026-10-15).
+  Future<String> uploadDisputePhoto(
+    XFile file, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final original = await file.readAsBytes();
+    final (bytes, contentType) = await _prepareImage(original, file.path);
+    final objectPath = 'disputes/$_currentUid/${_uuid.v4()}.jpg';
+    return _upload(bytes, contentType, objectPath, onProgress: onProgress);
+  }
+
   // ── Suppression ───────────────────────────────────────────────────────────
   // Décision (2026-10-15, option a) : la clé publishable ne peut de toute
   // façon pas supprimer (policy INSERT seule, par design). On retire juste

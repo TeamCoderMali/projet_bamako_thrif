@@ -66,9 +66,9 @@ Future<void> _registerCore() async {
         firestore: sl<FirebaseFirestore>(),
       ));
   // StorageService n'a plus besoin de FirebaseStorage (Supabase Storage
-  // désormais, voir storage_service.dart) — FirebaseStorage reste
-  // enregistré ci-dessus pour firebase_client.dart et order_tracking_page.dart
-  // (signalements, pas encore migrés).
+  // désormais, voir storage_service.dart, y compris les photos de
+  // signalement de litige depuis le 2026-10-15) — FirebaseStorage reste
+  // enregistré ci-dessus seulement pour firebase_client.dart.
   sl.registerLazySingleton<StorageService>(
     () => StorageService(sl<FirebaseAuth>()),
   );

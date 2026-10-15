@@ -9,10 +9,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/logger_service.dart';
+import 'package:bamako_thrift/core/services/storage_service.dart';
 
 class OrderTrackingPage extends StatefulWidget {
   final String orderId;
@@ -648,24 +650,34 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
   }
 
   void _showError(Object e) {
+    // Jamais le message technique brut à l'écran — journalisé pour debug.
+    final isUnsupportedImage = e is UnsupportedImageException;
+    logger.severe('Échec signalement de litige', error: e.toString());
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(isUnsupportedImage
+              ? 'Cette photo n\'est pas compatible. Choisis une photo JPG ou PNG.'
+              : 'L\'envoi a échoué. Vérifie ta connexion et réessaie.'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
   Future<String> _createNonConformity({required String status}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    final storage = FirebaseStorage.instance;
+    final storageService = sl<StorageService>();
 
+    // Délai max par photo : sans ça, un envoi qui ne progresse jamais
+    // laisse le dialogue bloqué indéfiniment sans erreur visible (même
+    // constat que pour la publication, voir publish_product_page.dart).
     final photoUrls = <String>[];
     for (int i = 0; i < _photos.length; i++) {
-      final ref = storage.ref(
-          'non_conformities/$uid/${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
-      final bytes = await _photos[i].readAsBytes();
-      await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-      photoUrls.add(await ref.getDownloadURL());
+      final url = await storageService
+          .uploadDisputePhoto(_photos[i])
+          .timeout(const Duration(seconds: 60));
+      photoUrls.add(url);
     }
 
     // Photos de l'annonce initiale (déjà en ligne), pour comparaison par
