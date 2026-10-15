@@ -15,8 +15,6 @@ class OrdersPage extends StatelessWidget {
         return 'En attente';
       case 'confirmed':
         return 'Confirmée';
-      case 'in_transit':
-        return 'En livraison';
       case 'delivered':
         return 'Livré';
       case 'completed':
@@ -34,8 +32,6 @@ class OrdersPage extends StatelessWidget {
         return Colors.orange;
       case 'confirmed':
         return Colors.blue;
-      case 'in_transit':
-        return const Color(0xFF6B7F4D);
       case 'delivered':
         return Colors.teal;
       case 'completed':
