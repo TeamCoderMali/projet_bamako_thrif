@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +10,7 @@ import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/constants/mali_cities.dart';
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/logger_service.dart';
 import 'package:bamako_thrift/core/services/storage_service.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
@@ -135,16 +138,40 @@ class _PublishProductPageState extends State<PublishProductPage> {
         final storageService = sl<StorageService>();
         final total = _selectedImages.length;
 
-        for (int i = 0; i < total; i++) {
-          if (mounted) {
-            setState(() => _publishStep = 'Envoi photo ${i + 1}/$total...');
+        try {
+          for (int i = 0; i < total; i++) {
+            if (mounted) {
+              setState(() => _publishStep = 'Envoi photo ${i + 1}/$total...');
+            }
+            // Délai max : sans ça, un envoi qui ne progresse jamais (ex.
+            // bucket Storage indisponible) laisse le dialogue bloqué à 0%
+            // indéfiniment, sans erreur visible (constaté en test réel sur
+            // le canal web, 2026-10-16).
+            final url = await storageService
+                .uploadProductImage(_selectedImages[i])
+                .timeout(const Duration(seconds: 60));
+            imageUrls.add(url);
+            if (mounted) {
+              setState(() => _uploadProgress = (i + 1) / total * 0.8);
+            }
           }
-          final url =
-              await storageService.uploadProductImage(_selectedImages[i]);
-          imageUrls.add(url);
+        } catch (e) {
+          // Jamais le message technique brut à l'écran — journalisé pour
+          // debug (code Firebase si disponible), message simple affiché.
+          final code = e is FirebaseException ? e.code : e.runtimeType.toString();
+          logger.severe('Échec envoi photo à la publication',
+              error: '$code — ${e.toString()}');
           if (mounted) {
-            setState(() => _uploadProgress = (i + 1) / total * 0.8);
+            setState(() => _isPublishing = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'L\'envoi de la photo a échoué. Vérifie ta connexion et réessaie.'),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
+          return;
         }
       }
 
