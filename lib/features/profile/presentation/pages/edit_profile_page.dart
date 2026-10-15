@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:bamako_thrift/core/constants/mali_cities.dart';
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
+import 'package:bamako_thrift/core/services/logger_service.dart';
 import 'package:bamako_thrift/core/services/storage_service.dart';
 import 'package:bamako_thrift/features/auth/domain/entities/user_entity.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -71,7 +72,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     try {
       final storageService = sl<StorageService>();
-      final avatarUrl = await storageService.uploadAvatar(picked);
+      final avatarUrl = await storageService
+          .uploadAvatar(picked)
+          .timeout(const Duration(seconds: 60));
 
       // Mettre à jour Firestore avec la nouvelle URL d'avatar
       await context.read<AuthCubit>().updateProfile(avatarUrl: avatarUrl);
@@ -95,6 +98,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         );
       }
     } catch (e) {
+      // Jamais le message technique brut à l'écran — journalisé pour debug.
+      final isUnsupportedImage = e is UnsupportedImageException;
+      logger.severe('Échec envoi avatar', error: e.toString());
       if (mounted) {
         setState(() {
           _selectedAvatar = null;
@@ -102,7 +108,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur upload : ${e.toString()}'),
+            content: Text(isUnsupportedImage
+                ? 'Cette photo n\'est pas compatible. Choisis une photo JPG ou PNG.'
+                : 'L\'envoi de la photo a échoué. Vérifie ta connexion et réessaie.'),
             backgroundColor: Colors.red,
           ),
         );
