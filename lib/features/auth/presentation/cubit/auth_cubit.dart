@@ -151,6 +151,19 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  // ── Suppression de compte ────────────────────────────────────────────────
+  Future<bool> deleteAccount({String? password}) async {
+    emit(const AuthLoading());
+    try {
+      await _authRepository.deleteAccount(password: password);
+      emit(const AuthUnauthenticated());
+      return true;
+    } catch (e) {
+      emit(AuthError(e.toString().replaceFirst('Exception: ', '')));
+      return false;
+    }
+  }
+
   // ── Utilisateur courant (convenience getter) ─────────────────────────────
   UserEntity? get currentUser {
     final s = state;

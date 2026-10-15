@@ -1,4 +1,5 @@
 // ─── Bamako Thrift — Settings Page ───────────────────────────────────────────
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -108,6 +109,30 @@ class _SettingsPageState extends State<SettingsPage> {
               icon: const Icon(Icons.logout, color: Colors.red, size: 18),
               label: const Text(
                 'Se déconnecter',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton.icon(
+              onPressed: () => _confirmDeleteAccount(context),
+              icon: const Icon(Icons.delete_forever_outlined,
+                  color: Colors.red, size: 18),
+              label: const Text(
+                'Supprimer mon compte',
                 style: TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
@@ -242,5 +267,135 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
+  }
+
+  // ── Suppression de compte (étape 1 : avertissement) ─────────────────────
+  void _confirmDeleteAccount(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Supprimer ton compte ?'),
+        content: const Text(
+          'Cette action est définitive : tu seras déconnecté et ne pourras '
+          'plus te reconnecter avec ce compte.\n\n'
+          'Tes articles en ligne seront masqués. Tes commandes et messages '
+          'déjà échangés restent visibles pour les autres, mais ton nom et '
+          'ta photo y apparaîtront comme "Utilisateur supprimé".',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _confirmDeleteAccountStep2(context);
+            },
+            child: const Text('Continuer', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Suppression de compte (étape 2 : reconfirmation) ─────────────────────
+  // Mot de passe pour un compte email, Google pour un compte Google — le
+  // seul autre provider que l'app gère (voir AuthRepositoryImpl.deleteAccount).
+  void _confirmDeleteAccountStep2(BuildContext context) {
+    final hasPasswordProvider = FirebaseAuth.instance.currentUser?.providerData
+            .any((p) => p.providerId == 'password') ??
+        true;
+
+    if (!hasPasswordProvider) {
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Confirmer avec Google'),
+          content: const Text(
+            'Reconnecte-toi avec Google pour confirmer la suppression définitive de ton compte.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _performAccountDeletion(context);
+              },
+              child: const Text('Confirmer avec Google',
+                  style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final passwordCtrl = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Confirme ton mot de passe'),
+        content: TextField(
+          controller: passwordCtrl,
+          obscureText: true,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Mot de passe'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              final password = passwordCtrl.text;
+              Navigator.pop(ctx);
+              _performAccountDeletion(context, password: password);
+            },
+            child: const Text('Supprimer définitivement',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Suppression de compte (exécution) ─────────────────────────────────────
+  Future<void> _performAccountDeletion(BuildContext context,
+      {String? password}) async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+      ),
+    );
+
+    final cubit = context.read<AuthCubit>();
+    final success = await cubit.deleteAccount(password: password);
+
+    if (!context.mounted) return;
+    Navigator.pop(context); // ferme le loader
+
+    if (success) {
+      context.go(RouteNames.login);
+    } else {
+      final state = cubit.state;
+      final message =
+          state is AuthError ? state.message : 'La suppression a échoué.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
+    }
   }
 }

@@ -44,6 +44,9 @@ abstract class AuthRepository {
     String? avatarUrl,
   });
 
-  /// Supprime le compte (Firestore + Firebase Auth).
-  Future<void> deleteAccount();
+  /// Supprime le compte. Réauthentification obligatoire au préalable :
+  /// [password] pour un compte email/mot de passe, ignoré (Google redemandé
+  /// directement) pour un compte Google. Anonymise le profil et masque les
+  /// articles du vendeur plutôt que de les supprimer — voir l'implémentation.
+  Future<void> deleteAccount({String? password});
 }

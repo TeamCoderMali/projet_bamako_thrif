@@ -42,36 +42,26 @@ service cloud.firestore {
       return !(exists(/databases/$(database)/documents/config/payment)
         && get(/databases/$(database)/documents/config/payment).data.get('enabled', false) == true);
     }
-    // Pressing/vérification d'article : le vendeur ne peut jamais toucher au
-    // champ "verifie" (statut accordé par la plateforme après remise en état
-    // par le pressing, pas auto-déclaré — même principe que isVendeurPro).
-    // Il peut seulement basculer available<->inactive (masquer/republier) sur
-    // son propre article, jamais entrer/sortir de "enAttenteVerification",
-    // "sold", "reserved", etc. Une fois l'article vérifié, titre/description/
-    // photos sont figés (pour ne pas garder le badge après avoir changé
-    // l'article) ; le prix et le reste restent modifiables.
-    function productOwnerEditAllowed() {
-      let before = resource.data;
-      let after = request.resource.data;
-      return after.get('verifie', false) == before.get('verifie', false)
-        && (after.status == before.status
-            || (before.status in ['available', 'inactive']
-                && after.status in ['available', 'inactive'])
-            // Vendeur marque son article vendu/reserve lui-meme :
-            // uniquement en phase sans paiement integre (lot 5).
-            || (before.status == 'available'
-                && after.status in ['sold', 'reserved']
-                && paymentDisabled())
-            // Annule une vente/reservation auto-declaree (meme phase
-            // uniquement) : une vente reelle, payee, reste geree par le
-            // flux de commande (acheteur), pas par ce carve-out.
-            || (before.status in ['sold', 'reserved']
-                && after.status == 'available'
-                && paymentDisabled()))
-        && (before.get('verifie', false) != true
-            || (after.title == before.title
-                && after.description == before.description
-                && after.imageUrls == before.imageUrls));
+
+    // Lot "offres" (voir PLAN_OFFRES.md) : valeurs reglables depuis
+    // config/offers (back-office a venir), repli en dur si document/champ
+    // absent -- memes valeurs de repli que OffersConfigService (mobile).
+    // Valeurs validees par Fatou le 2026-10-08.
+    function offersMinRatio() {
+      return exists(/databases/$(database)/documents/config/offers)
+        ? get(/databases/$(database)/documents/config/offers).data.get('minOfferRatio', 0.3)
+        : 0.3;
+    }
+    // Null = illimite (pas de plafond de tours), par defaut comme a
+    // l'explicite. Utiliser via offersRoundAllowed(), pas directement,
+    // pour eviter de repeter la verification de null partout.
+    function offersMaxRounds() {
+      return exists(/databases/$(database)/documents/config/offers)
+        ? get(/databases/$(database)/documents/config/offers).data.get('maxRounds', null)
+        : null;
+    }
+    function offersRoundAllowed(currentRound) {
+      return offersMaxRounds() == null || currentRound < offersMaxRounds();
     }
 
     // ── Collection users ───────────────────────────────────────────────────
@@ -126,10 +116,21 @@ service cloud.firestore {
     match /product/{productId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
-        && request.resource.data.sellerId == request.auth.uid
-        && request.resource.data.get('verifie', false) == false;
+        && request.resource.data.sellerId == request.auth.uid;
       allow update: if isAuthenticated()
-        && (isAdmin()
+        && (
+            // Vendeur marque/annule vendu-reserve sur son propre article :
+            // seulement en phase sans paiement integre (lot 5). Une vente
+            // reelle (paiement actif) reste geree par le flux de commande,
+            // pas par ce carve-out. Tout le reste des droits du vendeur
+            // (inchange par rapport a la production) reste ouvert.
+            (resource.data.sellerId == request.auth.uid
+             && (!((resource.data.status == 'available'
+                    && request.resource.data.status in ['sold', 'reserved'])
+                   || (resource.data.status in ['sold', 'reserved']
+                       && request.resource.data.status == 'available'))
+                 || paymentDisabled()))
+            || isAdmin()
             || request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['viewCount', 'favoriteCount', 'rating', 'reviewCount'])
             || (request.resource.data.diff(resource.data).affectedKeys()
@@ -137,9 +138,7 @@ service cloud.firestore {
                 && request.resource.data.status in ['sold', 'available']
                 && request.resource.data.orderId is string
                 && get(/databases/$(database)/documents/order/$(request.resource.data.orderId)).data.buyerId == request.auth.uid
-                && get(/databases/$(database)/documents/order/$(request.resource.data.orderId)).data.productId == productId)
-            || (resource.data.sellerId == request.auth.uid
-                && productOwnerEditAllowed()));
+                && get(/databases/$(database)/documents/order/$(request.resource.data.orderId)).data.productId == productId));
       allow delete: if isAuthenticated()
         && (resource.data.sellerId == request.auth.uid || isAdmin());
 
@@ -231,20 +230,66 @@ service cloud.firestore {
     // Signalement acheteur (remplace l'ancienne inspection relais). Le relais
     // (et l'admin) doivent voir et traiter tous les signalements, pas
     // seulement ceux où ils sont partie prenante.
+    // ID deterministe {orderId}_{buyerId} (audit du 2026-10-08) : un seul
+    // signalement actif par commande et par acheteur -- l'ancien ID
+    // auto-genere permettait des envois illimites sur la meme commande.
     match /non_conformities/{ncId} {
       allow create: if isAuthenticated()
-        && request.resource.data.buyerId == request.auth.uid;
-      allow read, update: if isAuthenticated()
-        && (resource.data.buyerId == request.auth.uid
+        && request.resource.data.buyerId == request.auth.uid
+        && ncId == request.resource.data.orderId + '_' + request.resource.data.buyerId;
+      // !exists(...) restreint a ncId.split('_')[1] == auth.uid (sa propre
+      // place, ncId = orderId + '_' + buyerId) : meme bug que sur
+      // offers/{offerId} (resource.data plante quand le document n'existe
+      // pas encore) -- ici il cassait la verification de doublon dans
+      // order_tracking_page.dart:137-140 (.doc(ncId).get() avant toute
+      // premiere declaration sur une commande). Trouve/corrige le
+      // 2026-10-09 en repondant a la meme question pour les 3 collections
+      // a ID deterministe.
+      //
+      // "read" et "update" separes (c'etaient les memes conditions sous
+      // un "allow read, update" avant le 2026-10-09) : la clause de
+      // champs immuables ci-dessous reference request.resource, qui
+      // n'existe QUE pour les ecritures -- combinee a "read", elle
+      // plantait TOUTE lecture par un non-admin, meme d'un document
+      // existant (pas seulement le cas "n'existe pas encore" ci-dessus).
+      // Ca cassait aussi silencieusement la fiche vendeur "Validation
+      // remise en etat" (notifications_page.dart:183-187, StreamBuilder
+      // reste bloque en chargement infini) -- jamais remarque faute de
+      // test de lecture pure sur cette collection avant aujourd'hui.
+      allow read: if isAuthenticated()
+        && ((!exists(/databases/$(database)/documents/non_conformities/$(ncId))
+             && ncId.split('_')[1] == request.auth.uid)
+            || resource.data.buyerId == request.auth.uid
             || resource.data.sellerId == request.auth.uid
             || isRelayManager()
             || isAdmin());
+
+      allow update: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isRelayManager()
+            || isAdmin())
+        // Pour un non-admin : ni les champs identifiants, ni le contenu
+        // du signalement (fourni une seule fois a la creation) ne
+        // changent -- empeche de reutiliser "update" pour resoumettre un
+        // nouveau motif/description/photos sur le meme document (ce qui
+        // contournerait sinon l'ID deterministe). Les transitions de
+        // statut existantes (evaluation du cout, acceptation vendeur via
+        // notifications_page.dart) ne touchent jamais ces champs, donc
+        // restent inchangees.
+        && (isAdmin() || !request.resource.data.diff(resource.data)
+             .affectedKeys().hasAny(['orderId', 'buyerId', 'sellerId', 'productId',
+                                      'reason', 'description', 'photoUrls',
+                                      'listingPhotoUrls', 'createdAt']));
     }
 
     // ── Collection refund_requests ─────────────────────────────────────────
+    // ID deterministe {orderId}_{buyerId} (audit du 2026-10-08) : une
+    // seule demande de remboursement active par commande et par acheteur.
     match /refund_requests/{id} {
       allow create: if isAuthenticated()
-        && request.resource.data.buyerId == request.auth.uid;
+        && request.resource.data.buyerId == request.auth.uid
+        && id == request.resource.data.orderId + '_' + request.resource.data.buyerId;
       allow read: if isAuthenticated()
         && (resource.data.buyerId == request.auth.uid || isAdmin());
     }
@@ -261,11 +306,30 @@ service cloud.firestore {
     // non_conformities (lié à une commande) et de disputes (litige
     // acheteur/vendeur). Tout utilisateur connecté peut créer un
     // signalement avec son propre reporterId ; seuls les admins le
-    // lisent et le traitent.
+    // traitent (update).
+    // ID deterministe {reporterId}_{targetType}_{targetId} (audit du
+    // 2026-10-08) : un seul signalement actif par personne et par objet
+    // signale. Une seconde tentative sur le meme objet est traitee comme
+    // un "update" (le document existe deja) et refusee a un non-admin --
+    // aucune regle update n'existe pour eux, ni aucune regle delete.
     match /reports/{id} {
       allow create: if isAuthenticated()
-        && request.resource.data.reporterId == request.auth.uid;
-      allow read, update: if isAdmin();
+        && request.resource.data.reporterId == request.auth.uid
+        && id == request.resource.data.reporterId + '_' + request.resource.data.targetType + '_' + request.resource.data.targetId;
+      // id.split('_')[0] == auth.uid : l'ID commence TOUJOURS par le
+      // reporterId (impose a la creation ci-dessus), donc cette seule
+      // verification suffit pour "est-ce ma propre place ?", que le
+      // document existe deja ou non -- pas besoin d'un exists() separe,
+      // contrairement a offers/non_conformities ou un second role
+      // (vendeur) a aussi besoin de lire resource.data. Corrige le
+      // 2026-10-09 : la regle precedente (isAdmin() seul) interdisait a
+      // l'auteur de lire SON PROPRE signalement, existant ou non --
+      // report_dialog.dart fait un .get() sans try/catch avant meme
+      // d'afficher le formulaire, donc CHAQUE signalement (pas seulement
+      // les doublons) echouait avec permission-denied en production.
+      allow read: if isAdmin()
+        || (isAuthenticated() && id.split('_')[0] == request.auth.uid);
+      allow update: if isAdmin();
     }
 
     // ── Collection config ───────────────────────────────────────────────────
@@ -276,6 +340,148 @@ service cloud.firestore {
     match /config/{docId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+    }
+
+    // ── Collection offers ────────────────────────────────────────────────────
+    // Negociation de prix acheteur/vendeur (lot "offres", PLAN_OFFRES.md).
+    // Lot A (socle) : regles ecrites et testees, AUCUN ecran ne les utilise
+    // encore. Valeurs validees par Fatou le 2026-10-08 : pas de plafond de
+    // nombre d'offres par defaut (illimite), pas de plafond de rounds par
+    // defaut (illimite, voir offersRoundAllowed()). L'expiration (respondBy
+    // depasse) est geree par ecriture paresseuse cote client a l'ouverture
+    // d'un ecran concerne, pas par un cron serveur.
+    //
+    // "Une seule offre pending par acheteur/article" : garanti par un ID de
+    // document DETERMINISTE {productId}_{buyerId} (voir OfferModel.buildId,
+    // mobile) -- un seul document possible par paire, donc un seul statut
+    // possible a la fois. Une negociation refusee/annulee/expiree se relance
+    // en reutilisant CE MEME document (branche "relance" ci-dessous), pas en
+    // creant un nouveau document.
+    match /offers/{offerId} {
+      allow create: if isAuthenticated()
+        && offerId == request.resource.data.productId + '_' + request.resource.data.buyerId
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.buyerId != request.resource.data.sellerId
+        && request.resource.data.sellerId ==
+             get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.sellerId
+        && get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.status == 'available'
+        && get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.get('offersEnabled', true) == true
+        && request.resource.data.status == 'pending'
+        && request.resource.data.round == 1
+        && request.resource.data.turn == 'seller'
+        && request.resource.data.currentPrice < request.resource.data.originalPrice
+        && request.resource.data.currentPrice >= request.resource.data.originalPrice * offersMinRatio();
+
+      // !exists(...) : un "get" sur un document qui n'existe pas encore
+      // (ex. un acheteur qui n'a jamais fait d'offre sur ce produit) doit
+      // renvoyer exists=false, pas permission-denied -- sinon "resource"
+      // vaut null et resource.data plante l'evaluation de la regle avant
+      // meme d'atteindre les conditions de proprietaire. Restreint a
+      // offerId.split('_')[1] == auth.uid (sa PROPRE place, puisque
+      // offerId = productId + '_' + buyerId) : un tiers qui sonde la
+      // place d'un autre acheteur reste refuse, meme si le document
+      // n'existe pas. Bug trouve le 2026-10-09 en testant le flux "Faire
+      // une offre" sur un premier contact (aucune offre existante).
+      allow read: if isAuthenticated()
+        && ((!exists(/databases/$(database)/documents/offers/$(offerId))
+             && offerId.split('_')[1] == request.auth.uid)
+            || resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isAdmin());
+
+      // Les champs identifiants/prix de depart ne changent jamais apres
+      // creation, quelle que soit la transition (y compris une relance :
+      // originalPrice reste celui de la toute premiere offre sur cette
+      // paire, meme si le prix du produit a change depuis). Seule la
+      // partie dont c'est le tour peut agir (verrou optimiste sur "turn").
+      allow update: if isAuthenticated()
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['buyerId', 'sellerId', 'productId', 'originalPrice', 'chatId'])
+        && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid)
+        && (
+             // Expiration paresseuse : uniquement depuis "pending" (pas depuis
+             // "accepted" -- la reservation post-acceptation a son propre
+             // delai, pas encore gere par cette regle) et seulement une fois
+             // le delai de reponse du tour en cours reellement depasse. Seuls
+             // le statut et l'historique changent.
+             (resource.data.status == 'pending'
+               && request.time > resource.data.respondBy
+               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+               && request.resource.data.status == 'expired')
+
+             // L'acheteur retire son offre tant que le vendeur n'a pas repondu :
+             // seuls le statut et l'historique changent.
+             || (resource.data.buyerId == request.auth.uid
+                 && resource.data.turn == 'seller'
+                 && resource.data.status == 'pending'
+                 && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+                 && request.resource.data.status == 'cancelled')
+
+             // Relance par l'acheteur : seulement depuis un statut terminal
+             // issu d'un refus/annulation/expiration (jamais depuis
+             // "pending" ou "accepted"). Memes conditions qu'une creation
+             // (ratio, prix strictement inferieur, produit disponible,
+             // offres autorisees), retour a round 1 / turn seller.
+             // L'historique est conserve (pas remplace) par les champs
+             // globalement immuables + le fait qu'on ne touche pas
+             // "history" ici (l'app y ajoutera l'entree de relance).
+             || (resource.data.buyerId == request.auth.uid
+                 && resource.data.status in ['rejected', 'cancelled', 'expired']
+                 && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.status == 'available'
+                 && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.get('offersEnabled', true) == true
+                 && request.resource.data.status == 'pending'
+                 && request.resource.data.round == 1
+                 && request.resource.data.turn == 'seller'
+                 && request.resource.data.currentPrice < resource.data.originalPrice
+                 && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio())
+
+             // Le vendeur agit quand c'est son tour.
+             || (resource.data.sellerId == request.auth.uid
+                 && resource.data.turn == 'seller'
+                 && resource.data.status == 'pending'
+                 && (
+                      // Accepter/refuser : currentPrice, round et turn
+                      // restent inchanges, seuls le statut et l'historique
+                      // bougent. Accepter exige en plus que le produit
+                      // soit toujours disponible au moment T (empeche
+                      // d'accepter une offre devenue perimee si l'article
+                      // a ete vendu/reserve entre-temps, lot D) ; refuser
+                      // reste possible dans tous les cas.
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+                        && ((request.resource.data.status == 'accepted'
+                             && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.status == 'available')
+                            || request.resource.data.status == 'rejected'))
+
+                      // Contre-offre : prix dans les bornes [ratio min, prix
+                      // de depart], round+1, tour qui passe a l'acheteur.
+                      || (request.resource.data.status == 'pending'
+                          && request.resource.data.turn == 'buyer'
+                          && request.resource.data.round == resource.data.round + 1
+                          && offersRoundAllowed(resource.data.round)
+                          && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio()
+                          && request.resource.data.currentPrice <= resource.data.originalPrice)
+                    ))
+
+             // L'acheteur agit quand c'est son tour (apres une contre-offre).
+             || (resource.data.buyerId == request.auth.uid
+                 && resource.data.turn == 'buyer'
+                 && resource.data.status == 'pending'
+                 && (
+                      // Memes conditions que pour le vendeur ci-dessus :
+                      // accepter exige le produit toujours disponible.
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+                        && ((request.resource.data.status == 'accepted'
+                             && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.status == 'available')
+                            || request.resource.data.status == 'rejected'))
+
+                      || (request.resource.data.status == 'pending'
+                          && request.resource.data.turn == 'seller'
+                          && request.resource.data.round == resource.data.round + 1
+                          && offersRoundAllowed(resource.data.round)
+                          && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio()
+                          && request.resource.data.currentPrice <= resource.data.originalPrice)
+                    ))
+           );
     }
 
     // ── Collection relay_centers ────────────────────────────────────────────

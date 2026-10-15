@@ -411,17 +411,159 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
   }
 
   // ── Suppression compte ───────────────────────────────────────────────────
+  // Décision (2026-10-16) : on anonymise, on ne supprime jamais les docs
+  // Firestore référencés par d'autres personnes (articles, commandes,
+  // messages) — supprimer users/{uid} casserait l'affichage du nom/avatar
+  // vendeur chez tous ses acheteurs passés, et la suppression de product/
+  // casserait l'historique de commande de l'acheteur. Seul le compte
+  // Firebase Auth lui-même est réellement supprimé.
   @override
-  Future<void> deleteAccount() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) throw Exception('Utilisateur non connecté.');
+  Future<void> deleteAccount({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Utilisateur non connecté.');
+    final uid = user.uid;
 
-    // Supprimer les docs Firestore d'abord (privé puis public)
-    await _privateDoc(uid).delete();
-    await _usersCol.doc(uid).delete();
+    // Comptes admin/relais (admin_users/{uid}, back-office) : jamais
+    // supprimables depuis l'app mobile — distinct de users/{uid}, voir
+    // firestore.rules (isAdmin()/isRelayManager()).
+    final adminDoc = await _firestore.collection('admin_users').doc(uid).get();
+    if (adminDoc.exists) {
+      throw Exception(
+          'Les comptes administrateur ne peuvent pas être supprimés depuis l\'application.');
+    }
 
-    // Supprimer le compte Firebase Auth
-    await _auth.currentUser!.delete();
+    await _reauthenticate(user, password: password);
+    await _assertNoPendingActivity(uid);
+
+    // Articles disponibles du vendeur -> masqués (inactive), pas supprimés
+    // (gardés pour l'historique des commandes déjà passées sur ces articles).
+    final products = await _firestore
+        .collection('product')
+        .where('sellerId', isEqualTo: uid)
+        .where('status', isEqualTo: 'available')
+        .get();
+    if (products.docs.isNotEmpty) {
+      final batch = _firestore.batch();
+      for (final doc in products.docs) {
+        batch.update(doc.reference, {'status': 'inactive'});
+      }
+      await batch.commit();
+    }
+
+    // Profil anonymisé (pas supprimé) : le nom/avatar affichés chez les
+    // autres (commandes, messages passés) deviennent neutres sans casser
+    // ces références.
+    await _usersCol.doc(uid).set({
+      'fullName': 'Utilisateur supprimé',
+      'avatarUrl': null,
+      'bio': null,
+      'isActive': false,
+      'deletedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _privateDoc(uid).set({
+      'email': null,
+      'phoneNumber': null,
+    }, SetOptions(merge: true));
+
+    // Compte Firebase Auth réellement supprimé.
+    if (await _googleSignIn.isSignedIn()) {
+      await _googleSignIn.signOut();
+    }
+    await user.delete();
+  }
+
+  /// Réauthentifie l'utilisateur avant la suppression (Firebase l'exige dès
+  /// que la session n'est plus "récente"). Mot de passe si le compte a ce
+  /// provider, sinon Google (seul autre provider supporté par l'app).
+  Future<void> _reauthenticate(User user, {String? password}) async {
+    final hasPasswordProvider =
+        user.providerData.any((p) => p.providerId == 'password');
+    try {
+      if (hasPasswordProvider) {
+        if (password == null || password.isEmpty) {
+          throw Exception('Mot de passe requis pour confirmer la suppression.');
+        }
+        final credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: password,
+        );
+        await user.reauthenticateWithCredential(credential);
+      } else {
+        final googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) {
+          throw Exception('Confirmation Google annulée.');
+        }
+        final googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        await user.reauthenticateWithCredential(credential);
+      }
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_mapFirebaseAuthError(e.code));
+    }
+  }
+
+  /// Bloque la suppression si une commande en cours, une offre ouverte ou un
+  /// litige ouvert existe encore pour cet utilisateur (acheteur ou vendeur).
+  Future<void> _assertNoPendingActivity(String uid) async {
+    const blockedMessage =
+        'Termine tes commandes en cours avant de supprimer ton compte.';
+
+    // Un seul filtre d'égalité par requête (pas de "where" combiné sur un
+    // second champ) : évite de dépendre d'un index composite qui n'existe
+    // peut-être pas encore pour cette forme de requête précise (le fichier
+    // firestore.indexes.json local s'est déjà révélé désynchronisé des
+    // index réellement déployés, même constat que pour firestore.rules).
+    const openOrderStatuses = {'pending', 'collecte'};
+    final ordersAsBuyer =
+        await _firestore.collection('order').where('buyerId', isEqualTo: uid).get();
+    if (ordersAsBuyer.docs
+        .any((d) => openOrderStatuses.contains(d.data()['status']))) {
+      throw Exception(blockedMessage);
+    }
+
+    final ordersAsSeller = await _firestore
+        .collection('order')
+        .where('sellerId', isEqualTo: uid)
+        .get();
+    if (ordersAsSeller.docs
+        .any((d) => openOrderStatuses.contains(d.data()['status']))) {
+      throw Exception(blockedMessage);
+    }
+
+    final offersAsBuyer =
+        await _firestore.collection('offers').where('buyerId', isEqualTo: uid).get();
+    if (offersAsBuyer.docs.any((d) => d.data()['status'] == 'pending')) {
+      throw Exception(blockedMessage);
+    }
+
+    final offersAsSeller = await _firestore
+        .collection('offers')
+        .where('sellerId', isEqualTo: uid)
+        .get();
+    if (offersAsSeller.docs.any((d) => d.data()['status'] == 'pending')) {
+      throw Exception(blockedMessage);
+    }
+
+    // non_conformities n'a pas de statut de clôture consulté par l'app (le
+    // back-office traite les litiges dans une collection "disputes" séparée,
+    // jamais reliée à non_conformities) — on bloque donc dès qu'un
+    // signalement existe pour cet utilisateur, résolu ou non.
+    final disputesAsBuyer = await _firestore
+        .collection('non_conformities')
+        .where('buyerId', isEqualTo: uid)
+        .limit(1)
+        .get();
+    if (disputesAsBuyer.docs.isNotEmpty) throw Exception(blockedMessage);
+
+    final disputesAsSeller = await _firestore
+        .collection('non_conformities')
+        .where('sellerId', isEqualTo: uid)
+        .limit(1)
+        .get();
+    if (disputesAsSeller.docs.isNotEmpty) throw Exception(blockedMessage);
   }
 
   // ── Helpers privés ───────────────────────────────────────────────────────
