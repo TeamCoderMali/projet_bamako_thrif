@@ -2,6 +2,7 @@
 // Liste les offres faites par l'acheteur connecté, groupées par statut.
 // Au chargement, fait aussi expirer celles dont le délai de réponse (72h)
 // est dépassé (expiration paresseuse, pas de cron serveur).
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -134,12 +135,13 @@ class _OfferTile extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: offer.productImageUrl != null
-                    ? Image.network(
-                        offer.productImageUrl!,
+                    ? CachedNetworkImage(
+                        imageUrl: offer.productImageUrl!,
                         width: 56,
                         height: 56,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _placeholder(colors),
+                        placeholder: (_, __) => _placeholder(colors),
+                        errorWidget: (_, __, ___) => _placeholder(colors),
                       )
                     : _placeholder(colors),
               ),
