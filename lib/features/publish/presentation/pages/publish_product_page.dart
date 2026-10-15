@@ -148,25 +148,33 @@ class _PublishProductPageState extends State<PublishProductPage> {
             // indéfiniment, sans erreur visible (constaté en test réel sur
             // le canal web, 2026-10-16).
             final url = await storageService
-                .uploadProductImage(_selectedImages[i])
+                .uploadProductImage(
+                  _selectedImages[i],
+                  onProgress: (p) {
+                    if (mounted) {
+                      setState(() => _uploadProgress = (i + p) / total * 0.8);
+                    }
+                  },
+                )
                 .timeout(const Duration(seconds: 60));
             imageUrls.add(url);
-            if (mounted) {
-              setState(() => _uploadProgress = (i + 1) / total * 0.8);
-            }
           }
         } catch (e) {
           // Jamais le message technique brut à l'écran — journalisé pour
-          // debug (code Firebase si disponible), message simple affiché.
+          // debug (code Firebase/Supabase si disponible), message simple
+          // affiché. Photo ni décodable ni dans un format accepté (ex.
+          // HEIC) : message dédié, distinct d'un échec réseau.
+          final isUnsupportedImage = e is UnsupportedImageException;
           final code = e is FirebaseException ? e.code : e.runtimeType.toString();
           logger.severe('Échec envoi photo à la publication',
               error: '$code — ${e.toString()}');
           if (mounted) {
             setState(() => _isPublishing = false);
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                    'L\'envoi de la photo a échoué. Vérifie ta connexion et réessaie.'),
+              SnackBar(
+                content: Text(isUnsupportedImage
+                    ? 'Cette photo n\'est pas compatible. Choisis une photo JPG ou PNG.'
+                    : 'L\'envoi de la photo a échoué. Vérifie ta connexion et réessaie.'),
                 backgroundColor: Colors.red,
               ),
             );
