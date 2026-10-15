@@ -1,4 +1,5 @@
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -305,7 +306,39 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+
+                    // ── Conditions d'utilisation ──────────────────────────
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                            children: [
+                              const TextSpan(
+                                  text: 'En t\'inscrivant, tu acceptes les '),
+                              TextSpan(
+                                text: 'conditions d\'utilisation',
+                                style: const TextStyle(
+                                  color: Color(0xFF6B7F4D),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () =>
+                                      context.push(RouteNames.termsOfService),
+                              ),
+                              const TextSpan(text: '.'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
 
                     // ── Lien Login ────────────────────────────────────────
                     Row(

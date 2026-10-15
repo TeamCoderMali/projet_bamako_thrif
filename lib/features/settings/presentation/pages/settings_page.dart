@@ -52,6 +52,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 () => context.push(RouteNames.privacy)),
             _item(context, Icons.block, 'Vendeurs bloqués',
                 () => context.push(RouteNames.blockedSellers)),
+            _item(context, Icons.description_outlined, 'Conditions d\'utilisation',
+                () => context.push(RouteNames.termsOfService)),
           ]),
           const SizedBox(height: 22),
           _sectionLabel('Préférences'),

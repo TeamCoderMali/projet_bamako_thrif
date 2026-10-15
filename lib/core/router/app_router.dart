@@ -63,6 +63,7 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/privacy_page.dart';
 import '../../features/settings/presentation/pages/about_page.dart';
 import '../../features/settings/presentation/pages/blocked_sellers_page.dart';
+import '../../features/settings/presentation/pages/terms_of_service_page.dart';
 import 'package:bamako_thrift/features/settings/presentation/pages/change_password_page.dart';
 
 // ── Admin ──────────────────────────────────────────────────────────────────
@@ -81,6 +82,9 @@ final GoRouter appRouter = GoRouter(
       RouteNames.verifyEmail,
       RouteNames.welcome,
       RouteNames.intro,
+      // Lié depuis l'écran d'inscription (non connecté) en plus des
+      // paramètres (connecté) — doit rester accessible sans compte.
+      RouteNames.termsOfService,
     ];
 
     final isPublicRoute = publicRoutes.any((r) =>
@@ -343,6 +347,11 @@ final GoRouter appRouter = GoRouter(
           path: 'blocked-sellers',
           name: 'blocked-sellers',
           builder: (context, state) => const BlockedSellersPage(),
+        ),
+        GoRoute(
+          path: 'terms',
+          name: 'terms',
+          builder: (context, state) => const TermsOfServicePage(),
         ),
       ],
     ),

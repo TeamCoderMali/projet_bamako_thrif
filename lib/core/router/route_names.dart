@@ -57,6 +57,7 @@ abstract class RouteNames {
   static const String about = '/settings/about';
   static const String changePassword = '/settings/change-password';
   static const String blockedSellers = '/settings/blocked-sellers';
+  static const String termsOfService = '/settings/terms';
 
   // ── Admin ─────────────────────────────────────────────────────────────
   static const String adminDashboard = '/admin/dashboard';
