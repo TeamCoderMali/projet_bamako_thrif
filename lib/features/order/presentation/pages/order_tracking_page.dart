@@ -189,7 +189,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
               : context.push(RouteNames.orders),
         ),
         title: const Text(
-          'Suivi de commande',
+          'Remise de l\'article',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
@@ -320,10 +320,11 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                 else ...[
                   _buildStep('Vendu', 'Paiement reçu',
                       done: true, active: status == 'pending'),
-                  _buildStep('Collecté', 'Récupéré chez le vendeur',
+                  _buildStep('Remis en main propre',
+                      'Tu as remis l\'article à l\'acheteur',
                       done: status == 'collecte' || status == 'completed',
                       active: status == 'pending'),
-                  _buildStep('Reçu', 'Livré à l\'acheteur',
+                  _buildStep('Reçu', 'L\'acheteur a confirmé la réception',
                       done: status == 'completed',
                       active: status == 'collecte',
                       isLast: true),
@@ -341,7 +342,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                         onPressed: _isSubmitting ? null : _markCollected,
                         icon: const Icon(Icons.inventory_2_outlined,
                             color: Colors.white),
-                        label: const Text('Marquer collecté',
+                        label: const Text('Marquer comme remis',
                             style: TextStyle(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6B7F4D),
@@ -410,9 +411,9 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
   String _statusLabel(String status) {
     switch (status) {
       case 'pending':
-        return 'Vendu — en attente de collecte';
+        return 'Vendu — en attente de la remise';
       case 'collecte':
-        return 'Collecté — en cours de livraison';
+        return 'Remise en main propre en cours';
       case 'completed':
         return 'Reçu';
       default:
