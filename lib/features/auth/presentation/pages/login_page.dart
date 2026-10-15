@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/constants/brand.dart';
+import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
 class LoginPage extends StatefulWidget {
@@ -17,6 +18,10 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  // Quel bouton est en cours de chargement (pas un état global AuthCubit,
+  // qui ne distingue pas l'action) : évite que les deux boutons tournent
+  // en même temps quand un seul a été cliqué.
+  String? _loadingAction; // 'email' | 'google' | null
 
   @override
   void dispose() {
@@ -27,10 +32,18 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _loadingAction = 'email');
     await context.read<AuthCubit>().signIn(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+    if (mounted) setState(() => _loadingAction = null);
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() => _loadingAction = 'google');
+    await context.read<AuthCubit>().signInWithGoogle();
+    if (mounted) setState(() => _loadingAction = null);
   }
 
   @override
@@ -49,7 +62,9 @@ class _LoginPageState extends State<LoginPage> {
         }
       },
       builder: (context, state) {
-        final isLoading = state is AuthLoading;
+        final isAnyLoading = state is AuthLoading;
+        final isEmailLoading = isAnyLoading && _loadingAction == 'email';
+        final isGoogleLoading = isAnyLoading && _loadingAction == 'google';
         return Scaffold(
           body: SafeArea(
             child: SingleChildScrollView(
@@ -220,8 +235,10 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(
                       width: double.infinity,
                       height: 58,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _login,
+                      child: Opacity(
+                        opacity: isAnyLoading && !isEmailLoading ? 0.5 : 1,
+                        child: ElevatedButton(
+                        onPressed: isAnyLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6B7F4D),
                           elevation: 2,
@@ -229,7 +246,7 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: isLoading
+                        child: isEmailLoading
                             ? const CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2)
                             : const Text(
@@ -240,6 +257,7 @@ class _LoginPageState extends State<LoginPage> {
                                   color: Colors.white,
                                 ),
                               ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -279,7 +297,10 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         // Google
                         Expanded(
-                          child: Container(
+                          child: Opacity(
+                            opacity:
+                                isAnyLoading && !isGoogleLoading ? 0.5 : 1,
+                            child: Container(
                             height: 54,
                             decoration: BoxDecoration(
                               color: Theme.of(context)
@@ -299,12 +320,8 @@ class _LoginPageState extends State<LoginPage> {
                               ],
                             ),
                             child: TextButton.icon(
-                              onPressed: isLoading
-                                  ? null
-                                  : () => context
-                                      .read<AuthCubit>()
-                                      .signInWithGoogle(),
-                              icon: isLoading
+                              onPressed: isAnyLoading ? null : _loginWithGoogle,
+                              icon: isGoogleLoading
                                   ? const SizedBox(
                                       width: 18,
                                       height: 18,
@@ -327,10 +344,14 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
+                            ),
                           ),
                         ),
+                        // Facebook — pas configuré (pas de compte Facebook
+                        // Developer), masqué tant que facebookLoginEnabled
+                        // vaut false. Code gardé tel quel, pas supprimé.
+                        if (facebookLoginEnabled) ...[
                         const SizedBox(width: 12),
-                        // Facebook
                         Expanded(
                           child: Container(
                             height: 54,
@@ -379,6 +400,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 28),
