@@ -5,6 +5,7 @@
 // physique ni livreur ayant accès à l'app (cahier des charges v2).
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -498,7 +499,9 @@ class _ReportIssueSheet extends StatefulWidget {
 class _ReportIssueSheetState extends State<_ReportIssueSheet> {
   String _reason = '';
   final _descCtrl = TextEditingController();
-  final List<File> _photos = [];
+  // XFile (pas dart:io.File) : readAsBytes() marche sur le web (lot
+  // "putFile web", 2026-10-15).
+  final List<XFile> _photos = [];
   bool _isSending = false;
 
   final List<String> _reasons = [
@@ -513,7 +516,7 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
     final picker = ImagePicker();
     final picked = await picker.pickMultiImage(imageQuality: 75, limit: 5);
     if (picked.isNotEmpty) {
-      setState(() => _photos.addAll(picked.map((x) => File(x.path))));
+      setState(() => _photos.addAll(picked));
     }
   }
 
@@ -660,7 +663,8 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
     for (int i = 0; i < _photos.length; i++) {
       final ref = storage.ref(
           'non_conformities/$uid/${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
-      await ref.putFile(_photos[i]);
+      final bytes = await _photos[i].readAsBytes();
+      await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
       photoUrls.add(await ref.getDownloadURL());
     }
 
@@ -796,8 +800,11 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
                       separatorBuilder: (_, __) => const SizedBox(width: 6),
                       itemBuilder: (_, i) => ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: Image.file(_photos[i],
-                            width: 64, height: 64, fit: BoxFit.cover),
+                        child: kIsWeb
+                            ? Image.network(_photos[i].path,
+                                width: 64, height: 64, fit: BoxFit.cover)
+                            : Image.file(File(_photos[i].path),
+                                width: 64, height: 64, fit: BoxFit.cover),
                       ),
                     ),
                   ),
