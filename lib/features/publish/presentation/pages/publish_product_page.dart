@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:bamako_thrift/core/constants/feature_flags.dart';
+import 'package:bamako_thrift/core/constants/mali_cities.dart';
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/storage_service.dart';
@@ -32,12 +34,20 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   ProductCategory _selectedCategory = ProductCategory.women;
   ProductCondition _selectedCondition = ProductCondition.bon;
+  // Ville du vendeur, demandée ici seulement si absente de son profil
+  // (lot 6) — enregistrée sur le profil en plus d'être copiée sur
+  // l'article (sellerCity).
+  String? _selectedSellerCity;
   bool _pressingRequested = false;
   // Autoriser les offres de prix sur cet article (lot "offres"). Défaut
   // autorisé, cohérent avec ProductEntity.offersEnabled.
   bool _offersEnabled = true;
 
-  final List<File> _selectedImages = [];
+  // XFile (pas dart:io.File) : readAsBytes() marche sur Android/iOS/web,
+  // contrairement à File qui n'existe pas vraiment sur le web (lot "putFile
+  // web", 2026-10-15 — putFile()/File jetaient UnimplementedError sur le
+  // canal web).
+  final List<XFile> _selectedImages = [];
   bool _isPublishing = false;
   double _uploadProgress = 0.0;
   String _publishStep = '';
@@ -74,7 +84,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
         imageQuality: 75, limit: 5 - _selectedImages.length);
     if (picked.isNotEmpty && mounted) {
       setState(() {
-        _selectedImages.addAll(picked.map((x) => File(x.path)));
+        _selectedImages.addAll(picked);
       });
     }
   }
@@ -90,6 +100,16 @@ class _PublishProductPageState extends State<PublishProductPage> {
       return;
     }
 
+    // Ville obligatoire si absente du profil (lot 6) — le sélecteur n'est
+    // affiché dans le formulaire que dans ce cas précis, voir build().
+    final needsCitySelection = authState.user.city == null;
+    if (needsCitySelection && _selectedSellerCity == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choisis ta ville')),
+      );
+      return;
+    }
+
     setState(() {
       _isPublishing = true;
       _uploadProgress = 0.0;
@@ -100,6 +120,15 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
     try {
       final user = authState.user;
+      final sellerCity = user.city ?? _selectedSellerCity;
+
+      // Vendeur sans ville sur son profil : on l'enregistre aussi là-bas
+      // (pas seulement sur cet article), pour ne plus la redemander la
+      // prochaine fois.
+      if (needsCitySelection && _selectedSellerCity != null) {
+        await context.read<AuthCubit>().updateProfile(city: _selectedSellerCity);
+      }
+
       List<String> imageUrls = [];
 
       if (_selectedImages.isNotEmpty) {
@@ -131,6 +160,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
         sellerId: user.id,
         sellerName: user.fullName,
         sellerAvatarUrl: user.avatarUrl,
+        sellerCity: sellerCity,
         title: _titreController.text.trim(),
         description: _descriptionController.text.trim(),
         price: double.parse(_prixController.text.replaceAll(' ', '')),
@@ -203,6 +233,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthCubit>().state;
+    final sellerHasNoCity =
+        authState is AuthAuthenticated && authState.user.city == null;
+
     return TabRootBackHandler(
       canRedirectHome: !_isPublishing,
       child: Scaffold(
@@ -333,6 +367,25 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           decoration:
                               _inputDeco('Ex: Bleu marine, Rouge, Noir...'),
                         ),
+                        if (sellerHasNoCity) ...[
+                          const SizedBox(height: 18),
+                          _sectionTitle('Ta ville'),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedSellerCity,
+                            decoration: _inputDeco(
+                                'Dans quelle ville te trouves-tu ?'),
+                            items: [
+                              for (final city in maliCities)
+                                DropdownMenuItem(
+                                    value: city, child: Text(city)),
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _selectedSellerCity = v),
+                            validator: (v) =>
+                                v == null ? 'Choisis ta ville' : null,
+                          ),
+                        ],
                         const SizedBox(height: 18),
                         _sectionTitle('Localisation'),
                         const SizedBox(height: 8),
@@ -600,7 +653,12 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           image: DecorationImage(
-                            image: FileImage(file),
+                            // XFile.path est un blob: URL sur le web
+                            // (chargeable via NetworkImage), un vrai chemin
+                            // de fichier sur Android/iOS (FileImage).
+                            image: kIsWeb
+                                ? NetworkImage(file.path) as ImageProvider
+                                : FileImage(File(file.path)),
                             fit: BoxFit.cover,
                           ),
                           border: idx == 0
