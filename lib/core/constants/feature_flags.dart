@@ -14,10 +14,3 @@
 /// règles Firestore associées restent inchangés. Remettre à true pour
 /// réactiver.
 const bool pressingEnabled = false;
-
-/// La connexion Facebook n'est pas configurée (pas de compte Facebook
-/// Developer) : le bouton n'a jamais été branché, juste un TODO affichant
-/// un SnackBar. Masqué tant que false (login_page.dart). Code gardé tel
-/// quel, pas supprimé. Remettre à true une fois Facebook réellement
-/// configuré.
-const bool facebookLoginEnabled = false;

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/constants/brand.dart';
-import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
 class LoginPage extends StatefulWidget {
@@ -348,12 +347,14 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         // Facebook — pas configuré (pas de compte Facebook
-                        // Developer), masqué tant que facebookLoginEnabled
-                        // vaut false. Code gardé tel quel, pas supprimé.
-                        if (facebookLoginEnabled) ...[
+                        // Developer) : visible, mais le clic n'appelle
+                        // personne, juste un message. Pas de spinner, ne
+                        // bloque pas les autres boutons.
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Container(
+                          child: Opacity(
+                            opacity: isAnyLoading ? 0.5 : 1,
+                            child: Container(
                             height: 54,
                             decoration: BoxDecoration(
                               color: Theme.of(context)
@@ -373,17 +374,22 @@ class _LoginPageState extends State<LoginPage> {
                               ],
                             ),
                             child: TextButton.icon(
-                              onPressed: () {
-                                // TODO : Facebook — pas encore configuré
-                                // (nécessite un compte Facebook Developer)
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Connexion Facebook bientôt disponible',
-                                    ),
-                                  ),
-                                );
-                              },
+                              onPressed: isAnyLoading
+                                  ? null
+                                  : () {
+                                      // TODO : Facebook — pas encore
+                                      // configuré (nécessite un compte
+                                      // Facebook Developer). Aucun appel
+                                      // réseau, juste un message.
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'La connexion avec Facebook arrive bientôt. '
+                                            'En attendant, connecte-toi avec ton email ou Google.',
+                                          ),
+                                        ),
+                                      );
+                                    },
                               icon: const Icon(
                                 Icons.facebook,
                                 color: Color(0xFF1877F2),
@@ -398,9 +404,9 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
+                            ),
                           ),
                         ),
-                        ],
                       ],
                     ),
                     const SizedBox(height: 28),
