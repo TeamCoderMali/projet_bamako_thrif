@@ -91,6 +91,7 @@ lcov.info
 
 # ── Firebase CLI (cache local de déploiement) ───────────────────────────────
 .firebase/
+firestore.rules.backup-*
 
 # ── Fastlane ───────────────────────────────────────────────────────────────
 **/fastlane/report.xml
