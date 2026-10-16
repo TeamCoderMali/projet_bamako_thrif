@@ -73,7 +73,9 @@ final GoRouter appRouter = GoRouter(
   debugLogDiagnostics: true,
   initialLocation: RouteNames.splash,
   redirect: (context, state) {
-    // Routes publiques (pas de redirection)
+    // Routes publiques : réservées aux non-connectés, un utilisateur déjà
+    // authentifié qui y arrive est renvoyé à l'accueil (login/register n'ont
+    // pas de sens une fois connecté).
     final publicRoutes = [
       RouteNames.splash,
       RouteNames.login,
@@ -82,16 +84,28 @@ final GoRouter appRouter = GoRouter(
       RouteNames.verifyEmail,
       RouteNames.welcome,
       RouteNames.intro,
-      // Lié depuis l'écran d'inscription (non connecté) en plus des
-      // paramètres (connecté) — doit rester accessible sans compte.
+    ];
+
+    // Routes neutres : accessibles qu'on soit connecté ou pas, jamais de
+    // redirection dans un sens ni dans l'autre. Les conditions d'utilisation
+    // doivent rester lisibles depuis l'inscription (non connecté) ET depuis
+    // les paramètres (connecté) — contrairement à publicRoutes ci-dessus,
+    // un utilisateur connecté n'en est pas chassé (bug du 2026-10-16 :
+    // termsOfService était à tort dans publicRoutes, donc renvoyé à
+    // l'accueil dès qu'on y accédait en étant connecté).
+    final authNeutralRoutes = [
       RouteNames.termsOfService,
     ];
 
     final isPublicRoute = publicRoutes.any((r) =>
         state.matchedLocation == r || state.matchedLocation.startsWith('$r/'));
+    final isAuthNeutralRoute = authNeutralRoutes.any((r) =>
+        state.matchedLocation == r || state.matchedLocation.startsWith('$r/'));
 
     // Le splash gère lui-même la redirection, on ne l'intercepte pas
     if (state.matchedLocation == RouteNames.splash) return null;
+
+    if (isAuthNeutralRoute) return null;
 
     try {
       final authState = context.read<AuthCubit>().state;
