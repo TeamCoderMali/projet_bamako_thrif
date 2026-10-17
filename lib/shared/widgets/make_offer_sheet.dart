@@ -149,11 +149,12 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
       } catch (_) {}
 
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Offre envoyée au vendeur.'),
-            backgroundColor: Color(0xFF6B7F4D),
+          SnackBar(
+            content: const Text('Offre envoyée au vendeur.'),
+            backgroundColor: colorScheme.primary,
           ),
         );
       }
@@ -257,25 +258,25 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
           child: ElevatedButton(
             onPressed: _submitting ? null : _submit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6B7F4D),
+              backgroundColor: colors.primary,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
             child: _submitting
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: colors.onPrimary,
                     ),
                   )
-                : const Text(
+                : Text(
                     'Envoyer l\'offre',
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
+                        color: colors.onPrimary, fontWeight: FontWeight.bold),
                   ),
           ),
         ),
@@ -295,7 +296,7 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
       children: [
         Row(
           children: [
-            Icon(icon, color: const Color(0xFF6B7F4D)),
+            Icon(icon, color: colors.primary),
             const SizedBox(width: 8),
             Text(
               title,

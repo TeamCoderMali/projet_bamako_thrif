@@ -18,38 +18,45 @@ class LoadingService {
       context: context,
       barrierDismissible: false,
       barrierColor: AppColors.overlay,
-      builder: (_) => PopScope(
-        canPop: false,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(
-                  color: AppColors.primary,
-                  strokeWidth: 3,
-                ),
-                if (message != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    message,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      color: AppColors.onSurface,
-                    ),
+      builder: (dialogCtx) {
+        final colorScheme = Theme.of(dialogCtx).colorScheme;
+        // Mode clair strictement inchangé (blanc Material ne correspond à
+        // aucun token exact de la palette claire) : repli explicite en
+        // clair, token du thème en sombre.
+        final isDark = Theme.of(dialogCtx).brightness == Brightness.dark;
+        return PopScope(
+          canPop: false,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    color: colorScheme.primary,
+                    strokeWidth: 3,
                   ),
+                  if (message != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      message,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

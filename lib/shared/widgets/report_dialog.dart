@@ -94,7 +94,7 @@ Future<void> showReportDialog(
                       value: r,
                       groupValue: selectedReason,
                       title: Text(r, style: const TextStyle(fontSize: 14)),
-                      activeColor: const Color(0xFF6B7F4D),
+                      activeColor: Theme.of(sheetCtx).colorScheme.primary,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (v) => setState(() => selectedReason = v),
                     ),
@@ -131,23 +131,24 @@ Future<void> showReportDialog(
                               if (sheetCtx.mounted) Navigator.pop(sheetCtx);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Signalement envoyé, merci.'),
-                                    backgroundColor: Color(0xFF6B7F4D),
+                                  SnackBar(
+                                    content: const Text('Signalement envoyé, merci.'),
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
                                   ),
                                 );
                               }
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B7F4D),
+                        backgroundColor: Theme.of(sheetCtx).colorScheme.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape:
                             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Envoyer le signalement',
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
+                            color: Theme.of(sheetCtx).colorScheme.onPrimary,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -180,7 +181,7 @@ Future<void> _showAlreadyReportedSheet(
           children: [
             Row(
               children: [
-                const Icon(Icons.flag, color: Color(0xFF6B7F4D)),
+                Icon(Icons.flag, color: colors.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Déjà signalé',
