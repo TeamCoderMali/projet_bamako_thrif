@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/constants/brand.dart';
+import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
 class LoginPage extends StatefulWidget {
@@ -294,7 +295,9 @@ class _LoginPageState extends State<LoginPage> {
                     // ── Boutons Google & Facebook ──────────────────────────
                     Row(
                       children: [
-                        // Google
+                        // Google — seul bouton restant tant que
+                        // facebookLoginEnabled est false (voir
+                        // feature_flags.dart) : prend toute la largeur.
                         Expanded(
                           child: Opacity(
                             opacity:
@@ -346,67 +349,69 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-                        // Facebook — pas configuré (pas de compte Facebook
-                        // Developer) : visible, mais le clic n'appelle
-                        // personne, juste un message. Pas de spinner, ne
-                        // bloque pas les autres boutons.
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Opacity(
-                            opacity: isAnyLoading ? 0.5 : 1,
-                            child: Container(
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.outlineVariant,
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                        // Facebook — masqué tant que facebookLoginEnabled
+                        // est false (voir feature_flags.dart, pas de compte
+                        // Facebook Developer configuré). Code gardé intact
+                        // pour réactivation facile, pas supprimé.
+                        if (facebookLoginEnabled) ...[
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Opacity(
+                              opacity: isAnyLoading ? 0.5 : 1,
+                              child: Container(
+                              height: 54,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.outlineVariant,
+                                  width: 1.5,
                                 ),
-                              ],
-                            ),
-                            child: TextButton.icon(
-                              onPressed: isAnyLoading
-                                  ? null
-                                  : () {
-                                      // TODO : Facebook — pas encore
-                                      // configuré (nécessite un compte
-                                      // Facebook Developer). Aucun appel
-                                      // réseau, juste un message.
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'La connexion avec Facebook arrive bientôt. '
-                                            'En attendant, connecte-toi avec ton email ou Google.',
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: TextButton.icon(
+                                onPressed: isAnyLoading
+                                    ? null
+                                    : () {
+                                        // TODO : Facebook — pas encore
+                                        // configuré (nécessite un compte
+                                        // Facebook Developer). Aucun appel
+                                        // réseau, juste un message.
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'La connexion avec Facebook arrive bientôt. '
+                                              'En attendant, connecte-toi avec ton email ou Google.',
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
-                              icon: const Icon(
-                                Icons.facebook,
-                                color: Color(0xFF1877F2),
-                                size: 26,
-                              ),
-                              label: Text(
-                                'Facebook',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
+                                        );
+                                      },
+                                icon: const Icon(
+                                  Icons.facebook,
+                                  color: Color(0xFF1877F2),
+                                  size: 26,
+                                ),
+                                label: Text(
+                                  'Facebook',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
                                 ),
                               ),
-                            ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 28),

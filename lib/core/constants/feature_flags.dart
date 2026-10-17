@@ -14,3 +14,10 @@
 /// règles Firestore associées restent inchangés. Remettre à true pour
 /// réactiver.
 const bool pressingEnabled = false;
+
+/// Le bouton "Se connecter avec Facebook" n'a pas de compte Facebook
+/// Developer configuré derrière (voir login_page.dart) : masqué des écrans
+/// de connexion/inscription avant les tests testeuses du 2026-10-17. Rien
+/// n'est supprimé, juste masqué par ce drapeau. Remettre à true pour
+/// réactiver dès qu'un compte Facebook Developer existe.
+const bool facebookLoginEnabled = false;
