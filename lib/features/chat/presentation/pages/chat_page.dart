@@ -207,7 +207,7 @@ class _ChatPageState extends State<ChatPage> {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: const Color(0xFFD4E4B8),
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               backgroundImage: (_otherAvatarUrl != null &&
                       _otherAvatarUrl!.isNotEmpty)
                   ? CachedNetworkImageProvider(_otherAvatarUrl!)
@@ -217,8 +217,8 @@ class _ChatPageState extends State<ChatPage> {
                       _otherName.isNotEmpty
                           ? _otherName[0].toUpperCase()
                           : '?',
-                      style: const TextStyle(
-                        color: Color(0xFF6B7F4D),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     )
@@ -276,8 +276,9 @@ class _ChatPageState extends State<ChatPage> {
               stream: _chatRepo.watchMessages(widget.chatId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                  return Center(
+                    child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary),
                   );
                 }
                 if (snapshot.hasError) {
@@ -352,12 +353,12 @@ class _ChatPageState extends State<ChatPage> {
                     child: Container(
                       width: 46,
                       height: 46,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF6B7F4D),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
-                      child:
-                          const Icon(Icons.send, color: Colors.white, size: 20),
+                      child: Icon(Icons.send,
+                          color: Theme.of(context).colorScheme.onPrimary, size: 20),
                     ),
                   ),
                 ],
@@ -408,7 +409,7 @@ class _MessageBubble extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isMe
-                ? const Color(0xFF6B7F4D)
+                ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(18),
@@ -432,7 +433,7 @@ class _MessageBubble extends StatelessWidget {
                 message.content,
                 style: TextStyle(
                   color: isMe
-                      ? Colors.white
+                      ? Theme.of(context).colorScheme.onPrimary
                       : Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                   height: 1.4,
@@ -443,7 +444,7 @@ class _MessageBubble extends StatelessWidget {
                 _formatTime(message.createdAt),
                 style: TextStyle(
                   color: isMe
-                      ? Colors.white70
+                      ? Theme.of(context).colorScheme.onPrimary.withOpacity(0.7)
                       : Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 10,
                 ),
@@ -632,8 +633,8 @@ class _OfferMessageBubbleState extends State<_OfferMessageBubble> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.local_offer_outlined,
-                      color: Color(0xFF6B7F4D), size: 18),
+                  Icon(Icons.local_offer_outlined,
+                      color: colors.primary, size: 18),
                   const SizedBox(width: 6),
                   Text(
                     'Offre : ${offer.currentPrice.toStringAsFixed(0)} FCFA',
@@ -667,10 +668,10 @@ class _OfferMessageBubbleState extends State<_OfferMessageBubble> {
                       ElevatedButton(
                         onPressed: () => _act(() => _repo.accept(offer.id)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B7F4D),
+                          backgroundColor: colors.primary,
                         ),
-                        child: const Text('Accepter',
-                            style: TextStyle(color: Colors.white)),
+                        child: Text('Accepter',
+                            style: TextStyle(color: colors.onPrimary)),
                       ),
                       OutlinedButton(
                         onPressed: () => _act(() => _repo.reject(offer.id)),

@@ -38,19 +38,19 @@ class _ChatListPageState extends State<ChatListPage> {
     return TabRootBackHandler(
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFF6B7F4D),
+          backgroundColor: Theme.of(context).colorScheme.primary,
           elevation: 0,
-          title: const Text(
+          title: Text(
             'Messages',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onPrimary,
               fontWeight: FontWeight.bold,
               fontSize: 20,
             ),
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: Colors.white),
+              icon: Icon(Icons.edit_outlined, color: Theme.of(context).colorScheme.onPrimary),
               tooltip: 'Nouveau message',
               onPressed: () => context.push('/messages/new'),
             ),
@@ -64,8 +64,9 @@ class _ChatListPageState extends State<ChatListPage> {
           stream: _chatRepo.watchChats(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+              return Center(
+                child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary),
               );
             }
             if (snapshot.hasError) {
@@ -103,13 +104,13 @@ class _ChatListPageState extends State<ChatListPage> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.chat_bubble_outline,
                         size: 48,
-                        color: Color(0xFF6B7F4D),
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -155,8 +156,10 @@ class _ChatListPageState extends State<ChatListPage> {
                       borderRadius: BorderRadius.circular(16),
                       border: unread > 0
                           ? Border.all(
-                              color:
-                                  const Color(0xFF6B7F4D).withOpacity(0.3),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.3),
                               width: 1.5,
                             )
                           : null,
@@ -174,8 +177,10 @@ class _ChatListPageState extends State<ChatListPage> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color:
-                                const Color(0xFF6B7F4D).withOpacity(0.15),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -183,8 +188,8 @@ class _ChatListPageState extends State<ChatListPage> {
                               otherName.isNotEmpty
                                   ? otherName[0].toUpperCase()
                                   : '?',
-                              style: const TextStyle(
-                                color: Color(0xFF6B7F4D),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
                               ),
@@ -215,7 +220,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                       _formatDate(chat.lastMessageAt!),
                                       style: TextStyle(
                                         color: unread > 0
-                                            ? const Color(0xFF6B7F4D)
+                                            ? Theme.of(context).colorScheme.primary
                                             : Theme.of(context)
                                                 .colorScheme
                                                 .onSurfaceVariant,
@@ -274,14 +279,14 @@ class _ChatListPageState extends State<ChatListPage> {
                                     const SizedBox(width: 6),
                                     Container(
                                       padding: const EdgeInsets.all(5),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFC3653D),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).colorScheme.secondary,
                                         shape: BoxShape.circle,
                                       ),
                                       child: Text(
                                         '$unread',
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSecondary,
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),

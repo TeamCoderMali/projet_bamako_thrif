@@ -154,7 +154,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(wasExisting ? 'Avis modifié, merci !' : 'Avis envoyé, merci !'),
-            backgroundColor: const Color(0xFF6B7F4D),
+            backgroundColor: Theme.of(context).colorScheme.primary,
             duration: const Duration(seconds: 1),
           ),
         );
@@ -196,10 +196,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         if (mounted) {
           setState(() => _isFavorite = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Retiré des favoris'),
-              backgroundColor: Color(0xFF6B7F4D),
-              duration: Duration(seconds: 1),
+            SnackBar(
+              content: const Text('Retiré des favoris'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              duration: const Duration(seconds: 1),
             ),
           );
         }
@@ -211,10 +211,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         if (mounted) {
           setState(() => _isFavorite = true);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ajouté aux favoris ❤️'),
-              backgroundColor: Color(0xFF6B7F4D),
-              duration: Duration(seconds: 1),
+            SnackBar(
+              content: const Text('Ajouté aux favoris ❤️'),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              duration: const Duration(seconds: 1),
             ),
           );
         }
@@ -289,10 +289,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         // Recharge le produit pour afficher la nouvelle moyenne
         context.read<ProductCubit>().loadProductDetail(widget.productId);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Merci pour ta note ⭐'),
-            backgroundColor: Color(0xFF6B7F4D),
-            duration: Duration(seconds: 1),
+          SnackBar(
+            content: const Text('Merci pour ta note ⭐'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            duration: const Duration(seconds: 1),
           ),
         );
       }
@@ -396,7 +396,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('${product.sellerName} a été bloqué.'),
-                      backgroundColor: const Color(0xFF6B7F4D),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                     ),
                   );
                 }
@@ -440,8 +440,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         },
         builder: (context, state) {
           if (state is ProductLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+            return Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.primary),
             );
           }
           if (state is ProductError) {
@@ -459,12 +460,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   const SizedBox(height: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B7F4D)),
+                        backgroundColor: Theme.of(context).colorScheme.primary),
                     onPressed: () => context
                         .read<ProductCubit>()
                         .loadProductDetail(widget.productId),
-                    child: const Text('Réessayer',
-                        style: TextStyle(color: Colors.white)),
+                    child: Text('Réessayer',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary)),
                   ),
                 ],
               ),
@@ -655,25 +657,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           child: ElevatedButton(
                             onPressed: _isCommentSubmitting ? null : _submitComment,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6B7F4D),
+                              backgroundColor: Theme.of(context).colorScheme.primary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                             child: _isCommentSubmitting
-                                ? const SizedBox(
+                                ? SizedBox(
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Colors.white,
+                                      color: Theme.of(context).colorScheme.onPrimary,
                                     ),
                                   )
                                 : Text(
                                     _hasExistingComment
                                         ? 'Modifier mon avis'
                                         : 'Envoyer l\'avis',
-                                    style: const TextStyle(color: Colors.white),
+                                    style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onPrimary),
                                   ),
                           ),
                         ),
@@ -703,10 +706,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 const SizedBox(height: 14),
                 Text(
                   '${product.price.toStringAsFixed(0)} FCFA',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF6B7F4D),
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -741,7 +744,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   child: Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: const Color(0xFF6B7F4D),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         backgroundImage: product.sellerAvatarUrl != null
                             ? CachedNetworkImageProvider(
                                 product.sellerAvatarUrl!)
@@ -751,8 +754,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 product.sellerName.isNotEmpty
                                     ? product.sellerName[0].toUpperCase()
                                     : '?',
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onPrimary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               )
@@ -828,23 +831,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     child: ElevatedButton.icon(
                       onPressed: () => _contactSeller(product),
                       icon: _isContactLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onPrimary,
                               ),
                             )
-                          : const Icon(Icons.chat_bubble_outline,
-                              color: Colors.white, size: 18),
-                      label: const Text(
+                          : Icon(Icons.chat_bubble_outline,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              size: 18),
+                      label: Text(
                         'Contacter le vendeur',
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B7F4D),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -859,20 +864,23 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         child: OutlinedButton.icon(
                           onPressed: () => _contactSeller(product),
                           icon: _isContactLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Color(0xFF6B7F4D),
+                                    color: Theme.of(context).colorScheme.primary,
                                   ),
                                 )
-                              : const Icon(Icons.chat_bubble_outline,
-                                  color: Color(0xFF6B7F4D), size: 18),
-                          label: const Text('Contacter',
-                              style: TextStyle(color: Color(0xFF6B7F4D))),
+                              : Icon(Icons.chat_bubble_outline,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 18),
+                          label: Text('Contacter',
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary)),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF6B7F4D)),
+                            side: BorderSide(
+                                color: Theme.of(context).colorScheme.primary),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -886,16 +894,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           onPressed: () =>
                               context.push('/payment', extra: product),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6B7F4D),
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Je craque',
                             style: TextStyle(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onPrimary,
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -935,13 +943,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             product: product,
             buyer: currentUser,
           ),
-          icon: const Icon(Icons.local_offer_outlined, color: Color(0xFF6B7F4D)),
-          label: const Text(
+          icon: Icon(Icons.local_offer_outlined,
+              color: Theme.of(context).colorScheme.primary),
+          label: Text(
             'Faire une offre',
-            style: TextStyle(color: Color(0xFF6B7F4D), fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold),
           ),
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Color(0xFF6B7F4D)),
+            side: BorderSide(color: Theme.of(context).colorScheme.primary),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -956,8 +967,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     if (product.imageUrls.isEmpty) {
       return Container(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        child: const Center(
-          child: Icon(Icons.checkroom, size: 100, color: Color(0xFF6B7F4D)),
+        child: Center(
+          child: Icon(Icons.checkroom,
+              size: 100, color: Theme.of(context).colorScheme.primary),
         ),
       );
     }
@@ -969,17 +981,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           fit: BoxFit.cover,
           placeholder: (_, __) => Container(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: const Center(
+            child: Center(
               child: CircularProgressIndicator(
-                color: Color(0xFF6B7F4D),
+                color: Theme.of(context).colorScheme.primary,
                 strokeWidth: 2,
               ),
             ),
           ),
           errorWidget: (_, __, ___) => Container(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: const Center(
-              child: Icon(Icons.checkroom, size: 100, color: Color(0xFF6B7F4D)),
+            child: Center(
+              child: Icon(Icons.checkroom,
+                  size: 100, color: Theme.of(context).colorScheme.primary),
             ),
           ),
         );
@@ -1030,12 +1043,12 @@ class _RatingStars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const SizedBox(
+      return SizedBox(
         width: 16,
         height: 16,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          color: Color(0xFF6B7F4D),
+          color: Theme.of(context).colorScheme.primary,
         ),
       );
     }
@@ -1078,12 +1091,12 @@ class _ReviewsList extends StatelessWidget {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Center(
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Color(0xFF6B7F4D),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           );

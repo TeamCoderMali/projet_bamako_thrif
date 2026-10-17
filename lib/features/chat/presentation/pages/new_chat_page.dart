@@ -184,7 +184,8 @@ class _NewChatPageState extends State<NewChatPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                  CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 12),
                   Text('Ouverture de la conversation...',
                       style: TextStyle(
@@ -193,9 +194,9 @@ class _NewChatPageState extends State<NewChatPage> {
               ),
             )
           : _isLoading
-              ? const Center(
+              ? Center(
                   child: CircularProgressIndicator(
-                      color: Color(0xFF6B7F4D)),
+                      color: Theme.of(context).colorScheme.primary),
                 )
               : _filtered.isEmpty
                   ? _buildEmpty()
@@ -265,10 +266,10 @@ class _UserTile extends StatelessWidget {
     return '${name[0][0]}${name[1][0]}'.toUpperCase();
   }
 
-  Color get _roleColor {
+  Color _roleColor(BuildContext context) {
     final role = user['role'] as String? ?? 'buyer';
     switch (role) {
-      case 'seller': return const Color(0xFF6B7F4D);
+      case 'seller': return Theme.of(context).colorScheme.primary;
       case 'admin':  return Colors.purple;
       default:       return Colors.blue;
     }
@@ -305,16 +306,16 @@ class _UserTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                    color: _roleColor.withOpacity(0.3), width: 1.5),
+                    color: _roleColor(context).withOpacity(0.3), width: 1.5),
               ),
               child: ClipOval(
                 child: avatarUrl != null && avatarUrl.isNotEmpty
                     ? CachedNetworkImage(
                         imageUrl: avatarUrl,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => _initialsWidget(),
+                        errorWidget: (_, __, ___) => _initialsWidget(context),
                       )
-                    : _initialsWidget(),
+                    : _initialsWidget(context),
               ),
             ),
             const SizedBox(width: 12),
@@ -346,20 +347,20 @@ class _UserTile extends StatelessWidget {
 
             const SizedBox(width: 8),
             Icon(Icons.chat_bubble_outline,
-                color: _roleColor, size: 18),
+                color: _roleColor(context), size: 18),
           ],
         ),
       ),
     );
   }
 
-  Widget _initialsWidget() => Container(
-        color: const Color(0xFFD4E4B8),
+  Widget _initialsWidget(BuildContext context) => Container(
+        color: Theme.of(context).colorScheme.primaryContainer,
         child: Center(
           child: Text(
             _initials,
-            style: const TextStyle(
-              color: Color(0xFF6B7F4D),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
