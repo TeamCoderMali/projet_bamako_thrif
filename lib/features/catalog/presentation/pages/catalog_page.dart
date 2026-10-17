@@ -145,8 +145,8 @@ class _CatalogPageState extends State<CatalogPage> {
                   child: Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF6B7F4D),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -175,7 +175,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.search, color: Color(0xFF6B7F4D), size: 20),
+                    Icon(Icons.search, color: Theme.of(context).colorScheme.primary, size: 20),
                     const SizedBox(width: 10),
                     Text(
                       'Rechercher un article...',
@@ -210,12 +210,12 @@ class _CatalogPageState extends State<CatalogPage> {
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFF6B7F4D)
+                          ? Theme.of(context).colorScheme.primary
                           : Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected
-                            ? const Color(0xFF6B7F4D)
+                            ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.outlineVariant,
                       ),
                     ),
@@ -225,7 +225,7 @@ class _CatalogPageState extends State<CatalogPage> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: isSelected
-                            ? Colors.white
+                            ? Theme.of(context).colorScheme.onPrimary
                             : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -244,8 +244,8 @@ class _CatalogPageState extends State<CatalogPage> {
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Row(
                 children: [
-                  const Icon(Icons.filter_list,
-                      size: 14, color: Color(0xFF6B7F4D)),
+                  Icon(Icons.filter_list,
+                      size: 14, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 6),
                   if (_filters.condition != null)
                     _Chip(_filters.condition!.label),
@@ -278,8 +278,9 @@ class _CatalogPageState extends State<CatalogPage> {
             child: BlocBuilder<ProductCubit, ProductState>(
               builder: (context, state) {
                 if (state is ProductLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                  return Center(
+                    child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary),
                   );
                 }
                 if (state is ProductError) {
@@ -299,8 +300,9 @@ class _CatalogPageState extends State<CatalogPage> {
                         const SizedBox(height: 12),
                         TextButton(
                           onPressed: _load,
-                          child: const Text('Réessayer',
-                              style: TextStyle(color: Color(0xFF6B7F4D))),
+                          child: Text('Réessayer',
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary)),
                         ),
                       ],
                     ),
@@ -329,8 +331,9 @@ class _CatalogPageState extends State<CatalogPage> {
                             setState(() => _filters = const CatalogFilters());
                             _load();
                           },
-                          child: const Text('Réinitialiser les filtres',
-                              style: TextStyle(color: Color(0xFF6B7F4D))),
+                          child: Text('Réinitialiser les filtres',
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary)),
                         ),
                       ],
                     ),
@@ -338,7 +341,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 }
 
                 return RefreshIndicator(
-                  color: const Color(0xFF6B7F4D),
+                  color: Theme.of(context).colorScheme.primary,
                   onRefresh: () async => _load(),
                   child: GridView.builder(
                     padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
@@ -401,27 +404,30 @@ class _ProductCard extends StatelessWidget {
                           color: Theme.of(context)
                               .colorScheme
                               .surfaceContainerHighest,
-                          child: const Center(
+                          child: Center(
                             child: Icon(Icons.checkroom,
-                                size: 40, color: Color(0xFF6B7F4D)),
+                                size: 40,
+                                color: Theme.of(context).colorScheme.primary),
                           ),
                         ),
                         errorWidget: (_, __, ___) => Container(
                           color: Theme.of(context)
                               .colorScheme
                               .surfaceContainerHighest,
-                          child: const Center(
+                          child: Center(
                             child: Icon(Icons.checkroom,
-                                size: 40, color: Color(0xFF6B7F4D)),
+                                size: 40,
+                                color: Theme.of(context).colorScheme.primary),
                           ),
                         ),
                       )
                     : Container(
                         color:
                             Theme.of(context).colorScheme.surfaceContainerHighest,
-                        child: const Center(
+                        child: Center(
                           child: Icon(Icons.checkroom,
-                              size: 40, color: Color(0xFF6B7F4D)),
+                              size: 40,
+                              color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
               ),
@@ -444,8 +450,8 @@ class _ProductCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     _fmtPrice(product.price),
-                    style: const TextStyle(
-                      color: Color(0xFF6B7F4D),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),

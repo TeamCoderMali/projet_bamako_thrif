@@ -110,9 +110,9 @@ class _HomePageState extends State<HomePage> {
                       state is ProductInitial ||
                       state is ProductDetailLoaded ||
                       state is ProductSearchResult) {
-                    return const Center(
-                      child:
-                          CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                    return Center(
+                      child: CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.primary),
                     );
                   }
                   if (state is ProductError) {
@@ -122,8 +122,9 @@ class _HomePageState extends State<HomePage> {
                     if (state.products.isEmpty) return _buildEmpty(context);
                     return _buildProductGrid(context, state.products);
                   }
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                  return Center(
+                    child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary),
                   );
                 },
               ),
@@ -165,13 +166,13 @@ class _HomePageState extends State<HomePage> {
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(width: 6),
-                      const Text(
+                      Text(
                         'DANAYA',
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
                           fontStyle: FontStyle.italic,
-                          color: Color(0xFF6B7F4D),
+                          color: Theme.of(context).colorScheme.primary,
                           letterSpacing: 1,
                         ),
                       ),
@@ -198,9 +199,9 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.notifications_outlined,
-                    color: Color(0xFF6B7F4D),
+                    color: Theme.of(context).colorScheme.primary,
                     size: 22,
                   ),
                 ),
@@ -222,14 +223,14 @@ class _HomePageState extends State<HomePage> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6B7F4D),
+                        color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
                         child: Text(
                           user?.initials ?? '?',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
@@ -266,7 +267,7 @@ class _HomePageState extends State<HomePage> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.search, color: Color(0xFF6B7F4D), size: 20),
+              Icon(Icons.search, color: Theme.of(context).colorScheme.primary, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -279,12 +280,12 @@ class _HomePageState extends State<HomePage> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.tune,
-                  color: Color(0xFF6B7F4D),
+                  color: Theme.of(context).colorScheme.primary,
                   size: 16,
                 ),
               ),
@@ -319,7 +320,7 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF6B7F4D)
+                    ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
@@ -331,7 +332,7 @@ class _HomePageState extends State<HomePage> {
                 ],
                 border: Border.all(
                   color: isSelected
-                      ? const Color(0xFF6B7F4D)
+                      ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
@@ -339,7 +340,7 @@ class _HomePageState extends State<HomePage> {
                 filter['label'] as String,
                 style: TextStyle(
                   color: isSelected
-                      ? Colors.white
+                      ? Theme.of(context).colorScheme.onPrimary
                       : Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 13,
@@ -354,7 +355,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildProductGrid(BuildContext context, List<ProductEntity> products) {
     return RefreshIndicator(
-      color: const Color(0xFF6B7F4D),
+      color: Theme.of(context).colorScheme.primary,
       onRefresh: () async {
         context
             .read<ProductCubit>()
@@ -385,13 +386,13 @@ class _HomePageState extends State<HomePage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF6B7F4D).withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.checkroom_outlined,
               size: 48,
-              color: Color(0xFF6B7F4D),
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 16),
@@ -414,16 +415,17 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             onPressed: () => context.go(RouteNames.publish),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6B7F4D),
+              backgroundColor: Theme.of(context).colorScheme.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
             ),
-            child: const Text(
+            child: Text(
               'Publier un article',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -445,11 +447,11 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 12),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6B7F4D)),
+                backgroundColor: Theme.of(context).colorScheme.primary),
             onPressed: () =>
                 context.read<ProductCubit>().loadProducts(refresh: true),
-            child:
-                const Text('Réessayer', style: TextStyle(color: Colors.white)),
+            child: Text('Réessayer',
+                style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
           ),
         ],
       ),
@@ -498,9 +500,9 @@ class _ProductCard extends StatelessWidget {
                               color: Theme.of(context)
                                   .colorScheme
                                   .surfaceContainerHighest,
-                              child: const Center(
+                              child: Center(
                                 child: CircularProgressIndicator(
-                                  color: Color(0xFF6B7F4D),
+                                  color: Theme.of(context).colorScheme.primary,
                                   strokeWidth: 2,
                                 ),
                               ),
@@ -509,9 +511,10 @@ class _ProductCard extends StatelessWidget {
                               color: Theme.of(context)
                                   .colorScheme
                                   .surfaceContainerHighest,
-                              child: const Center(
+                              child: Center(
                                 child: Icon(Icons.checkroom,
-                                    size: 48, color: Color(0xFF6B7F4D)),
+                                    size: 48,
+                                    color: Theme.of(context).colorScheme.primary),
                               ),
                             ),
                           )
@@ -519,9 +522,10 @@ class _ProductCard extends StatelessWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .surfaceContainerHighest,
-                            child: const Center(
+                            child: Center(
                               child: Icon(Icons.checkroom,
-                                  size: 48, color: Color(0xFF6B7F4D)),
+                                  size: 48,
+                                  color: Theme.of(context).colorScheme.primary),
                             ),
                           ),
                   ),
@@ -532,14 +536,14 @@ class _ProductCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6B7F4D),
+                        color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         product.condition.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -590,8 +594,8 @@ class _ProductCard extends StatelessWidget {
                     ),
                     Text(
                       '${product.price.toStringAsFixed(0)} FCFA',
-                      style: const TextStyle(
-                        color: Color(0xFF6B7F4D),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),

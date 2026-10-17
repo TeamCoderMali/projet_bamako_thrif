@@ -67,9 +67,10 @@ class _FilterPageState extends State<FilterPage> {
         actions: [
           TextButton(
             onPressed: _reset,
-            child: const Text(
+            child: Text(
               'Réinitialiser',
-              style: TextStyle(color: Color(0xFF6B7F4D), fontSize: 13),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary, fontSize: 13),
             ),
           ),
         ],
@@ -148,7 +149,7 @@ class _FilterPageState extends State<FilterPage> {
               min: 0,
               max: _maxPrice,
               divisions: 100,
-              activeColor: const Color(0xFF6B7F4D),
+              activeColor: Theme.of(context).colorScheme.primary,
               inactiveColor: Theme.of(context).colorScheme.primaryContainer,
               labels: RangeLabels(
                 _fmt(_priceRange.start),
@@ -166,16 +167,16 @@ class _FilterPageState extends State<FilterPage> {
               child: ElevatedButton(
                 onPressed: _apply,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6B7F4D),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Appliquer les filtres',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
@@ -253,12 +254,12 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF6B7F4D)
+              ? Theme.of(context).colorScheme.primary
               : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected
-                ? const Color(0xFF6B7F4D)
+                ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
@@ -268,7 +269,7 @@ class _FilterChip extends StatelessWidget {
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: selected
-                ? Colors.white
+                ? Theme.of(context).colorScheme.onPrimary
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),

@@ -130,16 +130,17 @@ class _SearchPageState extends State<SearchPage> {
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surface,
                 prefixIcon: _isSearching
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
+                    ? Padding(
+                        padding: const EdgeInsets.all(12),
                         child: SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Color(0xFF6B7F4D)),
+                              strokeWidth: 2,
+                              color: Theme.of(context).colorScheme.primary),
                         ),
                       )
-                    : const Icon(Icons.search, color: Color(0xFF6B7F4D)),
+                    : Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
                 suffixIcon: _controller.text.isNotEmpty
                     ? IconButton(
                         icon: Icon(Icons.close,
@@ -168,8 +169,9 @@ class _SearchPageState extends State<SearchPage> {
         body: BlocBuilder<ProductCubit, ProductState>(
           builder: (context, state) {
             if (state is ProductLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+              return Center(
+                child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary),
               );
             }
 
@@ -218,12 +220,12 @@ class _SearchPageState extends State<SearchPage> {
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: _selectedCondition != null
-                                ? const Color(0xFF6B7F4D)
+                                ? Theme.of(context).colorScheme.primary
                                 : Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: _selectedCondition != null
-                                  ? const Color(0xFF6B7F4D)
+                                  ? Theme.of(context).colorScheme.primary
                                   : Theme.of(context).colorScheme.outlineVariant,
                             ),
                           ),
@@ -233,7 +235,7 @@ class _SearchPageState extends State<SearchPage> {
                                 Icons.tune,
                                 size: 14,
                                 color: _selectedCondition != null
-                                    ? Colors.white
+                                    ? Theme.of(context).colorScheme.onPrimary
                                     : Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: 4),
@@ -244,7 +246,7 @@ class _SearchPageState extends State<SearchPage> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: _selectedCondition != null
-                                      ? Colors.white
+                                      ? Theme.of(context).colorScheme.onPrimary
                                       : Theme.of(context)
                                           .colorScheme
                                           .onSurfaceVariant,
@@ -318,11 +320,13 @@ class _SearchPageState extends State<SearchPage> {
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: selected ? const Color(0xFF6B7F4D) : Theme.of(context).colorScheme.surface,
+        color: selected
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: selected
-              ? const Color(0xFF6B7F4D)
+              ? Theme.of(context).colorScheme.primary
               : Theme.of(context).colorScheme.outlineVariant,
         ),
         boxShadow: [
@@ -342,7 +346,7 @@ class _SearchPageState extends State<SearchPage> {
             label,
             style: TextStyle(
               color: selected
-                  ? Colors.white
+                  ? Theme.of(context).colorScheme.onPrimary
                   : Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
               fontWeight: selected ? FontWeight.bold : FontWeight.normal,
@@ -505,7 +509,7 @@ class _SearchPageState extends State<SearchPage> {
                   value: c,
                   groupValue: _selectedCondition,
                   title: Text(c.label),
-                  activeColor: const Color(0xFF6B7F4D),
+                  activeColor: Theme.of(context).colorScheme.primary,
                   onChanged: (v) {
                     setModalState(() => _selectedCondition = v);
                     setState(() => _selectedCondition = v);
@@ -518,7 +522,7 @@ class _SearchPageState extends State<SearchPage> {
                 value: null,
                 groupValue: _selectedCondition,
                 title: const Text('Tous les états'),
-                activeColor: const Color(0xFF6B7F4D),
+                activeColor: Theme.of(context).colorScheme.primary,
                 onChanged: (v) {
                   setModalState(() => _selectedCondition = null);
                   setState(() => _selectedCondition = null);
@@ -575,9 +579,10 @@ class _ProductCard extends StatelessWidget {
                               color: Theme.of(context)
                                   .colorScheme
                                   .surfaceContainerHighest,
-                              child: const Center(
+                              child: Center(
                                 child: CircularProgressIndicator(
-                                    color: Color(0xFF6B7F4D), strokeWidth: 2),
+                                    color: Theme.of(context).colorScheme.primary,
+                                    strokeWidth: 2),
                               ),
                             ),
                             errorWidget: (_, __, ___) => Container(
@@ -606,14 +611,14 @@ class _ProductCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6B7F4D),
+                        color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         product.condition.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -667,8 +672,8 @@ class _ProductCard extends StatelessWidget {
                       children: [
                         Text(
                           '${product.price.toStringAsFixed(0)} FCFA',
-                          style: const TextStyle(
-                            color: Color(0xFF6B7F4D),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
