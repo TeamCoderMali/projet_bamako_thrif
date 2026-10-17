@@ -29,9 +29,9 @@ class VerifyEmailPage extends StatelessWidget {
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.mark_email_read_outlined,
-                  color: Color(0xFF6B7F4D),
+                  color: Theme.of(context).colorScheme.primary,
                   size: 50,
                 ),
               ),
@@ -60,15 +60,15 @@ class VerifyEmailPage extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => context.go(RouteNames.home),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B7F4D),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'J\'ai vérifié mon email',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -78,9 +78,9 @@ class VerifyEmailPage extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {},
-                child: const Text(
+                child: Text(
                   'Renvoyer l\'email',
-                  style: TextStyle(color: Color(0xFFC3653D)),
+                  style: TextStyle(color: Theme.of(context).colorScheme.secondary),
                 ),
               ),
               TextButton(

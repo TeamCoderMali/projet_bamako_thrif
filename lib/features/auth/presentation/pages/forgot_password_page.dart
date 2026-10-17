@@ -16,13 +16,20 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    // Mode clair strictement inchangé : certaines valeurs en dur (blanc pur,
+    // Colors.grey) ne correspondent à aucun token exact de la palette claire
+    // (qui est en beige très clair, pas blanc pur) — on les garde donc telles
+    // quelles en clair, et on bascule sur un token du thème seulement en
+    // sombre (audit mode sombre du 2026-10-17).
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? colorScheme.surface : Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? colorScheme.surface : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
           onPressed: () => context.go(RouteNames.login),
         ),
       ),
@@ -37,39 +44,46 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 width: 70,
                 height: 70,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F4EE),
+                  color: isDark
+                      ? colorScheme.primaryContainer
+                      : const Color(0xFFF7F4EE),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.lock_reset,
-                  color: const Color(0xFF6B7F4D),
+                  color: colorScheme.primary,
                   size: 36,
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Mot de passe oublié ?',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2B2B2B),
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Entre ton email pour recevoir un lien de réinitialisation.',
-                style: TextStyle(color: Colors.grey, height: 1.5),
+                style: TextStyle(
+                  color: isDark ? colorScheme.onSurfaceVariant : Colors.grey,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 40),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: Colors.black87),
+                style: TextStyle(
+                    color: isDark ? colorScheme.onSurface : Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Email ou téléphone',
                   prefixIcon: const Icon(Icons.email_outlined),
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor:
+                      isDark ? colorScheme.surfaceContainerHighest : Colors.grey.shade50,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -122,18 +136,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   .sendPasswordReset(email);
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B7F4D),
+                        backgroundColor: colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2)
-                          : const Text(
+                          ? CircularProgressIndicator(
+                              color: colorScheme.onPrimary, strokeWidth: 2)
+                          : Text(
                               'Envoyer le lien',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: colorScheme.onPrimary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
@@ -146,9 +160,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               Center(
                 child: TextButton(
                   onPressed: () => context.go(RouteNames.login),
-                  child: const Text(
+                  child: Text(
                     'Retour à la connexion',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                        color: isDark ? colorScheme.onSurfaceVariant : Colors.grey),
                   ),
                 ),
               ),

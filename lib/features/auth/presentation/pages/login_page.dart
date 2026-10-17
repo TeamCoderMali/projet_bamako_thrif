@@ -240,21 +240,22 @@ class _LoginPageState extends State<LoginPage> {
                         child: ElevatedButton(
                         onPressed: isAnyLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B7F4D),
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                           elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         child: isEmailLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2)
-                            : const Text(
+                            ? CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                strokeWidth: 2)
+                            : Text(
                                 'Connexion',
                                 style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onPrimary,
                                 ),
                               ),
                         ),
