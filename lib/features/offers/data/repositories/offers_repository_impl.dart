@@ -79,11 +79,18 @@ class OffersRepositoryImpl implements OffersRepository {
   }) async {
     final id = OfferModel.buildId(productId: productId, buyerId: buyerId);
     final docRef = _offersCol.doc(id);
-    final config = await _configService.getConfig();
+
+    // La config et l'état existant sont indépendants (audit lenteurs du
+    // 2026-10-17) : en parallèle plutôt qu'en série.
+    final results = await Future.wait([
+      _configService.getConfig(),
+      docRef.get(),
+    ]);
+    final config = results[0] as OffersConfig;
+    final existing = results[1] as DocumentSnapshot<Map<String, dynamic>>;
+
     final now = DateTime.now();
     final respondBy = now.add(Duration(hours: config.responseDeadlineHours));
-
-    final existing = await docRef.get();
 
     final historyEntry = OfferHistoryEntry(
       round: 1,

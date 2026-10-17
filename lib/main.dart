@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bamako_thrift/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/firebase_options.dart';
@@ -14,6 +16,7 @@ import 'core/constants/app_keys.dart';
 import 'core/dependency_injection/injection.dart';
 import 'core/router/app_router.dart';
 import 'core/services/logger_service.dart';
+import 'core/services/offers_config_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_cubit.dart';
 import 'features/product/presentation/cubit/product_cubit.dart';
@@ -118,6 +121,12 @@ Future<void> main() async {
   // ── Dependency Injection ─────────────────────────────────────────────────
   await configureDependencies();
   logger.info('Dépendances initialisées');
+
+  // Préchauffe le cache du config "offres" (TTL 5 min, voir
+  // OffersConfigService) sans bloquer le démarrage : force un rechargement
+  // frais à chaque lancement de l'app, pour qu'un changement fait par
+  // l'admin ne soit jamais servi depuis un cache plus vieux que le process.
+  unawaited(OffersConfigService.instance.getConfig(forceRefresh: true));
 
   // ── Localisation ─────────────────────────────────────────────────────────
   await initializeDateFormatting('fr_FR', null);

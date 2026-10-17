@@ -145,9 +145,7 @@ class ChatRepositoryImpl implements ChatRepository {
     String? offerId,
   }) async {
     final now = FieldValue.serverTimestamp();
-
-    // Ajouter le message dans la sous-collection
-    final msgRef = await _chatsCol.doc(chatId).collection('message').add({
+    final messageData = {
       'chatId': chatId,
       'senderId': _currentUid,
       'content': content,
@@ -156,22 +154,26 @@ class ChatRepositoryImpl implements ChatRepository {
       'createdAt': now,
       'mediaUrl': mediaUrl,
       'offerId': offerId,
-    });
+    };
 
-    // Mettre à jour le dernier message du chat
-    await _chatsCol.doc(chatId).update({
-      'lastMessage': content,
-      'lastMessageAt': now,
-    });
+    // Ajout du message et mise à jour du dernier message du chat : deux
+    // écritures indépendantes (sur des documents différents), en parallèle
+    // plutôt qu'en série (audit lenteurs du 2026-10-17). La relecture du
+    // message qu'on vient d'écrire a été supprimée : aucun appelant
+    // n'utilisait la valeur de retour au-delà de l'id, et elle coûtait un
+    // aller-retour réseau de plus juste pour résoudre le serverTimestamp.
+    final results = await Future.wait([
+      _chatsCol.doc(chatId).collection('message').add(messageData),
+      _chatsCol.doc(chatId).update({
+        'lastMessage': content,
+        'lastMessageAt': now,
+      }),
+    ]);
+    final msgRef = results[0] as DocumentReference<Map<String, dynamic>>;
 
-    // Retourner le message créé
-    final msgDoc = await msgRef.get();
-    final data = Map<String, dynamic>.from(msgDoc.data()!);
-    if (data['createdAt'] is Timestamp) {
-      data['createdAt'] =
-          (data['createdAt'] as Timestamp).millisecondsSinceEpoch;
-    }
-    return MessageModel.fromFirestore(data, msgRef.id);
+    final localData = Map<String, dynamic>.from(messageData);
+    localData['createdAt'] = DateTime.now().millisecondsSinceEpoch;
+    return MessageModel.fromFirestore(localData, msgRef.id);
   }
 
   // ── Supprimer un message ─────────────────────────────────────────────────

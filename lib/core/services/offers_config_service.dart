@@ -43,29 +43,50 @@ class OffersConfigService {
   OffersConfigService._();
   static final OffersConfigService instance = OffersConfigService._();
 
-  Future<OffersConfig> getConfig() async {
+  // Cache mémoire (audit lenteurs du 2026-10-17) : ce document ne change
+  // quasiment jamais (réglage admin), mais était relu à chaque action sur
+  // une offre (création, relance, accepter, refuser, contre-offre...). TTL
+  // courte plutôt qu'un cache permanent, pour qu'un changement fait par
+  // l'admin dans le back-office finisse par être pris en compte sans
+  // attendre un redémarrage de l'app.
+  static const _ttl = Duration(minutes: 5);
+  OffersConfig? _cached;
+  DateTime? _cachedAt;
+
+  bool get _isCacheFresh =>
+      _cached != null &&
+      _cachedAt != null &&
+      DateTime.now().difference(_cachedAt!) < _ttl;
+
+  Future<OffersConfig> getConfig({bool forceRefresh = false}) async {
+    if (!forceRefresh && _isCacheFresh) return _cached!;
+
     try {
       final snap = await FirebaseFirestore.instance
           .collection('config')
           .doc('offers')
           .get();
       final data = snap.data();
-      if (data == null) return OffersConfig.fallback;
-
-      return OffersConfig(
-        responseDeadlineHours: (data['responseDeadlineHours'] as num?)
-                ?.toInt() ??
-            OffersConfig.fallback.responseDeadlineHours,
-        // Champ absent = illimité (pas de repli numérique ici, c'est le
-        // comportement par défaut voulu).
-        maxOffersPerBuyerPerProduct:
-            (data['maxOffersPerBuyerPerProduct'] as num?)?.toInt(),
-        maxRounds: (data['maxRounds'] as num?)?.toInt(),
-        minOfferRatio: (data['minOfferRatio'] as num?)?.toDouble() ??
-            OffersConfig.fallback.minOfferRatio,
-      );
+      final config = data == null
+          ? OffersConfig.fallback
+          : OffersConfig(
+              responseDeadlineHours: (data['responseDeadlineHours'] as num?)
+                      ?.toInt() ??
+                  OffersConfig.fallback.responseDeadlineHours,
+              // Champ absent = illimité (pas de repli numérique ici, c'est
+              // le comportement par défaut voulu).
+              maxOffersPerBuyerPerProduct:
+                  (data['maxOffersPerBuyerPerProduct'] as num?)?.toInt(),
+              maxRounds: (data['maxRounds'] as num?)?.toInt(),
+              minOfferRatio: (data['minOfferRatio'] as num?)?.toDouble() ??
+                  OffersConfig.fallback.minOfferRatio,
+            );
+      _cached = config;
+      _cachedAt = DateTime.now();
+      return config;
     } catch (_) {
-      return OffersConfig.fallback;
+      // Une lecture ratée ne doit pas écraser un cache valide précédent.
+      return _cached ?? OffersConfig.fallback;
     }
   }
 }

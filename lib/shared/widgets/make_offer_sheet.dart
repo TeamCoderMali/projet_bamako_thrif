@@ -57,15 +57,16 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
   }
 
   Future<void> _load() async {
-    final config = await OffersConfigService.instance.getConfig();
-    final existing = await _repo.getOffer(
-      productId: widget.product.id,
-      buyerId: widget.buyer.id,
-    );
+    // Les deux lectures sont indépendantes (audit lenteurs du 2026-10-17) :
+    // en parallèle plutôt qu'en série.
+    final results = await Future.wait([
+      OffersConfigService.instance.getConfig(),
+      _repo.getOffer(productId: widget.product.id, buyerId: widget.buyer.id),
+    ]);
     if (!mounted) return;
     setState(() {
-      _config = config;
-      _existingOffer = existing;
+      _config = results[0] as OffersConfig;
+      _existingOffer = results[1] as OfferEntity?;
       _loading = false;
     });
   }
