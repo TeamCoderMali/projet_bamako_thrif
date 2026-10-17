@@ -344,6 +344,21 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
   // ── Déconnexion ──────────────────────────────────────────────────────────
   @override
   Future<void> signOut() async {
+    // Nettoie le jeton FCM avant de perdre l'accès à currentUser (sinon on
+    // ne sait plus sur quel doc écrire) : sans ça, un jeton resterait
+    // associé à ce compte sur un appareil partagé après déconnexion, et
+    // d'éventuelles notifications pourraient encore y être envoyées.
+    // Best-effort : jamais bloquant pour la déconnexion elle-même.
+    final uid = _auth.currentUser?.uid;
+    if (uid != null) {
+      try {
+        await _privateDoc(uid).set(
+          {'fcmToken': null},
+          SetOptions(merge: true),
+        );
+      } catch (_) {}
+    }
+
     // Déconnecte aussi de Google si l'utilisateur s'était connecté ainsi
     // (sinon le sélecteur de compte Google réaffiche le même compte
     // automatiquement à la prochaine tentative, sans laisser le choix).
@@ -463,6 +478,7 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     await _privateDoc(uid).set({
       'email': null,
       'phoneNumber': null,
+      'fcmToken': null,
     }, SetOptions(merge: true));
 
     // Compte Firebase Auth réellement supprimé.
