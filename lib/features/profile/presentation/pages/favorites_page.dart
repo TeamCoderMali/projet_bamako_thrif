@@ -164,7 +164,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         : null;
 
                     return GestureDetector(
-                      onTap: () => context.go(
+                      onTap: () => context.push(
                         '/product/${product['productId']}',
                       ),
                       child: Container(

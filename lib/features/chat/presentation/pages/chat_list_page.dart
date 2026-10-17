@@ -52,7 +52,7 @@ class _ChatListPageState extends State<ChatListPage> {
             IconButton(
               icon: const Icon(Icons.edit_outlined, color: Colors.white),
               tooltip: 'Nouveau message',
-              onPressed: () => context.go('/messages/new'),
+              onPressed: () => context.push('/messages/new'),
             ),
           ],
         ),

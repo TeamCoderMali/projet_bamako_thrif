@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/domain/entities/user_entity.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
@@ -132,7 +133,13 @@ class _NewChatPageState extends State<NewChatPage> {
         ),
         leading: IconButton(
           icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
-          onPressed: () => context.pop(),
+          // Garde canPop : cet écran est ouvert via context.push depuis
+          // chat_list_page.dart (voir correctif navigation du 2026-10-17),
+          // mais un push() direct vers cet écran sans la liste en amont
+          // laisserait un pop() nu fermer l'app — filet de sécurité.
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(RouteNames.messages),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(58),
