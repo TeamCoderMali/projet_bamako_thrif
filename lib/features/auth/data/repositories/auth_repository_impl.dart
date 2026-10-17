@@ -505,11 +505,15 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  /// Bloque la suppression si une commande en cours, une offre ouverte ou un
-  /// litige ouvert existe encore pour cet utilisateur (acheteur ou vendeur).
+  /// Bloque la suppression si une commande en cours ou un litige encore
+  /// ouvert existe pour cet utilisateur (acheteur ou vendeur). Une offre en
+  /// attente n'engage personne et ne bloque plus (décision du 2026-10-16).
   Future<void> _assertNoPendingActivity(String uid) async {
-    const blockedMessage =
+    const orderBlockedMessage =
         'Termine tes commandes en cours avant de supprimer ton compte.';
+    const disputeBlockedMessage =
+        'Un litige est encore en cours sur une de tes commandes. '
+        'Attends sa résolution avant de supprimer ton compte.';
 
     // Un seul filtre d'égalité par requête (pas de "where" combiné sur un
     // second champ) : évite de dépendre d'un index composite qui n'existe
@@ -521,7 +525,7 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
         await _firestore.collection('order').where('buyerId', isEqualTo: uid).get();
     if (ordersAsBuyer.docs
         .any((d) => openOrderStatuses.contains(d.data()['status']))) {
-      throw Exception(blockedMessage);
+      throw Exception(orderBlockedMessage);
     }
 
     final ordersAsSeller = await _firestore
@@ -530,40 +534,33 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
         .get();
     if (ordersAsSeller.docs
         .any((d) => openOrderStatuses.contains(d.data()['status']))) {
-      throw Exception(blockedMessage);
+      throw Exception(orderBlockedMessage);
     }
 
-    final offersAsBuyer =
-        await _firestore.collection('offers').where('buyerId', isEqualTo: uid).get();
-    if (offersAsBuyer.docs.any((d) => d.data()['status'] == 'pending')) {
-      throw Exception(blockedMessage);
-    }
-
-    final offersAsSeller = await _firestore
-        .collection('offers')
-        .where('sellerId', isEqualTo: uid)
-        .get();
-    if (offersAsSeller.docs.any((d) => d.data()['status'] == 'pending')) {
-      throw Exception(blockedMessage);
-    }
-
-    // non_conformities n'a pas de statut de clôture consulté par l'app (le
-    // back-office traite les litiges dans une collection "disputes" séparée,
-    // jamais reliée à non_conformities) — on bloque donc dès qu'un
-    // signalement existe pour cet utilisateur, résolu ou non.
+    // Statuts "ouverts" de non_conformities (voir relay-disputes.component.ts
+    // et disputes.component.ts côté back-office, même classification) :
+    // seuls ceux-ci bloquent. Les statuts terminaux (seller_accepted,
+    // buyer_refused_avoir, buyer_refused_refund) ne bloquent plus — le
+    // signalement reste consulté par l'admin/relais, déjà anonymisé
+    // indirectement via users/{uid} (fullName -> "Utilisateur supprimé").
+    const openDisputeStatuses = {'buyer_continue', 'awaiting_seller_acceptance'};
     final disputesAsBuyer = await _firestore
         .collection('non_conformities')
         .where('buyerId', isEqualTo: uid)
-        .limit(1)
         .get();
-    if (disputesAsBuyer.docs.isNotEmpty) throw Exception(blockedMessage);
+    if (disputesAsBuyer.docs
+        .any((d) => openDisputeStatuses.contains(d.data()['status']))) {
+      throw Exception(disputeBlockedMessage);
+    }
 
     final disputesAsSeller = await _firestore
         .collection('non_conformities')
         .where('sellerId', isEqualTo: uid)
-        .limit(1)
         .get();
-    if (disputesAsSeller.docs.isNotEmpty) throw Exception(blockedMessage);
+    if (disputesAsSeller.docs
+        .any((d) => openDisputeStatuses.contains(d.data()['status']))) {
+      throw Exception(disputeBlockedMessage);
+    }
   }
 
   // ── Helpers privés ───────────────────────────────────────────────────────
