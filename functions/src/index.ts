@@ -10,6 +10,13 @@ import { logger } from "firebase-functions/v2";
 
 initializeApp();
 
+// ── Notifications événementielles (nouveau message, nouvelle offre, offre
+// acceptée/refusée) — lot du 2026-10-18, même état que ci-dessous : écrites
+// mais non déployées, en attente du passage à Blaze. ──────────────────────
+export { onNewMessage } from "./notifications/onNewMessage";
+export { onNewOffer } from "./notifications/onNewOffer";
+export { onOfferStatusChange } from "./notifications/onOfferStatusChange";
+
 const INACTIVITY_DAYS = 30;
 const RENOTIFY_COOLDOWN_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
