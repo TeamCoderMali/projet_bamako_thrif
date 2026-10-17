@@ -141,8 +141,20 @@ Future<void> main() async {
           create: (_) =>
               AuthCubit(sl<FirebaseAuthRepositoryImpl>())..checkAuthStatus(),
         ),
+        // Pas de chargement anticipé ici (audit lenteurs du 2026-10-17) :
+        // HomePage déclenche déjà son propre loadProducts(refresh: true)
+        // dans son initState, donc cet appel ne faisait que dupliquer la
+        // même requête Firestore avant même de savoir si l'utilisateur est
+        // connecté ou a déjà vu l'onboarding. Écrans vérifiés : HomePage et
+        // CatalogPage ont chacun leur propre chargement dans initState ;
+        // BrowsePage n'utilise pas ProductCubit ; ProductDetailPage utilise
+        // loadProductDetail (indépendant) ; SearchPage n'a pas de
+        // chargement initial propre pour la recherche vide (dépend d'un
+        // écran précédent déjà chargé — cas normal puisque Home se charge
+        // toujours avant, sauf lien web direct vers /search, cas limite
+        // préexistant signalé à Ali, non corrigé ici).
         BlocProvider<ProductCubit>(
-          create: (_) => sl<ProductCubit>()..loadProducts(refresh: true),
+          create: (_) => sl<ProductCubit>(),
         ),
       ],
       child: const BamakoThriftApp(),
