@@ -236,16 +236,19 @@ class _PublishProductPageState extends State<PublishProductPage> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
+                Icon(Icons.check_circle, color: Theme.of(context).colorScheme.onPrimary),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(_pressingRequested
-                      ? 'Article envoyé au pressing — en cours de vérification !'
-                      : 'Article publié avec succès !'),
+                  child: Text(
+                    _pressingRequested
+                        ? 'Article envoyé au pressing — en cours de vérification !'
+                        : 'Article publié avec succès !',
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                  ),
                 ),
               ],
             ),
-            backgroundColor: const Color(0xFF6B7F4D),
+            backgroundColor: Theme.of(context).colorScheme.primary,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -275,17 +278,19 @@ class _PublishProductPageState extends State<PublishProductPage> {
     return TabRootBackHandler(
       canRedirectHome: !_isPublishing,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F4EE),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
-          backgroundColor: const Color(0xFF6B7F4D),
+          backgroundColor: Theme.of(context).colorScheme.primary,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
             onPressed: _isPublishing ? null : () => context.go(RouteNames.home),
           ),
-          title: const Text(
+          title: Text(
             'Publier un article',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontWeight: FontWeight.bold),
           ),
         ),
         body: Stack(
@@ -310,7 +315,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _titreController,
-                          style: const TextStyle(color: Colors.black87),
+                          style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : Colors.black87),
                           decoration: _inputDeco('Ex: Robe longue bleue Zara'),
                           validator: (v) => (v == null || v.trim().isEmpty)
                               ? 'Le titre est requis'
@@ -328,8 +336,11 @@ class _PublishProductPageState extends State<PublishProductPage> {
                                 return DropdownMenuItem<ProductCategory>(
                                   value: cat['value'] as ProductCategory,
                                   child: Text(cat['label'] as String,
-                                      style: const TextStyle(
-                                          color: Colors.black87)),
+                                      style: TextStyle(
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Theme.of(context).colorScheme.onSurface
+                                              : Colors.black87)),
                                 );
                               }).toList(),
                               onChanged: (v) =>
@@ -347,7 +358,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         TextFormField(
                           controller: _prixController,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(color: Colors.black87),
+                          style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : Colors.black87),
                           decoration: _inputDeco('Ex: 5000').copyWith(
                             suffixText: 'FCFA',
                           ),
@@ -366,7 +380,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         TextFormField(
                           controller: _descriptionController,
                           maxLines: 4,
-                          style: const TextStyle(color: Colors.black87),
+                          style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : Colors.black87),
                           decoration: _inputDeco(
                               'Décris ton article : état, utilisation, taille exacte...'),
                           validator: (v) => (v == null || v.trim().isEmpty)
@@ -382,7 +399,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _marqueController,
-                          style: const TextStyle(color: Colors.black87),
+                          style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : Colors.black87),
                           decoration: _inputDeco('Ex: Zara, Nike, Adidas...'),
                         ),
                         const SizedBox(height: 18),
@@ -390,7 +410,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _tailleController,
-                          style: const TextStyle(color: Colors.black87),
+                          style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : Colors.black87),
                           decoration: _inputDeco('Ex: M, 38, 42...'),
                         ),
                         const SizedBox(height: 18),
@@ -398,7 +421,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _couleurController,
-                          style: const TextStyle(color: Colors.black87),
+                          style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : Colors.black87),
                           decoration:
                               _inputDeco('Ex: Bleu marine, Rouge, Noir...'),
                         ),
@@ -426,7 +452,10 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _localisationController,
-                          style: const TextStyle(color: Colors.black87),
+                          style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onSurface
+                                  : Colors.black87),
                           decoration:
                               _inputDeco('Ex: Bamako, Hamdallaye ACI 2000...'),
                         ),
@@ -447,74 +476,86 @@ class _PublishProductPageState extends State<PublishProductPage> {
                 child: Container(
                   color: Colors.black.withOpacity(0.5),
                   child: Center(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 40),
-                      padding: const EdgeInsets.all(28),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6B7F4D).withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: _uploadProgress >= 1.0
-                                ? const Icon(Icons.check_circle,
-                                    color: Color(0xFF6B7F4D), size: 36)
-                                : const CircularProgressIndicator(
-                                    color: Color(0xFF6B7F4D), strokeWidth: 3),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            _publishStep,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Color(0xFF2B2B2B),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: _uploadProgress,
-                              backgroundColor: Colors.grey.shade200,
-                              color: const Color(0xFF6B7F4D),
-                              minHeight: 8,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${(_uploadProgress * 100).toInt()}%',
-                            style: const TextStyle(
-                              color: Color(0xFF6B7F4D),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          if (_selectedImages.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              '${_selectedImages.length} photo(s)',
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 12),
+                    child: Builder(builder: (context) {
+                      final colorScheme = Theme.of(context).colorScheme;
+                      final isDark =
+                          Theme.of(context).brightness == Brightness.dark;
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 40),
+                        padding: const EdgeInsets.all(28),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? colorScheme.surfaceContainerHighest
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 20,
                             ),
                           ],
-                        ],
-                      ),
-                    ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: _uploadProgress >= 1.0
+                                  ? Icon(Icons.check_circle,
+                                      color: colorScheme.primary, size: 36)
+                                  : CircularProgressIndicator(
+                                      color: colorScheme.primary, strokeWidth: 3),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              _publishStep,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: colorScheme.onSurface,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: _uploadProgress,
+                                backgroundColor: isDark
+                                    ? colorScheme.surfaceContainerHighest
+                                    : Colors.grey.shade200,
+                                color: colorScheme.primary,
+                                minHeight: 8,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${(_uploadProgress * 100).toInt()}%',
+                              style: TextStyle(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (_selectedImages.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                '${_selectedImages.length} photo(s)',
+                                style: TextStyle(
+                                    color: isDark
+                                        ? colorScheme.onSurfaceVariant
+                                        : Colors.grey,
+                                    fontSize: 12),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ),
@@ -526,9 +567,14 @@ class _PublishProductPageState extends State<PublishProductPage> {
             Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest
+                    : Colors.white,
                 border: Border(
-                  top: BorderSide(color: Colors.grey.shade200),
+                  top: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.outlineVariant
+                          : Colors.grey.shade200),
                 ),
               ),
               child: Column(
@@ -540,28 +586,30 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     child: ElevatedButton(
                       onPressed: _isPublishing ? null : _publish,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B7F4D),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         disabledBackgroundColor:
-                            const Color(0xFF6B7F4D).withOpacity(0.5),
+                            Theme.of(context).colorScheme.primary.withOpacity(0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: _isPublishing
-                          ? const CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2)
+                          ? CircularProgressIndicator(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              strokeWidth: 2)
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
+                              children: [
                                 Icon(Icons.rocket_launch_outlined,
-                                    color: Colors.white, size: 20),
-                                SizedBox(width: 8),
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    size: 20),
+                                const SizedBox(width: 8),
                                 Text(
                                   'Je publie',
                                   style: TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                 ),
                               ],
@@ -587,20 +635,24 @@ class _PublishProductPageState extends State<PublishProductPage> {
   }
 
   Widget _buildImagePicker() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         if (_selectedImages.isEmpty)
           GestureDetector(
             onTap: _isPublishing ? null : _pickImages,
             child: CustomPaint(
-              painter: const _DashedBorderPainter(
-                color: Color(0xFF6B7F4D),
+              painter: _DashedBorderPainter(
+                color: colorScheme.primary,
               ),
               child: Container(
                 width: double.infinity,
                 height: 200,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F4EE),
+                  color: isDark
+                      ? colorScheme.primary.withOpacity(0.1)
+                      : const Color(0xFFF7F4EE),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -608,7 +660,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                   children: [
                     Icon(
                       Icons.add_a_photo_outlined,
-                      color: const Color(0xFF6B7F4D).withOpacity(0.6),
+                      color: colorScheme.primary.withOpacity(0.6),
                       size: 32,
                     ),
                     const SizedBox(height: 14),
@@ -616,22 +668,24 @@ class _PublishProductPageState extends State<PublishProductPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 18, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6B7F4D),
+                        color: colorScheme.primary,
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Ajouter photos',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
+                    Text(
                       'Max 5 photos',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(
+                          color: isDark ? colorScheme.onSurfaceVariant : Colors.grey,
+                          fontSize: 12),
                     ),
                   ],
                 ),
@@ -652,22 +706,24 @@ class _PublishProductPageState extends State<PublishProductPage> {
                       height: 100,
                       margin: const EdgeInsets.only(right: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF7F4EE),
+                        color: isDark
+                            ? colorScheme.primary.withOpacity(0.1)
+                            : const Color(0xFFF7F4EE),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFF6B7F4D).withOpacity(0.5),
+                          color: colorScheme.primary.withOpacity(0.5),
                         ),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.add_a_photo,
-                              color: Color(0xFF6B7F4D), size: 28),
+                          Icon(Icons.add_a_photo,
+                              color: colorScheme.primary, size: 28),
                           const SizedBox(height: 4),
                           Text(
                             '${_selectedImages.length}/5',
-                            style: const TextStyle(
-                              color: Color(0xFF6B7F4D),
+                            style: TextStyle(
+                              color: colorScheme.primary,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
@@ -697,8 +753,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                             fit: BoxFit.cover,
                           ),
                           border: idx == 0
-                              ? Border.all(
-                                  color: const Color(0xFF6B7F4D), width: 2.5)
+                              ? Border.all(color: colorScheme.primary, width: 2.5)
                               : null,
                         ),
                       ),
@@ -710,13 +765,13 @@ class _PublishProductPageState extends State<PublishProductPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6B7F4D),
+                              color: colorScheme.primary,
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
+                            child: Text(
                               'Principale',
                               style:
-                                  TextStyle(color: Colors.white, fontSize: 8),
+                                  TextStyle(color: colorScheme.onPrimary, fontSize: 8),
                             ),
                           ),
                         ),
@@ -749,6 +804,8 @@ class _PublishProductPageState extends State<PublishProductPage> {
   }
 
   Widget _buildConditionSelector() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -761,17 +818,22 @@ class _PublishProductPageState extends State<PublishProductPage> {
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF6B7F4D) : Colors.white,
+              color: isSelected
+                  ? colorScheme.primary
+                  : (isDark ? colorScheme.surfaceContainerHighest : Colors.white),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color:
-                    isSelected ? const Color(0xFF6B7F4D) : Colors.grey.shade300,
+                color: isSelected
+                    ? colorScheme.primary
+                    : (isDark ? colorScheme.outlineVariant : Colors.grey.shade300),
               ),
             ),
             child: Text(
               c['label'] as String,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey.shade700,
+                color: isSelected
+                    ? colorScheme.onPrimary
+                    : (isDark ? colorScheme.onSurfaceVariant : Colors.grey.shade700),
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -787,12 +849,13 @@ class _PublishProductPageState extends State<PublishProductPage> {
     String? subtitle,
     required List<Widget> children,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -800,16 +863,20 @@ class _PublishProductPageState extends State<PublishProductPage> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: Color(0xFF2B2B2B),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 4),
             Text(subtitle,
-                style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                style: TextStyle(
+                    color: isDark
+                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        : Colors.grey,
+                    fontSize: 12)),
           ],
           const SizedBox(height: 14),
           ...children,
@@ -820,37 +887,47 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   Widget _sectionTitle(String title) => Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 15,
-            color: Color(0xFF2B2B2B)),
+            color: Theme.of(context).colorScheme.onSurface),
       );
 
-  InputDecoration _inputDeco(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF6B7F4D), width: 1.5),
-        ),
-      );
+  InputDecoration _inputDeco(String hint) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(
+          color: isDark ? colorScheme.onSurfaceVariant : Colors.grey,
+          fontSize: 13),
+      filled: true,
+      fillColor: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+      ),
+    );
+  }
 
-  Widget _dropdownContainer({required Widget child}) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: child,
-      );
+  Widget _dropdownContainer({required Widget child}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Theme.of(context).colorScheme.surfaceContainerHighest
+            : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: child,
+    );
+  }
 
   // ── Option pressing : vérification / remise en état avant publication ────
   // ── Autoriser les offres de prix (lot "offres") ─────────────────────────
@@ -889,7 +966,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
           ),
           Switch(
             value: _offersEnabled,
-            activeThumbColor: const Color(0xFF6B7F4D),
+            activeThumbColor: colors.primary,
             onChanged: (v) => setState(() => _offersEnabled = v),
           ),
         ],
@@ -898,15 +975,17 @@ class _PublishProductPageState extends State<PublishProductPage> {
   }
 
   Widget _buildPressingOption() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _pressingRequested
-              ? const Color(0xFF6B7F4D)
-              : Colors.grey.shade300,
+              ? colorScheme.primary
+              : (isDark ? colorScheme.outlineVariant : Colors.grey.shade300),
         ),
       ),
       child: InkWell(
@@ -918,7 +997,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
           children: [
             Checkbox(
               value: _pressingRequested,
-              activeColor: const Color(0xFF6B7F4D),
+              activeColor: colorScheme.primary,
               onChanged: (v) =>
                   setState(() => _pressingRequested = v ?? false),
             ),
@@ -928,12 +1007,12 @@ class _PublishProductPageState extends State<PublishProductPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Faire vérifier / remettre à neuf mon article via notre partenaire pressing',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
-                        color: Color(0xFF2B2B2B),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -943,7 +1022,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           : 'Optionnel. Ton article reste publié directement, comme aujourd\'hui.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: isDark ? colorScheme.onSurfaceVariant : Colors.grey.shade600,
                       ),
                     ),
                   ],
