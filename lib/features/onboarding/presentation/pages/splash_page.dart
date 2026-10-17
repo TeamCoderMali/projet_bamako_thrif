@@ -39,37 +39,49 @@ class _SplashPageState extends State<SplashPage>
 
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 1500), _checkAuth);
+    _bootstrap();
   }
 
-  Future<void> _checkAuth() async {
+  // Lance la vérification de session en parallèle du délai d'affichage
+  // minimal (1s), au lieu de l'attendre avant de commencer (audit lenteurs
+  // du 2026-10-17 : l'ancien délai fixe de 1,5s retardait le démarrage de
+  // la vérification elle-même, pas seulement la navigation). On navigue
+  // dès que les deux sont terminés — jamais avant 1s, jamais avant que la
+  // session soit résolue.
+  Future<void> _bootstrap() async {
+    final results = await Future.wait([
+      Future<void>.delayed(const Duration(seconds: 1)),
+      _resolveDestination(),
+    ]);
     if (!mounted) return;
+    context.go(results[1] as String);
+  }
 
+  Future<String> _resolveDestination() async {
     // ── Vérifier si c'est la première fois ──────────────────────────────
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
 
     if (!hasSeenOnboarding) {
       await prefs.setBool('has_seen_onboarding', true);
-      if (mounted) context.go(RouteNames.welcome);
-      return;
+      return RouteNames.welcome;
     }
 
     // ── Vérifier l'état auth ─────────────────────────────────────────────
-    if (!mounted) return;
+    if (!mounted) return RouteNames.login;
     final state = context.read<AuthCubit>().state;
     if (state is AuthAuthenticated) {
-      context.go(RouteNames.home);
+      return RouteNames.home;
     } else if (state is AuthLoading || state is AuthInitial) {
-      _listenUntilResolved();
+      return _waitForAuthResolution();
     } else {
-      context.go(RouteNames.login);
+      return RouteNames.login;
     }
   }
 
-  void _listenUntilResolved() {
+  Future<String> _waitForAuthResolution() async {
     final cubit = context.read<AuthCubit>();
-    cubit.stream
+    final state = await cubit.stream
         .firstWhere((s) => s is! AuthLoading && s is! AuthInitial)
         // Filet de sécurité : si AuthCubit ne se résout jamais (ex. appel
         // réseau bloqué en amont), on ne laisse pas le splash tourner à
@@ -77,15 +89,8 @@ class _SplashPageState extends State<SplashPage>
         .timeout(
           const Duration(seconds: 10),
           onTimeout: () => const AuthUnauthenticated(),
-        )
-        .then((state) {
-      if (!mounted) return;
-      if (state is AuthAuthenticated) {
-        context.go(RouteNames.home);
-      } else {
-        context.go(RouteNames.login);
-      }
-    });
+        );
+    return state is AuthAuthenticated ? RouteNames.home : RouteNames.login;
   }
 
   @override
