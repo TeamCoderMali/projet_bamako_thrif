@@ -66,9 +66,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
         actions: [
           TextButton(
             onPressed: () => _notifRepo.markAllAsRead(),
-            child: const Text(
+            child: Text(
               'Tout lire',
-              style: TextStyle(color: Color(0xFF6B7F4D)),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
           ),
         ],
@@ -77,8 +77,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
         stream: _notifRepo.watchNotifications(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+            return Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.primary),
             );
           }
 
@@ -170,10 +171,10 @@ class _RepairValidationSheet extends StatelessWidget {
     if (context.mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content:
-              Text('Montant accepté. L\'équipe procède à la remise en état.'),
-          backgroundColor: Color(0xFF6B7F4D),
+        SnackBar(
+          content: const Text(
+              'Montant accepté. L\'équipe procède à la remise en état.'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     }
@@ -188,10 +189,11 @@ class _RepairValidationSheet extends StatelessWidget {
           .snapshots(),
       builder: (context, snap) {
         if (!snap.hasData || !snap.data!.exists) {
-          return const Padding(
-            padding: EdgeInsets.all(32),
+          return Padding(
+            padding: const EdgeInsets.all(32),
             child: Center(
-                child: CircularProgressIndicator(color: Color(0xFF6B7F4D))),
+                child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary)),
           );
         }
 
@@ -253,10 +255,10 @@ class _RepairValidationSheet extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       _fmt(repairCost),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF6B7F4D),
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     if (deadline != null && !alreadyAccepted) ...[
@@ -298,15 +300,16 @@ class _RepairValidationSheet extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => _accept(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6B7F4D),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Accepter',
                       style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -337,12 +340,12 @@ class _NotifCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: notification.isRead
               ? Theme.of(context).colorScheme.surface
-              : const Color(0xFF6B7F4D).withOpacity(0.05),
+              : Theme.of(context).colorScheme.primary.withOpacity(0.05),
           borderRadius: BorderRadius.circular(16),
           border: notification.isRead
               ? null
               : Border.all(
-                  color: const Color(0xFF6B7F4D).withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 ),
           boxShadow: [
             BoxShadow(
@@ -410,8 +413,8 @@ class _NotifCard extends StatelessWidget {
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF6B7F4D),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
                             shape: BoxShape.circle,
                           ),
                         ),

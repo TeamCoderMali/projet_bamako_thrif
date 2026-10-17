@@ -182,18 +182,18 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                       height: 54,
                       child: ElevatedButton.icon(
                         onPressed: () => context.push(RouteNames.orders),
-                        icon:
-                            const Icon(Icons.receipt_long, color: Colors.white),
-                        label: const Text(
+                        icon: Icon(Icons.receipt_long,
+                            color: Theme.of(context).colorScheme.onPrimary),
+                        label: Text(
                           'Suivre ma commande',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B7F4D),
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -209,16 +209,16 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                       child: OutlinedButton(
                         onPressed: () => context.go(RouteNames.home),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                              color: Color(0xFF6B7F4D), width: 1.5),
+                          side: BorderSide(
+                              color: Theme.of(context).colorScheme.primary, width: 1.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Retour à l\'accueil',
                           style: TextStyle(
-                            color: Color(0xFF6B7F4D),
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -268,11 +268,12 @@ class _StepRow extends StatelessWidget {
           Container(
             width: 20,
             height: 20,
-            decoration: const BoxDecoration(
-              color: Color(0xFF6B7F4D),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check, color: Colors.white, size: 13),
+            child: Icon(Icons.check,
+                color: Theme.of(context).colorScheme.onPrimary, size: 13),
           )
         else
           Container(

@@ -155,10 +155,10 @@ class _PaymentPageState extends State<PaymentPage> {
   @override
   Widget build(BuildContext context) {
     if (_paymentEnabled != true) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF7F4EE),
+      return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
         ),
       );
     }
@@ -166,21 +166,26 @@ class _PaymentPageState extends State<PaymentPage> {
     final product = widget.product;
     final price = product?.price ?? 0.0;
     final fmtPrice = _fmt(price);
+    final colorScheme = Theme.of(context).colorScheme;
+    // Mode clair strictement inchangé (black87/blanc Material ne correspondent
+    // à aucun token exact de la palette claire) : repli explicite en clair,
+    // token du thème en sombre (même motif que order_tracking_page.dart).
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
+        backgroundColor: colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(RouteNames.home),
         ),
-        title: const Text(
+        title: Text(
           'Paiement',
           style: TextStyle(
-            color: Colors.white,
+            color: colorScheme.onPrimary,
             fontWeight: FontWeight.w700,
             fontSize: 17,
           ),
@@ -222,21 +227,21 @@ class _PaymentPageState extends State<PaymentPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Récapitulatif',
                     style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
-                        color: Colors.black87),
+                        color: isDark ? colorScheme.onSurface : Colors.black87),
                   ),
                   const SizedBox(height: 12),
                   if (product != null) ...[
                     Text(
                       product.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87),
+                          color: isDark ? colorScheme.onSurface : Colors.black87),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -245,13 +250,15 @@ class _PaymentPageState extends State<PaymentPage> {
                         if (product.size != null) 'Taille ${product.size}',
                         product.condition.label,
                       ].join(' · '),
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(
+                          color: isDark ? colorScheme.onSurfaceVariant : Colors.grey,
+                          fontSize: 12),
                     ),
                   ] else
-                    const Text('Article',
+                    Text('Article',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87)),
+                            color: isDark ? colorScheme.onSurface : Colors.black87)),
                   const Divider(height: 20),
                   _PriceLine(label: 'Prix', value: fmtPrice),
                   const SizedBox(height: 6),
@@ -264,17 +271,17 @@ class _PaymentPageState extends State<PaymentPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Total',
+                      Text('Total',
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: Colors.black87)),
+                              color: isDark ? colorScheme.onSurface : Colors.black87)),
                       Text(
                         _fmt(price + 1000),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
-                          color: Color(0xFF6B7F4D),
+                          color: colorScheme.primary,
                         ),
                       ),
                     ],
@@ -311,12 +318,12 @@ class _PaymentPageState extends State<PaymentPage> {
             const SizedBox(height: 16),
 
             // ── Moyens de paiement ─────────────────────────────────────────
-            const Text(
+            Text(
               'Moyen de paiement',
               style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
-                  color: Colors.black87),
+                  color: isDark ? colorScheme.onSurface : Colors.black87),
             ),
             const SizedBox(height: 10),
 
@@ -364,25 +371,28 @@ class _PaymentPageState extends State<PaymentPage> {
 
             // ── Saisie selon le moyen ──────────────────────────────────────
             if (_method == 'orange_money' || _method == 'moov_money') ...[
-              const Text('Numéro de téléphone',
+              Text('Numéro de téléphone',
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
-                      color: Colors.black87)),
+                      color: isDark ? colorScheme.onSurface : Colors.black87)),
               const SizedBox(height: 8),
               _SectionCard(
                 child: TextField(
                   controller: _phoneCtrl,
-                  style: const TextStyle(color: Colors.black87),
+                  style: TextStyle(
+                      color: isDark ? colorScheme.onSurface : Colors.black87),
                   keyboardType: TextInputType.phone,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   maxLength: 8,
                   decoration: InputDecoration(
                     hintText: '70 12 34 56',
-                    hintStyle: const TextStyle(color: Colors.grey),
+                    hintStyle: TextStyle(
+                        color: isDark ? colorScheme.onSurfaceVariant : Colors.grey),
                     prefixText: '+223  ',
-                    prefixStyle: const TextStyle(
-                        color: Colors.black87, fontWeight: FontWeight.w600),
+                    prefixStyle: TextStyle(
+                        color: isDark ? colorScheme.onSurface : Colors.black87,
+                        fontWeight: FontWeight.w600),
                     counterText: '',
                     filled: false,
                     border: InputBorder.none,
@@ -396,7 +406,9 @@ class _PaymentPageState extends State<PaymentPage> {
                 _method == 'orange_money'
                     ? 'Un message de confirmation te sera envoyé via Orange Money'
                     : 'Un message de confirmation te sera envoyé via Moov Money',
-                style: const TextStyle(color: Colors.grey, fontSize: 11),
+                style: TextStyle(
+                    color: isDark ? colorScheme.onSurfaceVariant : Colors.grey,
+                    fontSize: 11),
               ),
             ],
 
@@ -407,10 +419,12 @@ class _PaymentPageState extends State<PaymentPage> {
                     const Icon(Icons.qr_code_2,
                         size: 72, color: Color(0xFF1BB3F0)),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Ouvrez l\'app Wave et scannez le QR code',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(
+                          color: isDark ? colorScheme.onSurfaceVariant : Colors.grey,
+                          fontSize: 12),
                     ),
                   ],
                 ),
@@ -423,7 +437,8 @@ class _PaymentPageState extends State<PaymentPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
-                      style: const TextStyle(color: Colors.black87),
+                      style: TextStyle(
+                          color: isDark ? colorScheme.onSurface : Colors.black87),
                       decoration: const InputDecoration(
                         hintText: 'Numéro de carte',
                         filled: false,
@@ -440,7 +455,8 @@ class _PaymentPageState extends State<PaymentPage> {
                       children: [
                         Expanded(
                           child: TextField(
-                            style: const TextStyle(color: Colors.black87),
+                            style: TextStyle(
+                                color: isDark ? colorScheme.onSurface : Colors.black87),
                             decoration: const InputDecoration(
                               hintText: 'MM/AA',
                               filled: false,
@@ -454,7 +470,8 @@ class _PaymentPageState extends State<PaymentPage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
-                            style: const TextStyle(color: Colors.black87),
+                            style: TextStyle(
+                                color: isDark ? colorScheme.onSurface : Colors.black87),
                             decoration: const InputDecoration(
                               hintText: 'CVV',
                               filled: false,
@@ -482,27 +499,26 @@ class _PaymentPageState extends State<PaymentPage> {
               child: ElevatedButton(
                 onPressed: _isProcessing ? null : _pay,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6B7F4D),
-                  disabledBackgroundColor:
-                      const Color(0xFF6B7F4D).withOpacity(0.55),
+                  backgroundColor: colorScheme.primary,
+                  disabledBackgroundColor: colorScheme.primary.withOpacity(0.55),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 2,
                 ),
                 child: _isProcessing
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           strokeWidth: 2.5,
                         ),
                       )
                     : Text(
                         'Payer ${_fmt(price + 1000)}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colorScheme.onPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -541,7 +557,9 @@ class _SectionCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).colorScheme.surfaceContainerHighest
+              : Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -562,17 +580,24 @@ class _PriceLine extends StatelessWidget {
   const _PriceLine({required this.label, required this.value, this.valueColor});
 
   @override
-  Widget build(BuildContext context) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Text(value,
-              style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: valueColor ?? Colors.black87)),
-        ],
-      );
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: TextStyle(
+                color: isDark ? onSurfaceVariant : Colors.grey, fontSize: 13)),
+        Text(value,
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: valueColor ?? (isDark ? onSurface : Colors.black87))),
+      ],
+    );
+  }
 }
 
 class _MethodTile extends StatelessWidget {
@@ -597,16 +622,20 @@ class _MethodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = selected == value;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () => onTap(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? accentColor : Colors.grey.shade200,
+            color: isSelected
+                ? accentColor
+                : (isDark ? colorScheme.outlineVariant : Colors.grey.shade200),
             width: isSelected ? 1.8 : 1,
           ),
           boxShadow: isSelected
@@ -644,12 +673,16 @@ class _MethodTile extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
-                      color: isSelected ? accentColor : Colors.black87,
+                      color: isSelected
+                          ? accentColor
+                          : (isDark ? colorScheme.onSurface : Colors.black87),
                     ),
                   ),
                   Text(
                     detail,
-                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                    style: TextStyle(
+                        color: isDark ? colorScheme.onSurfaceVariant : Colors.grey,
+                        fontSize: 11),
                   ),
                 ],
               ),
@@ -660,7 +693,9 @@ class _MethodTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? accentColor : Colors.grey.shade300,
+                  color: isSelected
+                      ? accentColor
+                      : (isDark ? colorScheme.outlineVariant : Colors.grey.shade300),
                   width: 2,
                 ),
                 color: isSelected ? accentColor : Colors.transparent,

@@ -80,22 +80,24 @@ class OrdersPage extends StatelessWidget {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(RouteNames.home),
         ),
-        title: const Text(
+        title: Text(
           'Mes commandes',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.bold),
         ),
       ),
       body: uid.isEmpty
-          ? _buildEmpty('Connecte-toi pour voir tes commandes')
+          ? _buildEmpty(context, 'Connecte-toi pour voir tes commandes')
           : StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('order')
@@ -104,16 +106,17 @@ class OrdersPage extends StatelessWidget {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                  return Center(
+                    child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary),
                   );
                 }
                 if (snapshot.hasError) {
-                  return _buildEmpty('Erreur : ${snapshot.error}');
+                  return _buildEmpty(context, 'Erreur : ${snapshot.error}');
                 }
                 final docs = snapshot.data?.docs ?? [];
                 if (docs.isEmpty) {
-                  return _buildEmpty('Aucune commande pour l\'instant');
+                  return _buildEmpty(context, 'Aucune commande pour l\'instant');
                 }
 
                 return ListView.builder(
@@ -134,7 +137,9 @@ class OrdersPage extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Theme.of(context).colorScheme.surfaceContainerHighest
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -150,11 +155,11 @@ class OrdersPage extends StatelessWidget {
                               width: 52,
                               height: 52,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.checkroom,
-                                  color: Color(0xFF6B7F4D), size: 26),
+                              child: Icon(Icons.checkroom,
+                                  color: Theme.of(context).colorScheme.primary, size: 26),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -163,10 +168,10 @@ class OrdersPage extends StatelessWidget {
                                 children: [
                                   Text(
                                     productTitle,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
-                                      color: Color(0xFF2B2B2B),
+                                      color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -176,8 +181,8 @@ class OrdersPage extends StatelessWidget {
                                     children: [
                                       Text(
                                         _formatPrice(price),
-                                        style: const TextStyle(
-                                          color: Color(0xFF6B7F4D),
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.primary,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
                                         ),
@@ -233,7 +238,7 @@ class OrdersPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEmpty(String msg) {
+  Widget _buildEmpty(BuildContext context, String msg) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -241,11 +246,11 @@ class OrdersPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF6B7F4D).withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.receipt_long_outlined,
-                size: 48, color: Color(0xFF6B7F4D)),
+            child: Icon(Icons.receipt_long_outlined,
+                size: 48, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(height: 16),
           Text(

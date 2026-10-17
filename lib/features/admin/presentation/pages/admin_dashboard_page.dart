@@ -7,19 +7,24 @@ class AdminDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    // Mode clair strictement inchangé (blanc/gris Material ne correspondent
+    // à aucun token exact de la palette claire) : repli explicite en clair,
+    // token du thème en sombre.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: isDark ? colorScheme.surface : Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? colorScheme.surface : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(RouteNames.home),
         ),
-        title: const Text(
+        title: Text(
           'Dashboard Admin',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
@@ -28,12 +33,12 @@ class AdminDashboardPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Stats du jour
-            const Text(
+            Text(
               'Aujourd\'hui',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Color(0xFF2B2B2B)),
+                  color: colorScheme.onSurface),
             ),
             const SizedBox(height: 12),
             GridView.count(
@@ -44,51 +49,55 @@ class AdminDashboardPage extends StatelessWidget {
               mainAxisSpacing: 12,
               childAspectRatio: 1.5,
               children: [
-                _buildStat('Ventes', '12', const Color(0xFF6B7F4D), Icons.sell),
+                _buildStat(context, 'Ventes', '12', colorScheme.primary, Icons.sell),
                 _buildStat(
-                    'Revenus', '12 000 FCFA', Colors.green, Icons.payments),
-                _buildStat('En cours', '5', Colors.blue, Icons.pending),
-                _buildStat('Nouveaux', '8', Colors.purple, Icons.person_add),
+                    context, 'Revenus', '12 000 FCFA', Colors.green, Icons.payments),
+                _buildStat(context, 'En cours', '5', Colors.blue, Icons.pending),
+                _buildStat(context, 'Nouveaux', '8', Colors.purple, Icons.person_add),
               ],
             ),
 
             const SizedBox(height: 24),
 
             // Actions rapides
-            const Text(
+            Text(
               'Actions rapides',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Color(0xFF2B2B2B)),
+                  color: colorScheme.onSurface),
             ),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 children: [
                   _buildAction(
+                    context,
                     Icons.inventory_2_outlined,
                     'Gérer les articles',
                     'Valider, modifier, inspecter',
-                    const Color(0xFF6B7F4D),
+                    colorScheme.primary,
                   ),
                   _buildAction(
+                    context,
                     Icons.people_outline,
                     'Gérer les utilisateurs',
                     'Historique, sanctions',
                     Colors.blue,
                   ),
                   _buildAction(
+                    context,
                     Icons.account_balance_wallet_outlined,
                     'Gestion financière',
                     'Avoirs, remboursements',
                     Colors.green,
                   ),
                   _buildAction(
+                    context,
                     Icons.warning_amber_outlined,
                     'Gérer les litiges',
                     'Historique des conflits',
@@ -101,31 +110,34 @@ class AdminDashboardPage extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Commandes en attente
-            const Text(
+            Text(
               'Commandes en attente',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Color(0xFF2B2B2B)),
+                  color: colorScheme.onSurface),
             ),
             const SizedBox(height: 12),
             _buildCommande(
-                'Nike Air Max 270', 'Dépôt attendu', const Color(0xFF6B7F4D)),
+                context, 'Nike Air Max 270', 'Dépôt attendu', colorScheme.primary),
             _buildCommande(
-                'Robe longue bleue', 'Inspection en cours', Colors.blue),
+                context, 'Robe longue bleue', 'Inspection en cours', Colors.blue),
             _buildCommande(
-                'Sac à main', 'Disponible — non récupéré', Colors.red),
+                context, 'Sac à main', 'Disponible — non récupéré', Colors.red),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStat(String label, String value, Color color, IconData icon) {
+  Widget _buildStat(
+      BuildContext context, String label, String value, Color color, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -143,7 +155,9 @@ class AdminDashboardPage extends StatelessWidget {
           ),
           Text(
             label,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: TextStyle(
+                color: isDark ? colorScheme.onSurfaceVariant : Colors.grey,
+                fontSize: 12),
           ),
         ],
       ),
@@ -151,11 +165,14 @@ class AdminDashboardPage extends StatelessWidget {
   }
 
   Widget _buildAction(
+    BuildContext context,
     IconData icon,
     String title,
     String subtitle,
     Color color,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       leading: Container(
         width: 44,
@@ -167,29 +184,34 @@ class AdminDashboardPage extends StatelessWidget {
         child: Icon(icon, color: color, size: 22),
       ),
       title: Text(title,
-          style: const TextStyle(
-              fontWeight: FontWeight.bold, color: Color(0xFF2B2B2B))),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
       subtitle: Text(subtitle,
-          style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          style: TextStyle(
+              fontSize: 12,
+              color: isDark ? colorScheme.onSurfaceVariant : Colors.grey)),
+      trailing: Icon(Icons.chevron_right,
+          color: isDark ? colorScheme.onSurfaceVariant : Colors.grey),
       onTap: () {},
     );
   }
 
-  Widget _buildCommande(String titre, String statut, Color color) {
+  Widget _buildCommande(BuildContext context, String titre, String statut, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(titre,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, color: Color(0xFF2B2B2B))),
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(

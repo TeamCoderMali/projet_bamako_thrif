@@ -50,9 +50,9 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Article marqué comme collecté'),
-            backgroundColor: Color(0xFF6B7F4D),
+          SnackBar(
+            content: const Text('Article marqué comme collecté'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -115,9 +115,9 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Réception confirmée. Merci !'),
-            backgroundColor: Color(0xFF6B7F4D),
+          SnackBar(
+            content: const Text('Réception confirmée. Merci !'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -168,9 +168,9 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
     );
     if (result == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Signalement envoyé'),
-          backgroundColor: Color(0xFF6B7F4D),
+        SnackBar(
+          content: const Text('Signalement envoyé'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     }
@@ -179,21 +179,26 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
+    final colorScheme = Theme.of(context).colorScheme;
+    // Mode clair strictement inchangé (blanc/gris Material ne correspondent
+    // à aucun token exact de la palette claire, qui est en beige) : repli
+    // sur les valeurs claires exactes en clair, token du thème en sombre.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: isDark ? colorScheme.surface : Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? colorScheme.surface : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
           onPressed: () => context.canPop()
               ? context.pop()
               : context.push(RouteNames.orders),
         ),
-        title: const Text(
+        title: Text(
           'Remise de l\'article',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold),
         ),
       ),
       body: StreamBuilder<DocumentSnapshot>(
@@ -203,8 +208,8 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
             .snapshots(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+            return Center(
+              child: CircularProgressIndicator(color: colorScheme.primary),
             );
           }
           if (!snap.hasData || !snap.data!.exists) {
@@ -238,7 +243,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -247,7 +252,9 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF7F4EE),
+                          color: isDark
+                              ? colorScheme.primary.withOpacity(0.15)
+                              : const Color(0xFFF7F4EE),
                           borderRadius: BorderRadius.circular(12),
                           image: productImageUrl != null
                               ? DecorationImage(
@@ -256,8 +263,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                               : null,
                         ),
                         child: productImageUrl == null
-                            ? const Icon(Icons.checkroom,
-                                color: Color(0xFF6B7F4D))
+                            ? Icon(Icons.checkroom, color: colorScheme.primary)
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -267,14 +273,14 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                           children: [
                             Text(
                               productTitle,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2B2B2B)),
+                                  color: colorScheme.onSurface),
                             ),
                             Text(
                               _fmtPrice(totalAmount),
-                              style: const TextStyle(
-                                color: Color(0xFF6B7F4D),
+                              style: TextStyle(
+                                color: colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -321,13 +327,13 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                     ),
                   )
                 else ...[
-                  _buildStep('Vendu', 'Paiement reçu',
+                  _buildStep(context, 'Vendu', 'Paiement reçu',
                       done: true, active: status == 'pending'),
-                  _buildStep('Remis en main propre',
+                  _buildStep(context, 'Remis en main propre',
                       'Tu as remis l\'article à l\'acheteur',
                       done: status == 'collecte' || status == 'completed',
                       active: status == 'pending'),
-                  _buildStep('Reçu', 'L\'acheteur a confirmé la réception',
+                  _buildStep(context, 'Reçu', 'L\'acheteur a confirmé la réception',
                       done: status == 'completed',
                       active: status == 'collecte',
                       isLast: true),
@@ -343,12 +349,12 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                       height: 52,
                       child: ElevatedButton.icon(
                         onPressed: _isSubmitting ? null : _markCollected,
-                        icon: const Icon(Icons.inventory_2_outlined,
-                            color: Colors.white),
-                        label: const Text('Marquer comme remis',
-                            style: TextStyle(color: Colors.white)),
+                        icon: Icon(Icons.inventory_2_outlined,
+                            color: colorScheme.onPrimary),
+                        label: Text('Marquer comme remis',
+                            style: TextStyle(color: colorScheme.onPrimary)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B7F4D),
+                          backgroundColor: colorScheme.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -363,12 +369,12 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                       child: ElevatedButton.icon(
                         onPressed:
                             _isSubmitting ? null : () => _confirmReceipt(data),
-                        icon: const Icon(Icons.check_circle_outline,
-                            color: Colors.white),
-                        label: const Text('Confirmer réception',
-                            style: TextStyle(color: Colors.white)),
+                        icon: Icon(Icons.check_circle_outline,
+                            color: colorScheme.onPrimary),
+                        label: Text('Confirmer réception',
+                            style: TextStyle(color: colorScheme.onPrimary)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B7F4D),
+                          backgroundColor: colorScheme.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -424,8 +430,10 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
     }
   }
 
-  Widget _buildStep(String title, String subtitle,
+  Widget _buildStep(BuildContext context, String title, String subtitle,
       {required bool done, required bool active, bool isLast = false}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -436,15 +444,17 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
               height: 28,
               decoration: BoxDecoration(
                 color: done
-                    ? const Color(0xFF6B7F4D)
+                    ? colorScheme.primary
                     : active
-                        ? const Color(0xFFD4E4B8)
-                        : Colors.grey.shade200,
+                        ? colorScheme.primaryContainer
+                        : (isDark
+                            ? colorScheme.surfaceContainerHighest
+                            : Colors.grey.shade200),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 done ? Icons.check : Icons.circle,
-                color: Colors.white,
+                color: colorScheme.onPrimary,
                 size: 16,
               ),
             ),
@@ -452,7 +462,11 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
               Container(
                 width: 2,
                 height: 40,
-                color: done ? const Color(0xFF6B7F4D) : Colors.grey.shade200,
+                color: done
+                    ? colorScheme.primary
+                    : (isDark
+                        ? colorScheme.surfaceContainerHighest
+                        : Colors.grey.shade200),
               ),
           ],
         ),
@@ -467,12 +481,16 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
                   title,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: done ? Colors.black : Colors.grey,
+                    color: done
+                        ? colorScheme.onSurface
+                        : (isDark ? colorScheme.onSurfaceVariant : Colors.grey),
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  style: TextStyle(
+                      color: isDark ? colorScheme.onSurfaceVariant : Colors.grey,
+                      fontSize: 12),
                 ),
               ],
             ),
@@ -553,15 +571,15 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, 'avoir'),
-            child: const Text('Avoir (3 mois)',
-                style: TextStyle(color: Color(0xFF6B7F4D))),
+            child: Text('Avoir (3 mois)',
+                style: TextStyle(color: Theme.of(ctx).colorScheme.primary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6B7F4D)),
+                backgroundColor: Theme.of(ctx).colorScheme.primary),
             onPressed: () => Navigator.pop(ctx, 'remboursement'),
-            child: const Text('Remboursement',
-                style: TextStyle(color: Colors.white)),
+            child: Text('Remboursement',
+                style: TextStyle(color: Theme.of(ctx).colorScheme.onPrimary)),
           ),
         ],
       ),
@@ -741,23 +759,29 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
               runSpacing: 8,
               children: _reasons.map((r) {
                 final selected = _reason == r;
+                final colorScheme = Theme.of(context).colorScheme;
+                final isDark = Theme.of(context).brightness == Brightness.dark;
                 return GestureDetector(
                   onTap: () => setState(() => _reason = r),
                   child: Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: selected ? const Color(0xFF6B7F4D) : Colors.white,
+                      color: selected
+                          ? colorScheme.primary
+                          : (isDark ? colorScheme.surfaceContainerHighest : Colors.white),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: selected
-                            ? const Color(0xFF6B7F4D)
-                            : Colors.grey.shade300,
+                            ? colorScheme.primary
+                            : (isDark ? colorScheme.outlineVariant : Colors.grey.shade300),
                       ),
                     ),
                     child: Text(r,
                         style: TextStyle(
-                            color: selected ? Colors.white : Colors.black87,
+                            color: selected
+                                ? colorScheme.onPrimary
+                                : (isDark ? colorScheme.onSurface : Colors.black87),
                             fontSize: 12)),
                   ),
                 );
@@ -770,14 +794,22 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
             TextField(
               controller: _descCtrl,
               maxLines: 3,
-              style: const TextStyle(color: Colors.black87),
+              style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Colors.black87),
               decoration: InputDecoration(
                 hintText: 'Décris le problème...',
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest
+                    : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.outlineVariant
+                          : Colors.grey.shade300),
                 ),
               ),
             ),
@@ -793,13 +825,15 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F4EE),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+                          : const Color(0xFFF7F4EE),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                          color: const Color(0xFF6B7F4D).withOpacity(0.4)),
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
                     ),
-                    child: const Icon(Icons.add_a_photo_outlined,
-                        color: Color(0xFF6B7F4D)),
+                    child: Icon(Icons.add_a_photo_outlined,
+                        color: Theme.of(context).colorScheme.primary),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -833,21 +867,23 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
               child: ElevatedButton(
                 onPressed: _isSending ? null : _submitKeepWithCompensation,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6B7F4D),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 child: _isSending
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2),
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            strokeWidth: 2),
                       )
-                    : const Text('Garder avec dédommagement',
+                    : Text('Garder avec dédommagement',
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 10),

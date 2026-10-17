@@ -7,8 +7,13 @@ class PaymentFailedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    // Mode clair strictement inchangé (blanc/gris Material ne correspondent
+    // à aucun token exact de la palette claire) : repli explicite en clair,
+    // token du thème en sombre.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? colorScheme.surface : Colors.white,
       body: SafeArea(
         child: Center(
           child: Column(
@@ -28,18 +33,19 @@ class PaymentFailedPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Paiement échoué',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2B2B2B),
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Une erreur est survenue. Réessayez.',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(
+                    color: isDark ? colorScheme.onSurfaceVariant : Colors.grey),
               ),
               const SizedBox(height: 40),
               Padding(
@@ -50,15 +56,15 @@ class PaymentFailedPage extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => context.push(RouteNames.payment),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6B7F4D),
+                      backgroundColor: colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Réessayer',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -69,9 +75,10 @@ class PaymentFailedPage extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => context.go(RouteNames.home),
-                child: const Text(
+                child: Text(
                   'Retour à l\'accueil',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(
+                      color: isDark ? colorScheme.onSurfaceVariant : Colors.grey),
                 ),
               ),
             ],
