@@ -83,14 +83,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
         setState(() => _isUploadingAvatar = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white, size: 18),
-                SizedBox(width: 8),
-                Text('Photo de profil mise à jour !'),
+                Icon(Icons.check_circle,
+                    color: Theme.of(context).colorScheme.onPrimary, size: 18),
+                const SizedBox(width: 8),
+                const Text('Photo de profil mise à jour !'),
               ],
             ),
-            backgroundColor: const Color(0xFF6B7F4D),
+            backgroundColor: Theme.of(context).colorScheme.primary,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -148,11 +149,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                    color: Theme.of(ctx).colorScheme.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.camera_alt,
-                      color: Color(0xFF6B7F4D)),
+                  child: Icon(Icons.camera_alt,
+                      color: Theme.of(ctx).colorScheme.primary),
                 ),
                 title: const Text('Prendre une photo'),
                 onTap: () => Navigator.pop(ctx, ImageSource.camera),
@@ -199,14 +200,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Row(
+              content: Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.white, size: 18),
-                  SizedBox(width: 8),
-                  Text('Profil mis à jour avec succès !'),
+                  Icon(Icons.check_circle,
+                      color: Theme.of(context).colorScheme.onPrimary, size: 18),
+                  const SizedBox(width: 8),
+                  const Text('Profil mis à jour avec succès !'),
                 ],
               ),
-              backgroundColor: const Color(0xFF6B7F4D),
+              backgroundColor: Theme.of(context).colorScheme.primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -255,10 +257,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
             actions: [
               TextButton(
                 onPressed: (isLoading || _isUploadingAvatar) ? null : _save,
-                child: const Text(
+                child: Text(
                   'Enregistrer',
                   style: TextStyle(
-                    color: Color(0xFF6B7F4D),
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -282,7 +284,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFF6B7F4D),
+                              color: Theme.of(context).colorScheme.primary,
                               width: 2.5,
                             ),
                           ),
@@ -350,7 +352,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         : 'Appuyez pour changer la photo',
                     style: TextStyle(
                       color: _isUploadingAvatar
-                          ? const Color(0xFF6B7F4D)
+                          ? Theme.of(context).colorScheme.primary
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
@@ -397,8 +399,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFF6B7F4D), width: 1.5),
+                        borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary, width: 1.5),
                       ),
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
@@ -424,8 +426,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFF6B7F4D), width: 1.5),
+                        borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary, width: 1.5),
                       ),
                     ),
                   ),
@@ -447,8 +449,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFF6B7F4D), width: 1.5),
+                        borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary, width: 1.5),
                       ),
                     ),
                     items: [
@@ -480,8 +482,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFF6B7F4D), width: 1.5),
+                        borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary, width: 1.5),
                       ),
                     ),
                   ),
@@ -496,20 +498,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ? null
                           : _save,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B7F4D),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         disabledBackgroundColor:
-                            const Color(0xFF6B7F4D).withOpacity(0.5),
+                            Theme.of(context).colorScheme.primary.withOpacity(0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2)
-                          : const Text(
+                          ? CircularProgressIndicator(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              strokeWidth: 2)
+                          : Text(
                               'Sauvegarder les modifications',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onPrimary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
@@ -544,10 +547,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         width: 100,
         height: 100,
         placeholder: (_, __) => Container(
-          color: const Color(0xFF6B7F4D).withOpacity(0.1),
-          child: const Center(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          child: Center(
             child: CircularProgressIndicator(
-                color: Color(0xFF6B7F4D), strokeWidth: 2),
+                color: Theme.of(context).colorScheme.primary, strokeWidth: 2),
           ),
         ),
         errorWidget: (_, __, ___) => _initialsWidget(user),
@@ -558,16 +561,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _initialsWidget(UserEntity? user) {
     return Container(
-      color: const Color(0xFF6B7F4D),
+      color: Theme.of(context).colorScheme.primary,
       width: 100,
       height: 100,
       child: Center(
         child: Text(
           user?.initials ?? '?',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
           ),
         ),
       ),

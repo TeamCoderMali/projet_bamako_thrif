@@ -22,19 +22,19 @@ class _SettingsPageState extends State<SettingsPage> {
     final themeMode = context.watch<ThemeCubit>().state;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(RouteNames.profile),
         ),
-        title: const Text(
+        title: Text(
           'Paramètres',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -42,8 +42,8 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
-          _sectionLabel('Compte'),
-          _card([
+          _sectionLabel(context, 'Compte'),
+          _card(context, [
             _item(context, Icons.person_outline, 'Modifier le profil',
                 () => context.push(RouteNames.editProfile)),
             _item(context, Icons.lock_outline, 'Changer le mot de passe',
@@ -56,17 +56,17 @@ class _SettingsPageState extends State<SettingsPage> {
                 () => context.push(RouteNames.termsOfService)),
           ]),
           const SizedBox(height: 22),
-          _sectionLabel('Préférences'),
-          _card([
+          _sectionLabel(context, 'Préférences'),
+          _card(context, [
             SwitchListTile(
-              secondary: const Icon(Icons.notifications_outlined,
-                  color: Color(0xFF6B7F4D)),
-              title: const Text('Notifications',
-                  style: TextStyle(color: Color(0xFF2B2B2B))),
-              subtitle: const Text('Push et alertes en temps réel',
-                  style: TextStyle(color: Colors.grey)),
+              secondary: Icon(Icons.notifications_outlined,
+                  color: Theme.of(context).colorScheme.primary),
+              title: Text('Notifications',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+              subtitle: Text('Push et alertes en temps réel',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               value: _notifications,
-              activeColor: const Color(0xFF6B7F4D),
+              activeColor: Theme.of(context).colorScheme.primary,
               onChanged: (val) => setState(() => _notifications = val),
             ),
             const Divider(height: 1, indent: 56),
@@ -77,29 +77,30 @@ class _SettingsPageState extends State<SettingsPage> {
                   ThemeMode.light => Icons.light_mode_outlined,
                   ThemeMode.system => Icons.brightness_auto_outlined,
                 },
-                color: const Color(0xFF6B7F4D),
+                color: Theme.of(context).colorScheme.primary,
               ),
-              title: const Text('Apparence',
-                  style: TextStyle(color: Color(0xFF2B2B2B))),
+              title: Text('Apparence',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
               subtitle: Text(_themeModeLabel(themeMode),
-                  style: const TextStyle(color: Colors.grey)),
-              trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              trailing: Icon(Icons.chevron_right,
+                  size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
               onTap: () => _showThemeModeSheet(context, themeMode),
             ),
           ]),
           const SizedBox(height: 22),
-          _sectionLabel('À propos'),
-          _card([
+          _sectionLabel(context, 'À propos'),
+          _card(context, [
             _item(context, Icons.info_outline, 'À propos de l\'app',
                 () => context.push(RouteNames.about)),
             _item(context, Icons.help_outline, 'Aide & Support',
                 () => context.push(RouteNames.support)),
             _item(context, Icons.star_outline, 'Noter l\'application', () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Disponible après publication sur le Play Store'),
-                  backgroundColor: Color(0xFF6B7F4D),
+                SnackBar(
+                  content: const Text(
+                      'Disponible après publication sur le Play Store'),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                 ),
               );
             }),
@@ -157,21 +158,27 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _sectionLabel(String text) => Padding(
+  Widget _sectionLabel(BuildContext context, String text) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(
           text.toUpperCase(),
-          style: const TextStyle(
-            color: Color(0xFF6B7F4D),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),
         ),
       );
 
-  Widget _card(List<Widget> children) => Container(
+  // Carte volontairement plus claire que le fond de l'écran (deux niveaux de
+  // gris/beige, motif déjà utilisé dans le reste de l'app) : en clair, le
+  // blanc pur reste tel quel (ne correspond à aucun token exact de la
+  // palette claire, qui est en beige) ; en sombre, une surface du thème.
+  Widget _card(BuildContext context, List<Widget> children) => Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).colorScheme.surfaceContainerHighest
+              : Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -187,10 +194,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _item(
       BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF6B7F4D), size: 22),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
       title: Text(title,
-          style: const TextStyle(fontSize: 14, color: Color(0xFF2B2B2B))),
-      trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+          style: TextStyle(
+              fontSize: 14, color: Theme.of(context).colorScheme.onSurface)),
+      trailing: Icon(Icons.chevron_right,
+          size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
       onTap: onTap,
     );
   }
@@ -210,10 +219,10 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (sheetContext) {
         Widget option(ThemeMode mode, IconData icon) {
           return ListTile(
-            leading: Icon(icon, color: const Color(0xFF6B7F4D)),
+            leading: Icon(icon, color: Theme.of(sheetContext).colorScheme.primary),
             title: Text(_themeModeLabel(mode)),
             trailing: current == mode
-                ? const Icon(Icons.check, color: Color(0xFF6B7F4D))
+                ? Icon(Icons.check, color: Theme.of(sheetContext).colorScheme.primary)
                 : null,
             onTap: () {
               context.read<ThemeCubit>().setMode(mode);
@@ -380,8 +389,9 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+      builder: (dialogCtx) => Center(
+        child: CircularProgressIndicator(
+            color: Theme.of(dialogCtx).colorScheme.primary),
       ),
     );
 

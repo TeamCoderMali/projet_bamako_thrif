@@ -279,48 +279,48 @@ class ProfilePage extends StatelessWidget {
                             _buildMenuItem(
                               context,
                               icon: Icons.list_alt,
-                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                              iconColor: const Color(0xFF6B7F4D),
+                              iconBg: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                              iconColor: Theme.of(context).colorScheme.primary,
                               title: 'Mes annonces',
                               onTap: () => context.push(RouteNames.myListings),
                             ),
                             _buildMenuItem(
                               context,
                               icon: Icons.local_offer_outlined,
-                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                              iconColor: const Color(0xFF6B7F4D),
+                              iconBg: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                              iconColor: Theme.of(context).colorScheme.primary,
                               title: 'Mes offres',
                               onTap: () => context.push(RouteNames.myOffers),
                             ),
                             _buildMenuItem(
                               context,
                               icon: Icons.favorite_border,
-                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                              iconColor: const Color(0xFF6B7F4D),
+                              iconBg: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                              iconColor: Theme.of(context).colorScheme.primary,
                               title: 'Mes favoris',
                               onTap: () => context.push(RouteNames.favorites),
                             ),
                             _buildMenuItem(
                               context,
                               icon: Icons.shopping_bag_outlined,
-                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                              iconColor: const Color(0xFF6B7F4D),
+                              iconBg: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                              iconColor: Theme.of(context).colorScheme.primary,
                               title: 'Mes commandes',
                               onTap: () => context.push(RouteNames.orders),
                             ),
                             _buildMenuItem(
                               context,
                               icon: Icons.credit_card_outlined,
-                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                              iconColor: const Color(0xFF6B7F4D),
+                              iconBg: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                              iconColor: Theme.of(context).colorScheme.primary,
                               title: 'Paiements',
                               onTap: () => context.push(RouteNames.payment),
                             ),
                             _buildMenuItem(
                               context,
                               icon: Icons.notifications_outlined,
-                              iconBg: const Color(0xFF6B7F4D).withOpacity(0.1),
-                              iconColor: const Color(0xFF6B7F4D),
+                              iconBg: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                              iconColor: Theme.of(context).colorScheme.primary,
                               title: 'Notifications',
                               onTap: () =>
                                   context.push(RouteNames.notifications),
@@ -394,17 +394,17 @@ class ProfilePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF6B7F4D).withOpacity(0.1),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF6B7F4D),
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 2),

@@ -32,16 +32,18 @@ class WalletPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(RouteNames.profile),
         ),
-        title: const Text(
+        title: Text(
           'Mon Portefeuille',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.w700),
         ),
       ),
       body: uid == null
@@ -59,8 +61,9 @@ class WalletPage extends StatelessWidget {
                   .snapshots(),
               builder: (context, txSnap) {
                 if (txSnap.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                  return Center(
+                    child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary),
                   );
                 }
 
@@ -204,19 +207,20 @@ class WalletPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
                                 Icon(Icons.shield_outlined,
-                                    color: Color(0xFF6B7F4D), size: 18),
-                                SizedBox(width: 8),
+                                    color: Theme.of(context).colorScheme.primary, size: 18),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     'Les gains des ventes sont crédités après confirmation de réception par l\'acheteur.',
                                     style: TextStyle(
-                                        color: Color(0xFF6B7F4D), fontSize: 12),
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontSize: 12),
                                   ),
                                 ),
                               ],

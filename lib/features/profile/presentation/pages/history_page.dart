@@ -7,26 +7,29 @@ class HistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: isDark ? colorScheme.surface : Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? colorScheme.surface : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
           onPressed: () => context.canPop()
               ? context.pop()
               : context.go(RouteNames.profile),
         ),
-        title: const Text(
+        title: Text(
           'Historique',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           _buildCommande(
+            context,
             'Nike Air Max 270',
             '25 000 FCFA',
             'Récupéré',
@@ -34,13 +37,15 @@ class HistoryPage extends StatelessWidget {
             Icons.check_circle,
           ),
           _buildCommande(
+            context,
             'Robe longue bleue',
             '5 000 FCFA',
             'En cours',
-            const Color(0xFF6B7F4D),
+            colorScheme.primary,
             Icons.access_time,
           ),
           _buildCommande(
+            context,
             'Sac à main',
             '15 000 FCFA',
             'Disponible',
@@ -53,17 +58,20 @@ class HistoryPage extends StatelessWidget {
   }
 
   Widget _buildCommande(
+    BuildContext context,
     String titre,
     String prix,
     String statut,
     Color color,
     IconData icon,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -72,10 +80,12 @@ class HistoryPage extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F4EE),
+              color: isDark
+                  ? colorScheme.primary.withOpacity(0.15)
+                  : const Color(0xFFF7F4EE),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.checkroom, color: const Color(0xFF6B7F4D)),
+            child: Icon(Icons.checkroom, color: colorScheme.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -84,13 +94,13 @@ class HistoryPage extends StatelessWidget {
               children: [
                 Text(
                   titre,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Color(0xFF2B2B2B)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                 ),
                 Text(
                   prix,
-                  style: const TextStyle(
-                    color: const Color(0xFF6B7F4D),
+                  style: TextStyle(
+                    color: colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

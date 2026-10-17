@@ -84,10 +84,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Retiré des favoris'),
-        backgroundColor: Color(0xFF6B7F4D),
-        duration: Duration(seconds: 1),
+      SnackBar(
+        content: const Text('Retiré des favoris'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        duration: const Duration(seconds: 1),
       ),
     );
   }
@@ -96,25 +96,26 @@ class _FavoritesPageState extends State<FavoritesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
           onPressed: () => context.canPop()
               ? context.pop()
               : context.go(RouteNames.profile),
         ),
-        title: const Text(
+        title: Text(
           'Mes favoris',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+          ? Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.primary),
             )
           : _favorites.isEmpty
               ? Center(
@@ -124,13 +125,13 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6B7F4D).withOpacity(0.1),
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.favorite_border,
                           size: 48,
-                          color: Color(0xFF6B7F4D),
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -174,7 +175,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                           color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: const Color(0xFF6B7F4D).withOpacity(0.2),
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -198,22 +199,26 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                       errorWidget: (_, __, ___) => Container(
                                         width: 70,
                                         height: 70,
-                                        color: const Color(0xFF6B7F4D)
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
                                             .withOpacity(0.1),
-                                        child: const Icon(Icons.checkroom,
-                                            color: Color(0xFF6B7F4D)),
+                                        child: Icon(Icons.checkroom,
+                                            color: Theme.of(context).colorScheme.primary),
                                       ),
                                     )
                                   : Container(
                                       width: 70,
                                       height: 70,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF6B7F4D)
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
                                             .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(Icons.checkroom,
-                                          color: Color(0xFF6B7F4D)),
+                                      child: Icon(Icons.checkroom,
+                                          color: Theme.of(context).colorScheme.primary),
                                     ),
                             ),
                             const SizedBox(width: 14),
@@ -233,8 +238,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                   const SizedBox(height: 4),
                                   Text(
                                     '${((product['price'] ?? 0) as num).toStringAsFixed(0)} FCFA',
-                                    style: const TextStyle(
-                                      color: Color(0xFF6B7F4D),
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.primary,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                     ),

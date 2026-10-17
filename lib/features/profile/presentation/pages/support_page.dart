@@ -120,17 +120,19 @@ class _SupportPageState extends State<SupportPage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
           onPressed: () => context.canPop()
               ? context.pop()
               : context.go(RouteNames.profile),
         ),
-        title: const Text(
+        title: Text(
           'Aide & Support',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
@@ -191,7 +193,7 @@ class _SupportPageState extends State<SupportPage> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF6B7F4D)),
+          Icon(icon, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

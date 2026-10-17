@@ -40,16 +40,18 @@ class _MyOffersPageState extends State<MyOffersPage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(RouteNames.profile),
         ),
-        title: const Text(
+        title: Text(
           'Mes offres',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.w700),
         ),
       ),
       body: buyerId == null
@@ -163,8 +165,8 @@ class _OfferTile extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${offer.currentPrice.toStringAsFixed(0)} FCFA',
-                      style: const TextStyle(
-                        color: Color(0xFF6B7F4D),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),

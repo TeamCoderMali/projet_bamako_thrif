@@ -119,7 +119,7 @@ class _MyListingsView extends StatelessWidget {
         SnackBar(
           content: Text(
               newStatus == 'available' ? 'Annonce publiée' : 'Annonce masquée'),
-          backgroundColor: const Color(0xFF6B7F4D),
+          backgroundColor: Theme.of(context).colorScheme.primary,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -139,7 +139,7 @@ class _MyListingsView extends StatelessWidget {
           content: Text(currentlyEnabled
               ? 'Offres désactivées pour cet article'
               : 'Offres autorisées pour cet article'),
-          backgroundColor: const Color(0xFF6B7F4D),
+          backgroundColor: Theme.of(context).colorScheme.primary,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -164,7 +164,7 @@ class _MyListingsView extends StatelessWidget {
             'reserved' => 'Article marqué réservé',
             _ => 'Article remis disponible',
           }),
-          backgroundColor: const Color(0xFF6B7F4D),
+          backgroundColor: Theme.of(context).colorScheme.primary,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -229,20 +229,23 @@ class _MyListingsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(RouteNames.profile),
         ),
-        title: const Text(
+        title: Text(
           'Mes annonces',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+            icon: Icon(Icons.add_circle_outline,
+                color: Theme.of(context).colorScheme.onPrimary),
             tooltip: 'Publier une annonce',
             onPressed: () => context.go(RouteNames.publish),
           ),
@@ -272,8 +275,9 @@ class _MyListingsView extends StatelessWidget {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+                  return Center(
+                    child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary),
                   );
                 }
                 if (snapshot.hasError) {
@@ -303,8 +307,8 @@ class _MyListingsView extends StatelessWidget {
                           icon: const Icon(Icons.add, size: 18),
                           label: const Text('Publier une annonce'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6B7F4D),
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -393,8 +397,8 @@ class _MyListingsView extends StatelessWidget {
                                   const SizedBox(height: 4),
                                   Text(
                                     _fmtPrice(price),
-                                    style: const TextStyle(
-                                      color: Color(0xFF6B7F4D),
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.primary,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
                                     ),
@@ -544,6 +548,7 @@ class _MyListingsView extends StatelessWidget {
         width: 90,
         height: 90,
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        child: const Icon(Icons.checkroom, size: 36, color: Color(0xFF6B7F4D)),
+        child: Icon(Icons.checkroom,
+            size: 36, color: Theme.of(context).colorScheme.primary),
       );
 }

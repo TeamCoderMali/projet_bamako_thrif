@@ -22,7 +22,7 @@ class _BlockedSellersPageState extends State<BlockedSellersPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$label a été débloqué.'),
-            backgroundColor: const Color(0xFF6B7F4D),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -41,27 +41,30 @@ class _BlockedSellersPageState extends State<BlockedSellersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4EE),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7F4D),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
           onPressed: () => context.canPop()
               ? context.pop()
               : context.go(RouteNames.settings),
         ),
-        title: const Text(
+        title: Text(
           'Vendeurs bloqués',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.w700),
         ),
       ),
       body: StreamBuilder<List<({String sellerId, String? sellerName})>>(
         stream: _blockedUsers.watchBlocked(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6B7F4D)),
+            return Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.primary),
             );
           }
           final blocked = snapshot.data!;
@@ -72,11 +75,14 @@ class _BlockedSellersPageState extends State<BlockedSellersPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.block, size: 48, color: Colors.grey.shade400),
+                    Icon(Icons.block,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(height: 16),
                     Text(
                       'Aucun vendeur bloqué.',
-                      style: TextStyle(color: Colors.grey.shade600),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -94,13 +100,16 @@ class _BlockedSellersPageState extends State<BlockedSellersPage> {
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: Color(0xFF6B7F4D),
-                    child: Icon(Icons.block, color: Colors.white, size: 18),
+                  leading: CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: Icon(Icons.block,
+                        color: Theme.of(context).colorScheme.onPrimary, size: 18),
                   ),
                   title: Text(label,
                       maxLines: 1,
@@ -108,8 +117,8 @@ class _BlockedSellersPageState extends State<BlockedSellersPage> {
                       style: const TextStyle(fontSize: 14)),
                   trailing: TextButton(
                     onPressed: () => _unblock(entry.sellerId, label),
-                    child: const Text('Débloquer',
-                        style: TextStyle(color: Color(0xFF6B7F4D))),
+                    child: Text('Débloquer',
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                   ),
                 ),
               );
