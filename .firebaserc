@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "bamako-thrif"
-  }
+  },
+  "targets": {
+    "bamako-thrif": {
+      "hosting": {
+        "bamako-thrif": [
+          "bamako-thrif"
+        ],
+        "danaya": [
+          "danaya"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
