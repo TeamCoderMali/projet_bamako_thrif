@@ -16,8 +16,9 @@
 const bool pressingEnabled = false;
 
 /// Le bouton "Se connecter avec Facebook" n'a pas de compte Facebook
-/// Developer configuré derrière (voir login_page.dart) : masqué des écrans
-/// de connexion/inscription avant les tests testeuses du 2026-10-17. Rien
-/// n'est supprimé, juste masqué par ce drapeau. Remettre à true pour
-/// réactiver dès qu'un compte Facebook Developer existe.
-const bool facebookLoginEnabled = false;
+/// Developer configuré derrière (voir login_page.dart) : reste en mode
+/// "bientôt disponible" (le clic affiche un message, aucun appel réseau).
+/// Remasqué brièvement le 2026-10-17 pour les tests testeuses, remis à
+/// true le 2026-10-18 sur demande d'Ali — remettre à false si besoin de le
+/// masquer à nouveau, sans rien supprimer.
+const bool facebookLoginEnabled = true;
