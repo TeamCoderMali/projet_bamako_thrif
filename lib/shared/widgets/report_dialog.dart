@@ -78,7 +78,21 @@ Future<void> showReportDialog(
                       color: Theme.of(sheetCtx).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
+                  // Clarifie la portée du signalement avant tout envoi : sert
+                  // aux comptes suspects/comportements abusifs/bugs, ne doit
+                  // pas laisser croire à une médiation de litige (demande du
+                  // 2026-10-19).
+                  Text(
+                    "Ce signalement nous aide à améliorer Danaya et à repérer "
+                    "les comptes abusifs. Danaya n'intervient pas dans les "
+                    "litiges entre vendeur et acheteur.",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(sheetCtx).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Text(
                     targetType == ReportTargetType.product
                         ? 'Signaler cet article aux administrateurs.'
