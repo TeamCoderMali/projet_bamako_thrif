@@ -102,6 +102,10 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
         await db.collection('users').doc(sellerId).update({
           'totalSales': FieldValue.increment(1),
           'lastActivityAt': Timestamp.now(),
+          // Preuve de commande reelle exigee par les regles Firestore
+          // depuis l'audit securite du 2026-10-26 (empeche un tiers de
+          // gonfler ce compteur sans commande).
+          'lastCompletedOrderId': widget.orderId,
         });
       }
 
