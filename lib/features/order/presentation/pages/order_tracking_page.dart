@@ -14,6 +14,7 @@ import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/logger_service.dart';
+import 'package:bamako_thrift/core/services/payment_config_service.dart';
 import 'package:bamako_thrift/core/services/storage_service.dart';
 
 class OrderTrackingPage extends StatefulWidget {
@@ -81,42 +82,69 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
       });
 
       // Libère les fonds au vendeur (moins les frais de service déjà
-      // retenus au moment du paiement — voir payment_page.dart).
+      // retenus au moment du paiement — voir payment_page.dart). Sauté tant
+      // que le paiement reste désactivé (simulation, voir
+      // PaymentConfigService : rien à solder dans ce cas, et la règle
+      // Firestore wallet.write bloque de toute façon cette écriture depuis
+      // l'audit sécurité du 2026-10-26). Isolé dans son propre try/catch
+      // (demande d'Ali) : un échec ici ne doit jamais empêcher la commande
+      // d'être confirmée côté acheteur/vendeur ci-dessous.
+      if (sellerId != null &&
+          await PaymentConfigService.instance.isPaymentEnabled()) {
+        try {
+          final walletRef = db.collection('wallet').doc(sellerId);
+          await walletRef.set({
+            'balance': FieldValue.increment(totalAmount),
+            'totalEarned': FieldValue.increment(totalAmount),
+          }, SetOptions(merge: true));
+          await walletRef.collection('transactions').add({
+            'type': 'credit',
+            'label': 'Vente — $productTitle',
+            'amount': totalAmount,
+            'orderId': widget.orderId,
+            'createdAt': Timestamp.now(),
+            'expiresAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(days: 90))),
+          });
+        } catch (e) {
+          logger.severe('Échec crédit du wallet vendeur', error: e.toString());
+        }
+      }
+
+      // Compteur + signal d'activité pour la relance des utilisateurs
+      // inactifs (profil "vendeur" vs "acheteur"). Doit toujours s'exécuter,
+      // même si le crédit wallet ci-dessus a échoué ou a été sauté —
+      // isolé dans son propre try/catch pour ne jamais bloquer la suite.
       if (sellerId != null) {
-        final walletRef = db.collection('wallet').doc(sellerId);
-        await walletRef.set({
-          'balance': FieldValue.increment(totalAmount),
-          'totalEarned': FieldValue.increment(totalAmount),
-        }, SetOptions(merge: true));
-        await walletRef.collection('transactions').add({
-          'type': 'credit',
-          'label': 'Vente — $productTitle',
-          'amount': totalAmount,
-          'orderId': widget.orderId,
-          'createdAt': Timestamp.now(),
-          'expiresAt': Timestamp.fromDate(
-              DateTime.now().add(const Duration(days: 90))),
-        });
-        // Compteur + signal d'activité pour la relance des utilisateurs
-        // inactifs (profil "vendeur" vs "acheteur").
-        await db.collection('users').doc(sellerId).update({
-          'totalSales': FieldValue.increment(1),
-          'lastActivityAt': Timestamp.now(),
-          // Preuve de commande reelle exigee par les regles Firestore
-          // depuis l'audit securite du 2026-10-26 (empeche un tiers de
-          // gonfler ce compteur sans commande).
-          'lastCompletedOrderId': widget.orderId,
-        });
+        try {
+          await db.collection('users').doc(sellerId).update({
+            'totalSales': FieldValue.increment(1),
+            'lastActivityAt': Timestamp.now(),
+            // Preuve de commande reelle exigee par les regles Firestore
+            // depuis l'audit securite du 2026-10-26 (empeche un tiers de
+            // gonfler ce compteur sans commande).
+            'lastCompletedOrderId': widget.orderId,
+          });
+        } catch (e) {
+          logger.severe('Échec mise à jour totalSales vendeur', error: e.toString());
+        }
       }
 
       final buyerId = orderData['buyerId'] as String?;
       if (buyerId != null) {
-        await db.collection('users').doc(buyerId).update({
-          'totalPurchases': FieldValue.increment(1),
-          'lastActivityAt': Timestamp.now(),
-        });
+        try {
+          await db.collection('users').doc(buyerId).update({
+            'totalPurchases': FieldValue.increment(1),
+            'lastActivityAt': Timestamp.now(),
+          });
+        } catch (e) {
+          logger.severe('Échec mise à jour totalPurchases acheteur', error: e.toString());
+        }
       }
 
+      // Toujours affiché une fois la commande elle-même confirmée : les
+      // compteurs/le crédit sont du "best effort" ci-dessus, pas une
+      // condition de succès pour l'acheteur.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

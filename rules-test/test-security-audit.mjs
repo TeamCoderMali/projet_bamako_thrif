@@ -298,6 +298,39 @@ await check('le compteur totalSales du vendeur est mis a jour avec la preuve de 
     buyerCtx().doc('users/seller1').update({ totalSales: 1, lastActivityAt: new Date(), lastCompletedOrderId: 'o-cycle' })
   );
 });
+await check('le compteur totalPurchases de l\'acheteur (auto-ecriture) reste toujours autorise', async () => {
+  await seed({ 'users/buyer1': { displayName: 'Acheteur', totalPurchases: 0 } });
+  await assertSucceeds(buyerCtx().doc('users/buyer1').update({ totalPurchases: 1, lastActivityAt: new Date() }));
+});
+
+console.log('\n--- _confirmReceipt() cote app : paiement desactive, le wallet est saute (pas tente), les compteurs passent toujours ---');
+await seed({
+  'config/payment': { enabled: false },
+  'product/p-order-cycle2': { sellerId: SELLER, title: 'Chapeau', status: 'available', price: 3000 },
+});
+await check('creation de la commande (paiement desactive)', async () => {
+  await assertSucceeds(
+    buyerCtx().doc('order/o-cycle2').set({
+      buyerId: BUYER, sellerId: SELLER, productId: 'p-order-cycle2', productTitle: 'Chapeau',
+      totalAmount: 3000, status: 'pending', paymentMethod: 'wave', createdAt: new Date(),
+    })
+  );
+});
+await check('acheteur confirme reception (commande terminee)', async () => {
+  await assertSucceeds(buyerCtx().doc('order/o-cycle2').update({ status: 'completed', receivedAt: new Date() }));
+});
+// Paiement desactive : l'app ne tente meme plus l'ecriture wallet (voir
+// PaymentConfigService.isPaymentEnabled() dans order_tracking_page.dart),
+// donc rien a verifier ici cote wallet -- seuls les compteurs, toujours
+// executes, sont testes.
+await check('totalSales du vendeur est quand meme mis a jour (wallet non tente)', async () => {
+  await assertSucceeds(
+    buyerCtx().doc('users/seller1').update({ totalSales: 2, lastActivityAt: new Date(), lastCompletedOrderId: 'o-cycle2' })
+  );
+});
+await check('totalPurchases de l\'acheteur est quand meme mis a jour (wallet non tente)', async () => {
+  await assertSucceeds(buyerCtx().doc('users/buyer1').update({ totalPurchases: 2, lastActivityAt: new Date() }));
+});
 
 console.log('\n--- Annulation de commande (litige refuse) ---');
 await seed({ 'product/p-cancel': { sellerId: SELLER, title: 'Chemise', status: 'sold', price: 4000 } });
