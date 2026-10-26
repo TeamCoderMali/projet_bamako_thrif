@@ -83,6 +83,10 @@ function victimCtx() { return testEnv.authenticatedContext(VICTIM).firestore(); 
 function strangerCtx() { return testEnv.authenticatedContext(STRANGER).firestore(); }
 function adminCtx() { return testEnv.authenticatedContext(ADMIN).firestore(); }
 function relayCtx() { return testEnv.authenticatedContext(RELAY).firestore(); }
+function freshBuyerSecurity(label) {
+  const uid = `buyer-sec-${label}`;
+  return { uid, db: testEnv.authenticatedContext(uid).firestore() };
+}
 
 await seed({
   'admin_users/admin1': { role: 'admin' },
@@ -161,6 +165,78 @@ await probe('l\'acheteur invente une base de negociation (originalPrice) deconne
       originalPrice: 1000, currentPrice: 700, round: 1, turn: 'seller', status: 'pending',
       respondBy: new Date(Date.now() + 48 * 3600 * 1000), createdAt: new Date(),
     })
+  );
+});
+
+console.log('\n--- Durcissements du 2026-10-26 (revue Ali) : users.totalSales, admin_users, chat.create ---');
+await seed({ 'users/victim-totalsales': { displayName: 'Victime2', totalSales: 3 } });
+await probe('users.totalSales : sauter a une valeur arbitraire (pas +1) malgre une preuve de commande valide', async () => {
+  await seed({
+    'product/p-ts-abuse': { sellerId: 'victim-totalsales', title: 'Jupe', status: 'available', price: 2000 },
+    'order/o-ts-abuse': { buyerId: STRANGER, sellerId: 'victim-totalsales', productId: 'p-ts-abuse', totalAmount: 2000, status: 'completed' },
+  });
+  await assertSucceeds(
+    strangerCtx().doc('users/victim-totalsales').update({ totalSales: 999, lastActivityAt: new Date(), lastCompletedOrderId: 'o-ts-abuse' })
+  );
+});
+await probe('users.totalSales : omettre lastCompletedOrderId (ancienne forme exploitable)', async () => {
+  await assertSucceeds(
+    strangerCtx().doc('users/victim-totalsales').update({ totalSales: 4, lastActivityAt: new Date() })
+  );
+});
+await probe('admin_users : relay_manager s\'auto-attribue relayCenterId (hors liste blanche)', async () => {
+  await assertSucceeds(relayCtx().doc('admin_users/relay1').update({ relayCenterId: 'rc-invente' }));
+});
+await probe('admin_users : relay_manager s\'auto-attribue isActive (hors liste blanche)', async () => {
+  await assertSucceeds(relayCtx().doc('admin_users/relay1').update({ isActive: true }));
+});
+await probe('chat.create : conversation a 1 seul participant (soi-meme)', async () => {
+  await assertSucceeds(buyerCtx().doc('chat/c-solo').set({ participantIds: [BUYER], lastMessage: null }));
+});
+await probe('chat.create : conversation a 3 participants', async () => {
+  await assertSucceeds(buyerCtx().doc('chat/c-trio').set({ participantIds: [BUYER, SELLER, STRANGER], lastMessage: null }));
+});
+
+console.log('\n--- Durcissements du 2026-10-26 (demande Ali, 2e revue) : offre non acceptee, rejeu totalSales ---');
+await seed({ 'product/p-lowball': { sellerId: SELLER, title: 'Breloque', status: 'available', price: 3 } });
+await probe('offre a 1 FCFA jamais acceptee par le vendeur -> commande au prix de l\'offre quand meme', async () => {
+  const b = freshBuyerSecurity('lowball');
+  await b.db.doc(`offers/p-lowball_${b.uid}`).set({
+    productId: 'p-lowball', productTitle: 'Breloque', sellerId: SELLER, buyerId: b.uid,
+    originalPrice: 3, currentPrice: 1, round: 1, turn: 'seller', status: 'pending',
+    respondBy: new Date(Date.now() + 48 * 3600 * 1000), createdAt: new Date(),
+  });
+  await assertSucceeds(
+    b.db.doc('order/o-lowball').set({
+      buyerId: b.uid, sellerId: SELLER, productId: 'p-lowball', productTitle: 'Breloque',
+      totalAmount: 1, status: 'pending', paymentMethod: 'wave', createdAt: new Date(),
+    })
+  );
+});
+await probe('creation directe d\'une offre avec status "accepted" (contourne la negociation)', async () => {
+  const b = freshBuyerSecurity('direct-accept');
+  await assertSucceeds(
+    b.db.doc(`offers/p-lowball_${b.uid}`).set({
+      productId: 'p-lowball', productTitle: 'Breloque', sellerId: SELLER, buyerId: b.uid,
+      originalPrice: 3, currentPrice: 1, round: 1, turn: 'seller', status: 'accepted',
+      respondBy: new Date(Date.now() + 48 * 3600 * 1000), createdAt: new Date(),
+    })
+  );
+});
+
+await seed({
+  'users/seller-replay': { displayName: 'VendeurReplay', totalSales: 0 },
+  'product/p-replay': { sellerId: 'seller-replay', title: 'Montre', status: 'available', price: 5000 },
+  'order/o-replay': { buyerId: BUYER, sellerId: 'seller-replay', productId: 'p-replay', totalAmount: 5000, status: 'completed' },
+});
+await check('premiere utilisation de la preuve o-replay : OK', async () => {
+  await assertSucceeds(
+    buyerCtx().doc('users/seller-replay').update({ totalSales: 1, lastActivityAt: new Date(), lastCompletedOrderId: 'o-replay' })
+  );
+});
+await probe('rejeu de la MEME preuve o-replay une seconde fois (totalSales encore +1)', async () => {
+  await assertSucceeds(
+    buyerCtx().doc('users/seller-replay').update({ totalSales: 2, lastActivityAt: new Date(), lastCompletedOrderId: 'o-replay' })
   );
 });
 
@@ -330,6 +406,38 @@ await check('totalSales du vendeur est quand meme mis a jour (wallet non tente)'
 });
 await check('totalPurchases de l\'acheteur est quand meme mis a jour (wallet non tente)', async () => {
   await assertSucceeds(buyerCtx().doc('users/buyer1').update({ totalPurchases: 2, lastActivityAt: new Date() }));
+});
+
+console.log('\n--- Durcissements du 2026-10-26 : parcours legitimes toujours OK ---');
+await check('users.totalSales : exactement +1 avec preuve de commande reste autorise', async () => {
+  await seed({
+    'users/seller-exact': { displayName: 'VendeurExact', totalSales: 5 },
+    'product/p-exact': { sellerId: 'seller-exact', title: 'Ceinture', status: 'available', price: 1500 },
+    'order/o-exact': { buyerId: BUYER, sellerId: 'seller-exact', productId: 'p-exact', totalAmount: 1500, status: 'completed' },
+  });
+  await assertSucceeds(
+    buyerCtx().doc('users/seller-exact').update({ totalSales: 6, lastActivityAt: new Date(), lastCompletedOrderId: 'o-exact' })
+  );
+});
+await check('admin_users : relay_manager modifie son profil (liste blanche)', async () => {
+  await assertSucceeds(
+    relayCtx().doc('admin_users/relay1').update({ displayName: 'Relais Bamako Rive Droite', email: 'relais2@danaya.ml', phone: '70222222', city: 'Bamako' })
+  );
+});
+await check('chat.create : conversation normale a 2 participants (acheteur + vendeur)', async () => {
+  await assertSucceeds(buyerCtx().doc('chat/c-normal').set({ participantIds: [BUYER, SELLER], lastMessage: null, lastMessageAt: new Date() }));
+});
+await seed({
+  'product/p-offer-order': { sellerId: SELLER, title: 'Sac a dos', status: 'available', price: 12000 },
+  'offers/p-offer-order_buyer1': { productId: 'p-offer-order', sellerId: SELLER, buyerId: BUYER, originalPrice: 12000, currentPrice: 8000, status: 'accepted', round: 1, turn: 'seller' },
+});
+await check('order.create : totalAmount au prix d\'une offre acceptee (different du prix catalogue) reste autorise', async () => {
+  await assertSucceeds(
+    buyerCtx().doc('order/o-from-offer').set({
+      buyerId: BUYER, sellerId: SELLER, productId: 'p-offer-order', productTitle: 'Sac a dos',
+      totalAmount: 8000, status: 'pending', paymentMethod: 'wave', createdAt: new Date(),
+    })
+  );
 });
 
 console.log('\n--- Annulation de commande (litige refuse) ---');

@@ -94,7 +94,25 @@ service cloud.firestore {
         || (isAuthenticated()
             && request.resource.data.diff(resource.data).affectedKeys()
                .hasOnly(['totalSales', 'lastActivityAt', 'lastCompletedOrderId'])
+            // hasAll ajoute le 2026-10-26 (revue Ali) : rend explicite que
+            // lastCompletedOrderId doit etre present dans CETTE ecriture
+            // (pas seulement autorise), plutot que de compter implicitement
+            // sur l'erreur d'evaluation d'un champ absent.
+            && request.resource.data.diff(resource.data).affectedKeys()
+               .hasAll(['lastCompletedOrderId'])
             && request.resource.data.lastCompletedOrderId is string
+            // anti-rejeu ajoute le 2026-10-26 (revue Ali) : la MEME commande
+            // completee ne peut pas servir de preuve deux fois -- sinon un
+            // compte avec une seule vraie commande pouvait rejouer cette
+            // ecriture indefiniment (totalSales +1 a chaque fois, toujours
+            // avec la meme preuve deja valide).
+            && (!('lastCompletedOrderId' in resource.data)
+                || resource.data.lastCompletedOrderId != request.resource.data.lastCompletedOrderId)
+            // totalSales ne peut plus etre pousse a une valeur arbitraire :
+            // doit etre exactement l'ancienne valeur + 1 (0 si le champ
+            // n'existe pas encore), comme le produit un vrai
+            // FieldValue.increment(1) sur une seule commande.
+            && request.resource.data.totalSales == resource.data.get('totalSales', 0) + 1
             && get(/databases/$(database)/documents/order/$(request.resource.data.lastCompletedOrderId)).data.sellerId == userId
             && get(/databases/$(database)/documents/order/$(request.resource.data.lastCompletedOrderId)).data.buyerId == request.auth.uid
             && get(/databases/$(database)/documents/order/$(request.resource.data.lastCompletedOrderId)).data.status == 'completed');
@@ -127,15 +145,27 @@ service cloud.firestore {
     match /admin_users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow create, delete: if isAdmin();
-      // Durci le 2026-10-26 (audit securite) : un relay_manager pouvait
-      // reecrire N'IMPORTE QUEL champ de son propre doc, y compris "role",
-      // et se promouvoir admin lui-meme. L'auto-edition reste ouverte pour
-      // le profil (displayName/email/phone/city/relayName, voir
-      // relay-profile.component.ts) mais "role" n'est desormais modifiable
-      // que par un admin existant.
+      // Durci le 2026-10-26 (audit securite), puis passe en LISTE BLANCHE le
+      // meme jour (revue Ali) : un relay_manager pouvait reecrire N'IMPORTE
+      // QUEL champ de son propre doc, y compris "role", et se promouvoir
+      // admin lui-meme. Champs lus ailleurs pour decider un droit, revus un
+      // par un : "role" (firestore.rules isAdmin()/isRelayManager() ET
+      // auth.service.ts readAdminUserDoc -- le seul qui compte reellement
+      // aujourd'hui) ; "relayCenterId" (declare dans auth.models.ts "for
+      // relay_manager only" mais jamais lu nulle part dans le code actuel --
+      // mort aujourd'hui, a proteger si quelqu'un l'active plus tard) ;
+      // "isActive" (ecrit a true a la creation dans
+      // admin-accounts.component.ts, affiche comme badge, mais jamais
+      // verifie pour bloquer un acces -- aucun bouton ne le fait meme
+      // passer a false apres coup). Liste blanche limitee aux champs
+      // reellement ecrits par l'auto-edition de profil
+      // (relay-profile.component.ts) : displayName/email/phone/city/
+      // relayName/updatedAt. Tout le reste (role, relayCenterId, isActive,
+      // createdAt...) n'est modifiable que par un admin existant.
       allow update: if isAdmin()
         || (isOwner(uid)
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['displayName', 'email', 'phone', 'city', 'relayName', 'updatedAt']));
     }
 
     // ── Collection product ─────────────────────────────────────────────────
@@ -205,7 +235,14 @@ service cloud.firestore {
     match /chat/{chatId} {
       allow read: if isAuthenticated()
         && request.auth.uid in resource.data.participantIds;
+      // size()==2 ajoute le 2026-10-26 (revue Ali) : les 3 points d'entree
+      // reels (make_offer_sheet.dart, product_detail_page.dart,
+      // new_chat_page.dart) ne creent jamais qu'un chat a 2 (acheteur +
+      // vendeur) -- pas de groupe. Empeche un chat a 1 seul participant ou
+      // a 3+ (confusion de droits sur les futures regles de update/delete
+      // ci-dessous, pensees pour exactement 2 parties).
       allow create: if isAuthenticated()
+        && request.resource.data.participantIds.size() == 2
         && request.auth.uid in request.resource.data.participantIds;
       // Durci le 2026-10-26 (audit securite) : "allow write" ouvrait aussi
       // bien l'update (champs libres, dont participantIds) que le delete
@@ -267,13 +304,27 @@ service cloud.firestore {
       // (order_tracking_page.dart) : vendeur "collecte", acheteur
       // "completed" (avec ou sans collecte prealable), acheteur "cancelled"
       // (litige refuse).
+      // totalAmount accepte aussi le prix d'une offre acceptee (revue Ali du
+      // 2026-10-26) : seul payment_page.dart cree un order aujourd'hui (prix
+      // plein, aucun flux "payer l'offre negociee" n'existe encore -- une
+      // offre acceptee se regle hors app, voir le texte de l'offre
+      // "mets-toi d'accord sur la remise dans le chat"), mais si ce flux
+      // est ajoute plus tard il n'aura pas besoin d'un nouveau changement
+      // de regle. L'ID de l'offre est deterministe (productId_buyerId, voir
+      // offers/{offerId}), donc verifiable sans champ supplementaire.
       allow create: if isAuthenticated()
         && request.resource.data.buyerId == request.auth.uid
         && request.resource.data.status == 'pending'
         && request.resource.data.sellerId ==
              get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.sellerId
-        && request.resource.data.totalAmount ==
-             get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.price;
+        && (
+             request.resource.data.totalAmount ==
+               get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.price
+          || (request.resource.data.totalAmount ==
+                get(/databases/$(database)/documents/offers/$(request.resource.data.productId + '_' + request.auth.uid)).data.currentPrice
+              && get(/databases/$(database)/documents/offers/$(request.resource.data.productId + '_' + request.auth.uid)).data.status == 'accepted'
+              && get(/databases/$(database)/documents/offers/$(request.resource.data.productId + '_' + request.auth.uid)).data.sellerId == request.resource.data.sellerId)
+           );
       allow update: if isAuthenticated()
         && !request.resource.data.diff(resource.data).affectedKeys()
              .hasAny(['buyerId', 'sellerId', 'productId', 'totalAmount'])
