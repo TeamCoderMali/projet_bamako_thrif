@@ -49,9 +49,13 @@ class DefaultFirebaseOptions {
     }
   }
 
+  // App Android "com.danaya.app" (nouveau package, 2026-10-27 — remplace
+  // com.bamako.bamako_thrif / com.bamako.bamako_thrift avant publication
+  // Google Play). apiKey inchangee : meme cle restreinte au niveau du
+  // projet Firebase bamako-thrif.
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDOC2ObAyuAOs5m08RKjp17r6k-6G4r5YY',
-    appId: '1:84148343844:android:2f470b43abc7d85b8834b1',
+    appId: '1:84148343844:android:eeedd128a2c6ddae8834b1',
     messagingSenderId: '84148343844',
     projectId: 'bamako-thrif',
     storageBucket: 'bamako-thrif.firebasestorage.app',
