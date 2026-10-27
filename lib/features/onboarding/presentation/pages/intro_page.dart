@@ -71,9 +71,13 @@ class _IntroPageState extends State<IntroPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Logo complet (badge + "DANAYA MARKETPLACE") : hauteur
+                  // augmentee par rapport a l'ancien icone seul (28px),
+                  // illisible a cette taille pour cette composition plus
+                  // riche (demande d'Ali du 2026-10-27, "rendu propre").
                   Image.asset(
-                    'assets/images/logo_danaya_icon.png',
-                    height: 28,
+                    'assets/images/logo_danaya_complet.png',
+                    height: 72,
                     fit: BoxFit.contain,
                   ),
                   TextButton(

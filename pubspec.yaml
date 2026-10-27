@@ -2,7 +2,7 @@ name: bamako_thrift
 description: "DANAYA – Seconde main, première confiance."
 publish_to: 'none'
 
-version: 1.0.0+10
+version: 1.0.0+11
 
 environment:
   sdk: ^3.6.2
@@ -113,12 +113,12 @@ flutter_launcher_icons:
     generate: false
 
 flutter_native_splash:
-  color: "#48553D"
-  image: assets/images/danaya_icon_foreground_1024.png
+  color: "#F7F3EA"
+  image: assets/images/icone_danaya_cutout.png
   android_12:
-    color: "#48553D"
-    image: assets/images/danaya_icon_foreground_1024.png
-    icon_background_color: "#48553D"
+    color: "#F7F3EA"
+    image: assets/images/icone_danaya_cutout.png
+    icon_background_color: "#F7F3EA"
   android: true
   ios: true
   fullscreen: true

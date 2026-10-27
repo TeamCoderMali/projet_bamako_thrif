@@ -161,8 +161,8 @@ class _HomePageState extends State<HomePage> {
                   Row(
                     children: [
                       Image.asset(
-                        'assets/images/logo_danaya_icon.png',
-                        height: 22,
+                        'assets/images/icone_danaya_cutout.png',
+                        height: 32,
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(width: 6),
