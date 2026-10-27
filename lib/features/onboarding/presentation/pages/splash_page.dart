@@ -113,7 +113,7 @@ class _SplashPageState extends State<SplashPage>
               children: [
                 // ── Logo (contient le mot "DANAYA", plus le slogan) ──
                 Image.asset(
-                  'assets/images/logo_danaya_no_tagline.png',
+                  'assets/images/logo_danaya_complet.png',
                   width: 260,
                   fit: BoxFit.contain,
                 ),

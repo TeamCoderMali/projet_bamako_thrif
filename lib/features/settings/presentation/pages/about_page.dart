@@ -52,7 +52,7 @@ class _AboutPageState extends State<AboutPage> {
           children: [
             // Logo
             Image.asset(
-              'assets/images/logo_danaya_no_tagline.png',
+              'assets/images/logo_danaya_complet.png',
               width: 180,
               height: 180,
             ),

@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                     // ── Logo ──────────────────────────────────────────────
                     Center(
                       child: Image.asset(
-                        'assets/images/logo_danaya_no_tagline.png',
+                        'assets/images/logo_danaya_complet.png',
                         width: 200,
                         fit: BoxFit.contain,
                       ),

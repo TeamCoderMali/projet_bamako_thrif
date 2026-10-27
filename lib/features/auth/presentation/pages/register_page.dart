@@ -96,7 +96,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     // ── Logo ─────────────────────────────────────────────
                     Center(
                       child: Image.asset(
-                        'assets/images/logo_danaya_no_tagline.png',
+                        'assets/images/logo_danaya_complet.png',
                         width: 170,
                         fit: BoxFit.contain,
                       ),

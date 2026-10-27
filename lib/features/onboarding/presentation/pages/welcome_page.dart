@@ -59,7 +59,7 @@ class _WelcomePageState extends State<WelcomePage>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/logo_danaya_no_tagline.png',
+                    'assets/images/logo_danaya_complet.png',
                     width: 240,
                     fit: BoxFit.contain,
                   ),
