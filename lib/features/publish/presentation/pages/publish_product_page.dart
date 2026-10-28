@@ -81,14 +81,82 @@ class _PublishProductPageState extends State<PublishProductPage> {
     super.dispose();
   }
 
+  // Choix de la source des photos : appareil photo ou galerie.
+  Future<ImageSource?> _chooseImageSource() {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Ajouter une photo',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: Icon(Icons.camera_alt,
+                    color: Theme.of(ctx).colorScheme.primary),
+                title: const Text('Prendre une photo'),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library,
+                    color: Theme.of(ctx).colorScheme.primary),
+                title: const Text('Choisir dans la galerie'),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickImages() async {
+    final remaining = 5 - _selectedImages.length;
+    if (remaining <= 0) return;
+
+    final source = await _chooseImageSource();
+    if (source == null || !mounted) return;
+
     final picker = ImagePicker();
-    final picked = await picker.pickMultiImage(
-        imageQuality: 75, limit: 5 - _selectedImages.length);
-    if (picked.isNotEmpty && mounted) {
-      setState(() {
-        _selectedImages.addAll(picked);
-      });
+    try {
+      if (source == ImageSource.camera) {
+        final photo = await picker.pickImage(
+            source: ImageSource.camera, imageQuality: 75);
+        if (photo != null && mounted) {
+          setState(() => _selectedImages.add(photo));
+        }
+        return;
+      }
+
+      // pickMultiImage exige une limite d'au moins 2 : s'il ne reste qu'une
+      // place, on choisit une seule photo.
+      final List<XFile> picked;
+      if (remaining == 1) {
+        final one = await picker.pickImage(
+            source: ImageSource.gallery, imageQuality: 75);
+        picked = one == null ? <XFile>[] : [one];
+      } else {
+        picked =
+            await picker.pickMultiImage(imageQuality: 75, limit: remaining);
+      }
+      if (picked.isNotEmpty && mounted) {
+        setState(() => _selectedImages.addAll(picked.take(remaining)));
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'Impossible d\'ajouter la photo. Vérifie l\'autorisation de l\'appareil photo ou de la galerie.')),
+      );
     }
   }
 
