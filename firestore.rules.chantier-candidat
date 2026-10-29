@@ -119,11 +119,15 @@ service cloud.firestore {
       allow delete: if isOwner(userId);
 
       // Sous-collection favorites
-      // Lecture aussi ouverte au vendeur d'UN produit precis (productId =
-      // l'ID du doc), pour la requete collectionGroup('favorites') qui
-      // trouve qui notifier a la vente (retour de test Fatou, 2026-10-29)
-      // -- jamais la liste complete des favoris d'un autre utilisateur,
-      // seulement "est-ce que cet utilisateur a CE produit en favori".
+      // Lecture directe (get) aussi ouverte au vendeur d'UN produit precis
+      // (productId = l'ID du doc) -- jamais la liste complete des favoris
+      // d'un autre utilisateur, seulement "cet utilisateur a-t-il CE
+      // produit en favori ?". ATTENTION : cette regle imbriquee ne
+      // s'applique PAS aux requetes collectionGroup('favorites') (seulement
+      // au get()/write() direct par chemin complet) -- voir le bloc
+      // /{path=**}/favorites/{productId} plus bas, necessaire pour la
+      // requete collectionGroup de la notification "vendu" (bug signale
+      // par Ali le 2026-10-29, corrige).
       match /favorites/{productId} {
         allow read: if isOwner(userId)
           || (isAuthenticated()
@@ -145,6 +149,26 @@ service cloud.firestore {
       match /private/{doc} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
+    }
+
+    // Autorise la requete collectionGroup('favorites') utilisee par la
+    // notification "article vendu" (my_listings_page.dart, _markStatus).
+    // Une regle imbriquee sous /users/{userId}/favorites ne s'applique
+    // QU'aux acces par chemin complet (get/write direct) -- jamais aux
+    // requetes collectionGroup, qui exigent leur propre bloc avec le
+    // joker {path=**} (signale par Ali le 2026-10-29, corrige). "list"
+    // seulement (pas "get", deja couvert ci-dessus) : le vendeur peut
+    // lister tous les favoris pointant vers SON produit, jamais la liste
+    // complete des favoris d'un autre utilisateur.
+    match /{path=**}/favorites/{productId} {
+      // resource.data.productId (le champ du document), pas le segment de
+      // chemin {productId} : pour une requete "list" (par opposition a un
+      // "get" ponctuel), Firestore evalue la regle avant de connaitre un
+      // ID de document precis -- le joker de chemin n'est pas resolu a ce
+      // stade ("Null value error" confirme a l'emulateur), seul
+      // resource.data (le contenu reel de chaque document candidat) l'est.
+      allow list: if isAuthenticated()
+        && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.sellerId == request.auth.uid;
     }
 
     // ── Collection admin_users ─────────────────────────────────────────────

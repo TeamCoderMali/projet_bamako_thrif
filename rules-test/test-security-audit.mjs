@@ -452,11 +452,37 @@ await seed({
   'product/p-fav-sold': { sellerId: SELLER, title: 'Veste jean', status: 'available', price: 9000 },
   [`users/${BUYER}/favorites/p-fav-sold`]: { productId: 'p-fav-sold', addedAt: new Date() },
 });
-await check('le vendeur peut lire si un utilisateur precis a CE produit en favori', async () => {
+await check('le vendeur peut lire si un utilisateur precis a CE produit en favori (get direct)', async () => {
   await assertSucceeds(sellerCtx().doc(`users/${BUYER}/favorites/p-fav-sold`).get());
 });
-await probe('un tiers (pas le vendeur) peut aussi lire ce favori', async () => {
+await probe('un tiers (pas le vendeur) peut aussi lire ce favori (get direct)', async () => {
   await assertSucceeds(strangerCtx().doc(`users/${BUYER}/favorites/p-fav-sold`).get());
+});
+
+// Vraie requete collectionGroup (pas un .doc().get()) -- c'est exactement
+// ce que fait _markStatus() dans my_listings_page.dart. Une regle imbriquee
+// sous /users/{userId}/favorites ne s'applique PAS a ce type de requete ;
+// il faut le bloc /{path=**}/favorites/{productId} separe (bug signale par
+// Ali le 2026-10-29, corrige).
+await check('collectionGroup REEL : le vendeur retrouve le favori sur SON produit', async () => {
+  const snap = await assertSucceeds(
+    sellerCtx().collectionGroup('favorites').where('productId', '==', 'p-fav-sold').get()
+  );
+  if (snap.size !== 1) throw new Error(`attendu 1 resultat, recu ${snap.size}`);
+});
+await probe('collectionGroup REEL : un tiers (pas le vendeur) lance la meme requete sur ce produit', async () => {
+  await assertSucceeds(
+    strangerCtx().collectionGroup('favorites').where('productId', '==', 'p-fav-sold').get()
+  );
+});
+await seed({
+  'product/p-other-seller': { sellerId: STRANGER, title: 'Autre article', status: 'available', price: 5000 },
+  [`users/${BUYER}/favorites/p-other-seller`]: { productId: 'p-other-seller', addedAt: new Date() },
+});
+await probe('collectionGroup REEL : le vendeur de p-fav-sold lance la requete sur le produit d\'un AUTRE vendeur', async () => {
+  await assertSucceeds(
+    sellerCtx().collectionGroup('favorites').where('productId', '==', 'p-other-seller').get()
+  );
 });
 await check('le vendeur cree la notification "productSold" pour l\'utilisateur qui a favori', async () => {
   await assertSucceeds(

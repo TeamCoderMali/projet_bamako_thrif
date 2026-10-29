@@ -9,6 +9,7 @@ import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
 import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/logger_service.dart';
 import 'package:bamako_thrift/core/services/payment_config_service.dart';
 import 'package:bamako_thrift/features/offers/data/models/offer_model.dart';
 import 'package:bamako_thrift/features/offers/domain/repositories/offers_repository.dart';
@@ -185,8 +186,13 @@ class _MyListingsView extends StatelessWidget {
           });
         }
         await batch.commit();
-      } catch (_) {
-        // Non bloquant : la vente reste marquee meme si la notif echoue.
+      } catch (e, st) {
+        // Non bloquant : la vente reste marquee meme si la notif echoue --
+        // mais on le journalise desormais au lieu de l'avaler en silence
+        // (demande d'Ali, 2026-10-29 : sinon un index/regle manquant passe
+        // inapercu indefiniment).
+        logger.severe('Echec notification "article vendu" aux favoris',
+            error: e, stackTrace: st);
       }
     }
     if (context.mounted) {
