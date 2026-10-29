@@ -37,6 +37,54 @@ class _PublishProductPageState extends State<PublishProductPage> {
 
   ProductCategory _selectedCategory = ProductCategory.women;
   ProductCondition _selectedCondition = ProductCondition.bon;
+
+  // ── Menus deroulants marque/taille/couleur (retour de test Fatou,
+  // 2026-10-29) : remplace la saisie libre. La valeur finale reste stockee
+  // dans les memes controllers qu'avant (_marqueController, etc.) --
+  // "Autre" reutilise directement le meme controller comme champ texte.
+  static const _kAutre = 'Autre';
+  String? _selectedBrandOption;
+  String? _selectedSizeOption;
+  String? _selectedColorOption;
+
+  static const List<String> _brandOptions = [
+    'Sans marque', 'Fait main / Couture', 'Vlisco', 'Woodin', 'Uniwax',
+    'Zara', 'H&M', 'Shein', 'Mango', 'Primark', 'Bershka', 'Pull&Bear',
+    'Nike', 'Adidas', 'Puma', 'Lacoste', 'Tommy Hilfiger', 'Ralph Lauren',
+    'Calvin Klein', "Levi's", _kAutre,
+  ];
+
+  static const List<String> _colorOptions = [
+    'Noir', 'Blanc', 'Gris', 'Beige', 'Marron', 'Rouge', 'Rose', 'Orange',
+    'Jaune', 'Vert', 'Bleu', 'Bleu ciel', 'Violet', 'Doré', 'Argenté',
+    'Multicolore', _kAutre,
+  ];
+
+  static const List<String> _clothingSizes = [
+    'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'Taille unique', _kAutre,
+  ];
+  static const List<String> _childrenSizes = [
+    '0-6 mois', '6-12 mois', '1-2 ans', '3-4 ans', '5-6 ans', '7-8 ans',
+    '9-10 ans', '11-12 ans', '13-14 ans', _kAutre,
+  ];
+  static final List<String> _shoeSizes = [
+    for (var p = 35; p <= 46; p++) '$p',
+    _kAutre,
+  ];
+
+  // null = champ taille masque (categorie sans notion de taille).
+  List<String>? _sizeOptionsFor(ProductCategory cat) => switch (cat) {
+        ProductCategory.women ||
+        ProductCategory.men ||
+        ProductCategory.sportswear ||
+        ProductCategory.traditional ||
+        ProductCategory.other =>
+          _clothingSizes,
+        ProductCategory.children => _childrenSizes,
+        ProductCategory.shoes => _shoeSizes,
+        ProductCategory.accessories || ProductCategory.beauty => null,
+        ProductCategory.bags || ProductCategory.jewelry => _clothingSizes,
+      };
   // Ville du vendeur, demandée ici seulement si absente de son profil
   // (lot 6) — enregistrée sur le profil en plus d'être copiée sur
   // l'article (sellerCity).
@@ -411,8 +459,14 @@ class _PublishProductPageState extends State<PublishProductPage> {
                                               : Colors.black87)),
                                 );
                               }).toList(),
-                              onChanged: (v) =>
-                                  setState(() => _selectedCategory = v!),
+                              onChanged: (v) => setState(() {
+                                _selectedCategory = v!;
+                                // Reinitialise la taille au changement de
+                                // categorie (options differentes selon
+                                // vetements/enfants/chaussures/masquee).
+                                _selectedSizeOption = null;
+                                _tailleController.clear();
+                              }),
                             ),
                           ),
                         ),
@@ -463,38 +517,36 @@ class _PublishProductPageState extends State<PublishProductPage> {
                     _formSection(
                       title: 'Détails',
                       children: [
-                        _sectionTitle('Marque'),
-                        const SizedBox(height: 8),
-                        TextFormField(
+                        _dropdownWithOther(
+                          label: 'Marque',
+                          options: _brandOptions,
+                          selected: _selectedBrandOption,
+                          onSelected: (v) =>
+                              setState(() => _selectedBrandOption = v),
                           controller: _marqueController,
-                          style: TextStyle(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Theme.of(context).colorScheme.onSurface
-                                  : Colors.black87),
-                          decoration: _inputDeco('Ex: Zara, Nike, Adidas...'),
+                          otherHint: 'Précise la marque (40 caractères max)',
                         ),
+                        if (_sizeOptionsFor(_selectedCategory) != null) ...[
+                          const SizedBox(height: 18),
+                          _dropdownWithOther(
+                            label: 'Taille',
+                            options: _sizeOptionsFor(_selectedCategory)!,
+                            selected: _selectedSizeOption,
+                            onSelected: (v) =>
+                                setState(() => _selectedSizeOption = v),
+                            controller: _tailleController,
+                            otherHint: 'Précise la taille (40 caractères max)',
+                          ),
+                        ],
                         const SizedBox(height: 18),
-                        _sectionTitle('Taille'),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _tailleController,
-                          style: TextStyle(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Theme.of(context).colorScheme.onSurface
-                                  : Colors.black87),
-                          decoration: _inputDeco('Ex: M, 38, 42...'),
-                        ),
-                        const SizedBox(height: 18),
-                        _sectionTitle('Couleur'),
-                        const SizedBox(height: 8),
-                        TextFormField(
+                        _dropdownWithOther(
+                          label: 'Couleur',
+                          options: _colorOptions,
+                          selected: _selectedColorOption,
+                          onSelected: (v) =>
+                              setState(() => _selectedColorOption = v),
                           controller: _couleurController,
-                          style: TextStyle(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Theme.of(context).colorScheme.onSurface
-                                  : Colors.black87),
-                          decoration:
-                              _inputDeco('Ex: Bleu marine, Rouge, Noir...'),
+                          otherHint: 'Précise la couleur (40 caractères max)',
                         ),
                         if (sellerHasNoCity) ...[
                           const SizedBox(height: 18),
@@ -994,6 +1046,71 @@ class _PublishProductPageState extends State<PublishProductPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: child,
+    );
+  }
+
+  // ── Menu deroulant avec option "Autre" (champ texte, 40 car. max,
+  // obligatoire si choisie) — marque/taille/couleur. La valeur finale reste
+  // ecrite dans [controller], que l'option vienne de la liste ou du texte
+  // libre "Autre".
+  Widget _dropdownWithOther({
+    required String label,
+    required List<String> options,
+    required String? selected,
+    required ValueChanged<String?> onSelected,
+    required TextEditingController controller,
+    String otherHint = 'Précise ici (40 caractères max)',
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(label),
+        const SizedBox(height: 8),
+        _dropdownContainer(
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: selected,
+              isExpanded: true,
+              hint: Text('Choisis une option',
+                  style: TextStyle(
+                      color: isDark
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Colors.grey,
+                      fontSize: 13)),
+              items: options
+                  .map((o) => DropdownMenuItem(
+                        value: o,
+                        child: Text(o,
+                            style: TextStyle(
+                                color: isDark
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : Colors.black87)),
+                      ))
+                  .toList(),
+              onChanged: (v) {
+                onSelected(v);
+                controller.text = (v == null || v == _kAutre) ? '' : v;
+              },
+            ),
+          ),
+        ),
+        if (selected == _kAutre) ...[
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: controller,
+            maxLength: 40,
+            style: TextStyle(
+                color: isDark
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Colors.black87),
+            decoration: _inputDeco(otherHint),
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Précise $label'
+                : null,
+          ),
+        ],
+      ],
     );
   }
 
