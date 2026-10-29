@@ -144,16 +144,14 @@ class ProfilePage extends StatelessWidget {
                             builder: (context, snap) {
                               final data =
                                   snap.data?.data() as Map<String, dynamic>?;
-                              final totalSales = data?['totalSales'] as int? ??
-                                  user?.totalSales ??
-                                  0;
-                              final rating =
-                                  (data?['rating'] as num?)?.toDouble() ??
-                                      user?.rating ??
-                                      0;
-                              final reviewCount =
-                                  data?['reviewCount'] as int? ??
-                                      user?.reviewCount ??
+                              // "Achats" = commandes confirmees en tant
+                              // qu'ACHETEUR (totalPurchases, ecrit sur le
+                              // profil de l'acheteur a la confirmation de
+                              // reception). Avant, la carte affichait
+                              // totalSales, c'est-a-dire les VENTES du
+                              // vendeur : erreur d'etiquette.
+                              final totalPurchases =
+                                  (data?['totalPurchases'] as num?)?.toInt() ??
                                       0;
 
                               return Row(
@@ -186,18 +184,63 @@ class ProfilePage extends StatelessWidget {
                                   Expanded(
                                     child: _buildStatCard(
                                       context,
-                                      '$totalSales',
+                                      '$totalPurchases',
                                       'Achats',
                                     ),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
-                                    child: _buildStatCard(
-                                      context,
-                                      reviewCount > 0
-                                          ? '${rating.toStringAsFixed(1)}★'
-                                          : '—',
-                                      'Note',
+                                    // users.rating/reviewCount ne sont
+                                    // jamais ecrits -- les avis vivent sur
+                                    // chaque product (rating/reviewCount).
+                                    // Moyenne ponderee par reviewCount
+                                    // calculee cote client (retour de test
+                                    // Fatou, 2026-10-29). Pas de requete
+                                    // composee (sellerId seul) : limite
+                                    // raisonnable + filtre reviewCount==0
+                                    // applique apres coup, pour ne pas
+                                    // exiger de nouvel index.
+                                    child: FutureBuilder<QuerySnapshot>(
+                                      future: user == null
+                                          ? null
+                                          : FirebaseFirestore.instance
+                                              .collection('product')
+                                              .where('sellerId',
+                                                  isEqualTo: user.id)
+                                              .limit(50)
+                                              .get(),
+                                      builder: (context, prodSnap) {
+                                        final docs = prodSnap.data?.docs ??
+                                            const [];
+                                        double weightedSum = 0;
+                                        int totalReviews = 0;
+                                        for (final d in docs) {
+                                          final p = d.data()
+                                              as Map<String, dynamic>;
+                                          final pReviewCount =
+                                              (p['reviewCount'] as num?)
+                                                      ?.toInt() ??
+                                                  0;
+                                          if (pReviewCount == 0) continue;
+                                          final pRating =
+                                              (p['rating'] as num?)
+                                                      ?.toDouble() ??
+                                                  0;
+                                          weightedSum +=
+                                              pRating * pReviewCount;
+                                          totalReviews += pReviewCount;
+                                        }
+                                        final avg = totalReviews > 0
+                                            ? weightedSum / totalReviews
+                                            : 0.0;
+                                        return _buildStatCard(
+                                          context,
+                                          totalReviews > 0
+                                              ? '${avg.toStringAsFixed(1)}★'
+                                              : '—',
+                                          'Note',
+                                        );
+                                      },
                                     ),
                                   ),
                                 ],
