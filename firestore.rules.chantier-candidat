@@ -119,8 +119,16 @@ service cloud.firestore {
       allow delete: if isOwner(userId);
 
       // Sous-collection favorites
+      // Lecture aussi ouverte au vendeur d'UN produit precis (productId =
+      // l'ID du doc), pour la requete collectionGroup('favorites') qui
+      // trouve qui notifier a la vente (retour de test Fatou, 2026-10-29)
+      // -- jamais la liste complete des favoris d'un autre utilisateur,
+      // seulement "est-ce que cet utilisateur a CE produit en favori".
       match /favorites/{productId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId)
+          || (isAuthenticated()
+              && get(/databases/$(database)/documents/product/$(productId)).data.sellerId == request.auth.uid);
+        allow write: if isOwner(userId);
       }
 
       // Sous-collection blocked_sellers : vendeurs bloqués par cet acheteur
@@ -285,8 +293,19 @@ service cloud.firestore {
       // L'app mobile ne cree jamais de notification elle-meme ; seul le
       // back-office le fait (admin : article verifie, relay_manager :
       // remise en etat requise).
+      // Exception ajoutee le 2026-10-29 (retour de test Fatou) : le vendeur
+      // d'un article peut notifier (type "productSold" uniquement) un
+      // utilisateur precis, seulement si cet article est reellement a lui
+      // ET que cet utilisateur l'a reellement en favori -- regle minimale,
+      // pas un allow-create general.
       allow create: if isAuthenticated()
-        && (request.resource.data.userId == request.auth.uid || isAdmin() || isRelayManager());
+        && (request.resource.data.userId == request.auth.uid
+            || isAdmin()
+            || isRelayManager()
+            || (request.resource.data.type == 'productSold'
+                && request.resource.data.data.productId is string
+                && get(/databases/$(database)/documents/product/$(request.resource.data.data.productId)).data.sellerId == request.auth.uid
+                && exists(/databases/$(database)/documents/users/$(request.resource.data.userId)/favorites/$(request.resource.data.data.productId))));
     }
 
     // ── Collection order ──────────────────────────────────────────────────

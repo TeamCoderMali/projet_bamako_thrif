@@ -151,11 +151,44 @@ class _MyListingsView extends StatelessWidget {
   // dans firestore.rules — ce bouton n'est qu'un repli d'affichage, la
   // vraie barrière est serveur.
   Future<void> _markStatus(
-      BuildContext context, String docId, String newStatus) async {
+      BuildContext context, String docId, String newStatus,
+      [String? title]) async {
     await FirebaseFirestore.instance
         .collection('product')
         .doc(docId)
         .update({'status': newStatus});
+    if (newStatus == 'sold') {
+      // Notifie chaque utilisateur qui a cet article en favori (retour de
+      // test Fatou, 2026-10-29). ID deterministe (sold_{productId}_{userId})
+      // pour ne jamais dupliquer si declenche deux fois.
+      try {
+        final favDocs = await FirebaseFirestore.instance
+            .collectionGroup('favorites')
+            .where('productId', isEqualTo: docId)
+            .get();
+        final batch = FirebaseFirestore.instance.batch();
+        for (final fav in favDocs.docs) {
+          final favUserId = fav.reference.parent.parent?.id;
+          if (favUserId == null) continue;
+          final notifRef = FirebaseFirestore.instance
+              .collection('notification')
+              .doc('sold_${docId}_$favUserId');
+          batch.set(notifRef, {
+            'userId': favUserId,
+            'type': 'productSold',
+            'title': 'Article vendu',
+            'body':
+                "L'article ${title ?? ''} que tu avais en favori vient d'être vendu.",
+            'data': {'productId': docId},
+            'isRead': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+      } catch (_) {
+        // Non bloquant : la vente reste marquee meme si la notif echoue.
+      }
+    }
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -483,7 +516,7 @@ class _MyListingsView extends StatelessWidget {
                                   ),
                                   tooltip: 'Marquer vendu/réservé',
                                   onSelected: (v) =>
-                                      _markStatus(context, docId, v),
+                                      _markStatus(context, docId, v, title),
                                   itemBuilder: (_) => const [
                                     PopupMenuItem(
                                       value: 'sold',

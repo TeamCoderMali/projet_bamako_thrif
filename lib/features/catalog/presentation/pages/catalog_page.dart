@@ -398,10 +398,13 @@ class _ProductCard extends StatelessWidget {
           children: [
             // Image
             Expanded(
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(14)),
-                child: product.mainImageUrl != null
+              child: Stack(
+                children: [
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(14)),
+                  child: SizedBox.expand(
+                  child: product.mainImageUrl != null
                     ? CachedNetworkImage(
                         imageUrl: product.mainImageUrl!,
                         width: double.infinity,
@@ -436,6 +439,38 @@ class _ProductCard extends StatelessWidget {
                               color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
+                  ),
+                ),
+                // Nombre de favoris : visible par tous, masque si 0.
+                if (product.favoriteCount > 0)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.55),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.favorite,
+                              size: 11, color: Colors.red),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${product.favoriteCount}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
               ),
             ),
             // Infos

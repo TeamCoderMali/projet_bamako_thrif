@@ -79,6 +79,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
         .collection('favorites')
         .doc(productId)
         .delete();
+    await FirebaseFirestore.instance
+        .collection('product')
+        .doc(productId)
+        .update({'favoriteCount': FieldValue.increment(-1)}).catchError((_) {});
 
     setState(() {
       _favorites.removeWhere((f) => f['productId'] == productId);

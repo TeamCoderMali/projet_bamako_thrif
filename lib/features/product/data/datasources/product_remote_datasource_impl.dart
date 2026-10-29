@@ -161,6 +161,9 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       'productId': productId,
       'addedAt': FieldValue.serverTimestamp(),
     });
+    await _productsCol
+        .doc(productId)
+        .update({'favoriteCount': FieldValue.increment(1)}).catchError((_) {});
   }
 
   @override
@@ -171,6 +174,9 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         .collection('favorites')
         .doc(productId)
         .delete();
+    await _productsCol
+        .doc(productId)
+        .update({'favoriteCount': FieldValue.increment(-1)}).catchError((_) {});
   }
 
   @override

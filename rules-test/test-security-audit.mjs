@@ -447,6 +447,51 @@ await check('acheteur annule la commande suite a un litige refuse', async () => 
   await assertSucceeds(buyerCtx().doc('order/o-cancel').update({ status: 'cancelled', updatedAt: new Date() }));
 });
 
+console.log('\n--- Notification "article vendu" aux favoris (ajout du 2026-10-29) ---');
+await seed({
+  'product/p-fav-sold': { sellerId: SELLER, title: 'Veste jean', status: 'available', price: 9000 },
+  [`users/${BUYER}/favorites/p-fav-sold`]: { productId: 'p-fav-sold', addedAt: new Date() },
+});
+await check('le vendeur peut lire si un utilisateur precis a CE produit en favori', async () => {
+  await assertSucceeds(sellerCtx().doc(`users/${BUYER}/favorites/p-fav-sold`).get());
+});
+await probe('un tiers (pas le vendeur) peut aussi lire ce favori', async () => {
+  await assertSucceeds(strangerCtx().doc(`users/${BUYER}/favorites/p-fav-sold`).get());
+});
+await check('le vendeur cree la notification "productSold" pour l\'utilisateur qui a favori', async () => {
+  await assertSucceeds(
+    sellerCtx().doc(`notification/sold_p-fav-sold_${BUYER}`).set({
+      userId: BUYER, type: 'productSold', title: 'Article vendu',
+      body: "L'article Veste jean que tu avais en favori vient d'être vendu.",
+      data: { productId: 'p-fav-sold' }, isRead: false, createdAt: new Date(),
+    })
+  );
+});
+await probe('le vendeur cree la notification pour un utilisateur qui n\'a PAS favori cet article', async () => {
+  await assertSucceeds(
+    sellerCtx().doc(`notification/sold_p-fav-sold_${STRANGER}`).set({
+      userId: STRANGER, type: 'productSold', title: 'Article vendu',
+      body: 'spam', data: { productId: 'p-fav-sold' }, isRead: false, createdAt: new Date(),
+    })
+  );
+});
+await probe('un tiers (pas le vendeur) cree la notification "productSold" pour le favori d\'un autre', async () => {
+  await assertSucceeds(
+    strangerCtx().doc(`notification/sold_p-fav-sold_${BUYER}_fake`).set({
+      userId: BUYER, type: 'productSold', title: 'Article vendu',
+      body: 'usurpe', data: { productId: 'p-fav-sold' }, isRead: false, createdAt: new Date(),
+    })
+  );
+});
+await probe('le vendeur cree une notification d\'un AUTRE type via cette exception (contournement)', async () => {
+  await assertSucceeds(
+    sellerCtx().doc(`notification/n-other-type`).set({
+      userId: BUYER, type: 'promotion', title: 'Pub',
+      body: 'spam promo', data: { productId: 'p-fav-sold' }, isRead: false, createdAt: new Date(),
+    })
+  );
+});
+
 console.log(`\n=== Resultat section 2 (non-regression) : ${passed} OK, ${failed} FAIL ===`);
 console.log(`=== Resultat section 1 (vulnerabilites)  : ${exploitable} EXPLOITABLE, ${blocked} BLOQUE ===\n`);
 

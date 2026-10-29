@@ -47,6 +47,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool _hasExistingComment = false;
   bool _sellerIsVendeurPro = false;
   bool _proStatusRequested = false;
+  // Compteur local optimiste : product.favoriteCount vient du dernier
+  // ProductDetailLoaded (charge une seule fois), ne bouge pas tout seul
+  // quand on (dé)favorise cette meme fiche -- voir _toggleFavorite().
+  int? _favoriteCountOverride;
 
   // ── Interrupteur paiement (config/payment, back-office > Paramètres) ───
   // Repli = désactivé tant que la config n'est pas chargée (même repli que
@@ -182,6 +186,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
+  int _currentFavoriteCount() {
+    final state = _cubit.state;
+    return state is ProductDetailLoaded ? state.product.favoriteCount : 0;
+  }
+
   // ── Ajouter/Retirer des favoris Firestore ──────────────────────────────
   Future<void> _toggleFavorite() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -199,11 +208,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         .collection('favorites')
         .doc(widget.productId);
 
+    final productRef =
+        FirebaseFirestore.instance.collection('product').doc(widget.productId);
+
     try {
       if (_isFavorite) {
         await favRef.delete();
+        await productRef
+            .update({'favoriteCount': FieldValue.increment(-1)}).catchError(
+                (_) {});
         if (mounted) {
-          setState(() => _isFavorite = false);
+          setState(() {
+            _isFavorite = false;
+            _favoriteCountOverride =
+                (_favoriteCountOverride ?? _currentFavoriteCount()) - 1;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Retiré des favoris'),
@@ -217,8 +236,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           'productId': widget.productId,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        await productRef
+            .update({'favoriteCount': FieldValue.increment(1)}).catchError(
+                (_) {});
         if (mounted) {
-          setState(() => _isFavorite = true);
+          setState(() {
+            _isFavorite = true;
+            _favoriteCountOverride =
+                (_favoriteCountOverride ?? _currentFavoriteCount()) + 1;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Ajouté aux favoris ❤️'),
@@ -633,6 +659,22 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ),
                   ],
                 ),
+                if ((_favoriteCountOverride ?? product.favoriteCount) > 0) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.favorite, size: 14, color: Colors.red),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_favoriteCountOverride ?? product.favoriteCount} favori${(_favoriteCountOverride ?? product.favoriteCount) > 1 ? 's' : ''}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 12),
 
                 // ── Avis texte (réservé aux Vendeurs Pro) ──────────────
