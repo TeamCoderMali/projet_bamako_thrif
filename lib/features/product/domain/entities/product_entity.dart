@@ -65,6 +65,41 @@ class ProductEntity extends Equatable {
   bool get isAvailable => status == ProductStatus.available;
   String? get mainImageUrl => imageUrls.isNotEmpty ? imageUrls.first : null;
 
+  // Mise à jour optimiste côté client (favori, note) sans attendre une
+  // relecture Firestore -- voir product_detail_page.dart.
+  ProductEntity copyWith({
+    int? favoriteCount,
+    double? rating,
+    int? reviewCount,
+  }) {
+    return ProductEntity(
+      id: id,
+      sellerId: sellerId,
+      sellerName: sellerName,
+      sellerAvatarUrl: sellerAvatarUrl,
+      sellerCity: sellerCity,
+      title: title,
+      description: description,
+      price: price,
+      imageUrls: imageUrls,
+      category: category,
+      condition: condition,
+      brand: brand,
+      size: size,
+      color: color,
+      status: status,
+      verifie: verifie,
+      offersEnabled: offersEnabled,
+      viewCount: viewCount,
+      favoriteCount: favoriteCount ?? this.favoriteCount,
+      location: location,
+      rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id, sellerId, title, description, price, imageUrls,

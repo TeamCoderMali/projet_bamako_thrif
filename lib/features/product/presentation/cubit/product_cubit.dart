@@ -169,6 +169,29 @@ class ProductCubit extends Cubit<ProductState> {
     }
   }
 
+  // ── Afficher immédiatement une version déjà connue du produit (venant
+  // d'une liste chargée ailleurs : accueil/catalogue/recherche) : évite
+  // l'écran vide avec cercle à l'ouverture de la fiche. À suivre d'un
+  // refreshProductDetail() en arrière-plan pour les données à jour.
+  void showCachedProduct(ProductEntity product) {
+    emit(ProductDetailLoaded(product));
+  }
+
+  // ── Rafraîchir un détail déjà affiché, sans écran de chargement plein
+  // écran (voir showCachedProduct) ni ré-émission de ProductLoading. Garde
+  // l'affichage connu si le rafraîchissement échoue (pas d'ProductError).
+  Future<void> refreshProductDetail(String productId) async {
+    final id = ++_requestId;
+    try {
+      final product = await _repository.getProductById(productId);
+      _repository.incrementViewCount(productId).catchError((_) {});
+      if (id != _requestId) return;
+      emit(ProductDetailLoaded(product));
+    } catch (_) {
+      // Rafraîchissement silencieux : l'ancienne version reste affichée.
+    }
+  }
+
   // ── Rechercher des produits ─────────────────────────────────────
   Future<void> searchProducts(String query) async {
     final id = ++_requestId;

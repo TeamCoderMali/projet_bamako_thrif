@@ -22,8 +22,16 @@ import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productId;
+  // Version déjà connue du produit (venant d'une liste accueil/catalogue/
+  // recherche déjà chargée) : affichée immédiatement, sans écran vide avec
+  // cercle, en attendant le rafraîchissement en arrière-plan.
+  final ProductEntity? initialProduct;
 
-  const ProductDetailPage({super.key, required this.productId});
+  const ProductDetailPage({
+    super.key,
+    required this.productId,
+    this.initialProduct,
+  });
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
@@ -68,7 +76,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   @override
   void initState() {
     super.initState();
-    _cubit.loadProductDetail(widget.productId);
+    if (widget.initialProduct != null) {
+      _cubit.showCachedProduct(widget.initialProduct!);
+      _cubit.refreshProductDetail(widget.productId);
+    } else {
+      _cubit.loadProductDetail(widget.productId);
+    }
     _checkIfFavorite();
     _loadMyRating();
     _loadPaymentConfig();
@@ -269,6 +282,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   // ── Noter le produit (vendeur ou acheteur) ─────────────────────────────
+  // Mise à jour OPTIMISTE : l'étoile choisie et la nouvelle moyenne
+  // s'affichent tout de suite (calculées côté client à partir de l'état
+  // déjà affiché), la transaction Firestore part en arrière-plan. En cas
+  // d'échec, on revient à l'ancienne note/moyenne avec un message. Ne
+  // recharge jamais toute la fiche (pas de loadProductDetail ici) et
+  // n'incrémente pas viewCount : une vue = une ouverture de fiche, pas un
+  // vote.
   Future<void> _rateProduct(int stars) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -277,7 +297,36 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
 
     if (_isRatingLoading) return;
-    setState(() => _isRatingLoading = true);
+
+    final state = _cubit.state;
+    if (state is! ProductDetailLoaded) return;
+    final previousProduct = state.product;
+    final previousMyRating = _myRating;
+
+    final hadExistingRating = previousMyRating > 0;
+    final currentRating = previousProduct.rating;
+    final currentCount = previousProduct.reviewCount;
+    double optimisticRating;
+    int optimisticCount;
+    if (hadExistingRating) {
+      final totalPoints =
+          (currentRating * currentCount) - previousMyRating + stars;
+      optimisticCount = currentCount;
+      optimisticRating = optimisticCount == 0 ? 0 : totalPoints / optimisticCount;
+    } else {
+      final totalPoints = (currentRating * currentCount) + stars;
+      optimisticCount = currentCount + 1;
+      optimisticRating = totalPoints / optimisticCount;
+    }
+
+    setState(() {
+      _myRating = stars;
+      _isRatingLoading = true;
+    });
+    _cubit.showCachedProduct(previousProduct.copyWith(
+      rating: optimisticRating,
+      reviewCount: optimisticCount,
+    ));
 
     final productRef =
         FirebaseFirestore.instance.collection('product').doc(widget.productId);
@@ -288,9 +337,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         final existingReview = await transaction.get(reviewRef);
         final productSnap = await transaction.get(productRef);
 
-        final currentRating =
+        final serverRating =
             (productSnap['rating'] as num?)?.toDouble() ?? 0.0;
-        final currentCount =
+        final serverCount =
             (productSnap['reviewCount'] as num?)?.toInt() ?? 0;
 
         double newRating;
@@ -298,12 +347,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
         if (existingReview.exists) {
           final oldStars = (existingReview['rating'] as num).toDouble();
-          final totalPoints = (currentRating * currentCount) - oldStars + stars;
-          newRating = currentCount == 0 ? 0 : totalPoints / currentCount;
-          newCount = currentCount;
+          final totalPoints = (serverRating * serverCount) - oldStars + stars;
+          newRating = serverCount == 0 ? 0 : totalPoints / serverCount;
+          newCount = serverCount;
         } else {
-          final totalPoints = (currentRating * currentCount) + stars;
-          newCount = currentCount + 1;
+          final totalPoints = (serverRating * serverCount) + stars;
+          newCount = serverCount + 1;
           newRating = totalPoints / newCount;
         }
 
@@ -320,9 +369,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       });
 
       if (mounted) {
-        setState(() => _myRating = stars);
-        // Recharge le produit pour afficher la nouvelle moyenne
-        _cubit.loadProductDetail(widget.productId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Merci pour ta note ⭐'),
@@ -333,6 +379,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _myRating = previousMyRating);
+        _cubit.showCachedProduct(previousProduct);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur : ${e.toString()}'),
@@ -654,7 +702,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ],
                     _RatingStars(
                       currentRating: _myRating,
-                      isLoading: _isRatingLoading,
                       onRate: _rateProduct,
                     ),
                   ],
@@ -1085,27 +1132,15 @@ class _Badge extends StatelessWidget {
 // ── Widget d'étoiles cliquables pour noter un produit ──────────────────────
 class _RatingStars extends StatelessWidget {
   final int currentRating; // 0 si l'utilisateur n'a pas encore noté
-  final bool isLoading;
   final ValueChanged<int> onRate;
 
   const _RatingStars({
     required this.currentRating,
-    required this.isLoading,
     required this.onRate,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return SizedBox(
-        width: 16,
-        height: 16,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      );
-    }
     return Row(
       children: List.generate(5, (index) {
         final starValue = index + 1;

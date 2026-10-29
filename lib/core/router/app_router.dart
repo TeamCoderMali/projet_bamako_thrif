@@ -213,7 +213,8 @@ final GoRouter appRouter = GoRouter(
       name: 'productDetail',
       builder: (context, state) {
         final productId = state.pathParameters['id']!;
-        return ProductDetailPage(productId: productId);
+        final known = state.extra as ProductEntity?;
+        return ProductDetailPage(productId: productId, initialProduct: known);
       },
     ),
 
