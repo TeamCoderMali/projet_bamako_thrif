@@ -73,6 +73,7 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
     try {
       final db = FirebaseFirestore.instance;
       final sellerId = orderData['sellerId'] as String?;
+      final buyerId = orderData['buyerId'] as String?;
       final totalAmount = (orderData['totalAmount'] as num?)?.toDouble() ?? 0;
       final productTitle = orderData['productTitle'] as String? ?? 'Article';
 
@@ -81,66 +82,21 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
         'receivedAt': Timestamp.now(),
       });
 
-      // Libère les fonds au vendeur (moins les frais de service déjà
-      // retenus au moment du paiement — voir payment_page.dart). Sauté tant
-      // que le paiement reste désactivé (simulation, voir
-      // PaymentConfigService : rien à solder dans ce cas, et la règle
-      // Firestore wallet.write bloque de toute façon cette écriture depuis
-      // l'audit sécurité du 2026-10-26). Isolé dans son propre try/catch
-      // (demande d'Ali) : un échec ici ne doit jamais empêcher la commande
-      // d'être confirmée côté acheteur/vendeur ci-dessous.
-      if (sellerId != null &&
-          await PaymentConfigService.instance.isPaymentEnabled()) {
-        try {
-          final walletRef = db.collection('wallet').doc(sellerId);
-          await walletRef.set({
-            'balance': FieldValue.increment(totalAmount),
-            'totalEarned': FieldValue.increment(totalAmount),
-          }, SetOptions(merge: true));
-          await walletRef.collection('transactions').add({
-            'type': 'credit',
-            'label': 'Vente — $productTitle',
-            'amount': totalAmount,
-            'orderId': widget.orderId,
-            'createdAt': Timestamp.now(),
-            'expiresAt': Timestamp.fromDate(
-                DateTime.now().add(const Duration(days: 90))),
-          });
-        } catch (e) {
-          logger.severe('Échec crédit du wallet vendeur', error: e.toString());
-        }
-      }
-
-      // Compteur + signal d'activité pour la relance des utilisateurs
-      // inactifs (profil "vendeur" vs "acheteur"). Doit toujours s'exécuter,
-      // même si le crédit wallet ci-dessus a échoué ou a été sauté —
-      // isolé dans son propre try/catch pour ne jamais bloquer la suite.
-      if (sellerId != null) {
-        try {
-          await db.collection('users').doc(sellerId).update({
-            'totalSales': FieldValue.increment(1),
-            'lastActivityAt': Timestamp.now(),
-            // Preuve de commande reelle exigee par les regles Firestore
-            // depuis l'audit securite du 2026-10-26 (empeche un tiers de
-            // gonfler ce compteur sans commande).
-            'lastCompletedOrderId': widget.orderId,
-          });
-        } catch (e) {
-          logger.severe('Échec mise à jour totalSales vendeur', error: e.toString());
-        }
-      }
-
-      final buyerId = orderData['buyerId'] as String?;
-      if (buyerId != null) {
-        try {
-          await db.collection('users').doc(buyerId).update({
-            'totalPurchases': FieldValue.increment(1),
-            'lastActivityAt': Timestamp.now(),
-          });
-        } catch (e) {
-          logger.severe('Échec mise à jour totalPurchases acheteur', error: e.toString());
-        }
-      }
+      // Les 3 effets ci-dessous (crédit wallet, compteur vendeur, compteur
+      // acheteur) sont indépendants entre eux -- aucun ne lit le résultat
+      // d'un autre -- donc lancés en parallèle plutôt qu'en série. Chacun
+      // garde son propre try/catch (déjà en place avant ce correctif,
+      // demande d'Ali) : un échec isolé ne doit jamais bloquer les autres
+      // ni la confirmation de commande elle-même, déjà actée ci-dessus.
+      await Future.wait([
+        _creditSellerWallet(
+          sellerId: sellerId,
+          totalAmount: totalAmount,
+          productTitle: productTitle,
+        ),
+        _bumpSellerTotalSales(sellerId),
+        _bumpBuyerTotalPurchases(buyerId),
+      ]);
 
       // Toujours affiché une fois la commande elle-même confirmée : les
       // compteurs/le crédit sont du "best effort" ci-dessus, pas une
@@ -155,6 +111,74 @@ class _OrderTrackingPageState extends State<OrderTrackingPage> {
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  // Libère les fonds au vendeur (moins les frais de service déjà retenus au
+  // moment du paiement — voir payment_page.dart). Sauté tant que le
+  // paiement reste désactivé (simulation, voir PaymentConfigService : rien
+  // à solder dans ce cas, et la règle Firestore wallet.write bloque de
+  // toute façon cette écriture depuis l'audit sécurité du 2026-10-26).
+  Future<void> _creditSellerWallet({
+    required String? sellerId,
+    required double totalAmount,
+    required String productTitle,
+  }) async {
+    if (sellerId == null ||
+        !await PaymentConfigService.instance.isPaymentEnabled()) {
+      return;
+    }
+    try {
+      final db = FirebaseFirestore.instance;
+      final walletRef = db.collection('wallet').doc(sellerId);
+      // set() et l'ajout à la sous-collection 'transactions' sont
+      // indépendants (une sous-collection existe sans attendre le doc
+      // parent) : en parallèle plutôt qu'en série.
+      await Future.wait([
+        walletRef.set({
+          'balance': FieldValue.increment(totalAmount),
+          'totalEarned': FieldValue.increment(totalAmount),
+        }, SetOptions(merge: true)),
+        walletRef.collection('transactions').add({
+          'type': 'credit',
+          'label': 'Vente — $productTitle',
+          'amount': totalAmount,
+          'orderId': widget.orderId,
+          'createdAt': Timestamp.now(),
+          'expiresAt': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 90))),
+        }),
+      ]);
+    } catch (e) {
+      logger.severe('Échec crédit du wallet vendeur', error: e.toString());
+    }
+  }
+
+  Future<void> _bumpSellerTotalSales(String? sellerId) async {
+    if (sellerId == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(sellerId).update({
+        'totalSales': FieldValue.increment(1),
+        'lastActivityAt': Timestamp.now(),
+        // Preuve de commande reelle exigee par les regles Firestore depuis
+        // l'audit securite du 2026-10-26 (empeche un tiers de gonfler ce
+        // compteur sans commande).
+        'lastCompletedOrderId': widget.orderId,
+      });
+    } catch (e) {
+      logger.severe('Échec mise à jour totalSales vendeur', error: e.toString());
+    }
+  }
+
+  Future<void> _bumpBuyerTotalPurchases(String? buyerId) async {
+    if (buyerId == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(buyerId).update({
+        'totalPurchases': FieldValue.increment(1),
+        'lastActivityAt': Timestamp.now(),
+      });
+    } catch (e) {
+      logger.severe('Échec mise à jour totalPurchases acheteur', error: e.toString());
     }
   }
 
@@ -628,39 +652,45 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       final amount =
           (widget.orderData['totalAmount'] as num?)?.toDouble() ?? 0;
-            final productId = widget.orderData['productId'] as String?;
+      final productId = widget.orderData['productId'] as String?;
 
-      // La vente est annulée, l'article redevient disponible
-      await db.collection('order').doc(widget.orderId).update({
-        'status': 'cancelled',
-        'updatedAt': Timestamp.now(),
-      });
+      // Tout ce qui suit porte sur des documents différents et aucune
+      // écriture ne lit le résultat d'une autre : lancé en parallèle
+      // plutôt qu'en série.
+      final writes = <Future<void>>[
+        // La vente est annulée, l'article redevient disponible.
+        db.collection('order').doc(widget.orderId).update({
+          'status': 'cancelled',
+          'updatedAt': Timestamp.now(),
+        }),
+      ];
       if (productId != null) {
-        await db
+        writes.add(db
             .collection('product')
             .doc(productId)
-            .update({'status': 'available'});
+            .update({'status': 'available'}));
       }
-
       if (choice == 'avoir' && uid != null) {
         final walletRef = db.collection('wallet').doc(uid);
-        await walletRef.set({
-          'balance': FieldValue.increment(amount),
-          'totalEarned': FieldValue.increment(amount),
-        }, SetOptions(merge: true));
-        await walletRef.collection('transactions').add({
-          'type': 'credit',
-          'label': 'Avoir — vente annulée (signalement)',
-          'amount': amount,
-          'orderId': widget.orderId,
-          'createdAt': Timestamp.now(),
-          'expiresAt': Timestamp.fromDate(
-              DateTime.now().add(const Duration(days: 90))),
-        });
+        writes.add(Future.wait([
+          walletRef.set({
+            'balance': FieldValue.increment(amount),
+            'totalEarned': FieldValue.increment(amount),
+          }, SetOptions(merge: true)),
+          walletRef.collection('transactions').add({
+            'type': 'credit',
+            'label': 'Avoir — vente annulée (signalement)',
+            'amount': amount,
+            'orderId': widget.orderId,
+            'createdAt': Timestamp.now(),
+            'expiresAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(days: 90))),
+          }),
+        ]));
       } else if (choice == 'remboursement' && uid != null) {
         // ID deterministe {orderId}_{buyerId} : une seule demande de
         // remboursement active par commande et par acheteur.
-        await db
+        writes.add(db
             .collection('refund_requests')
             .doc('${widget.orderId}_$uid')
             .set({
@@ -669,8 +699,9 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
           'amount': amount,
           'status': 'pending',
           'createdAt': Timestamp.now(),
-        });
+        }));
       }
+      await Future.wait(writes);
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -722,13 +753,14 @@ class _ReportIssueSheetState extends State<_ReportIssueSheet> {
     // Délai max par photo : sans ça, un envoi qui ne progresse jamais
     // laisse le dialogue bloqué indéfiniment sans erreur visible (même
     // constat que pour la publication, voir publish_product_page.dart).
-    final photoUrls = <String>[];
-    for (int i = 0; i < _photos.length; i++) {
-      final url = await storageService
-          .uploadDisputePhoto(_photos[i])
-          .timeout(const Duration(seconds: 60));
-      photoUrls.add(url);
-    }
+    // Contrairement à publish_product_page.dart, aucune barre de
+    // progression par photo n'est affichée ici : les envois partent tous
+    // en parallèle plutôt qu'un par un.
+    final photoUrls = await Future.wait(_photos.map(
+      (photo) => storageService
+          .uploadDisputePhoto(photo)
+          .timeout(const Duration(seconds: 60)),
+    ));
 
     // Photos de l'annonce initiale (déjà en ligne), pour comparaison par
     // l'équipe — plus besoin d'un relais pour les prendre séparément.

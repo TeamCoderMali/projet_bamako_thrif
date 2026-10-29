@@ -17,6 +17,7 @@ import 'package:bamako_thrift/features/product/domain/entities/product_entity.da
 import 'package:bamako_thrift/features/product/data/models/product_model.dart';
 import 'package:bamako_thrift/features/product/presentation/cubit/product_cubit.dart';
 import 'package:bamako_thrift/shared/widgets/bottom_navigation.dart';
+import 'package:bamako_thrift/shared/widgets/sheet_picker_field.dart';
 
 class PublishProductPage extends StatefulWidget {
   const PublishProductPage({super.key});
@@ -102,15 +103,6 @@ class _PublishProductPageState extends State<PublishProductPage> {
   bool _isPublishing = false;
   double _uploadProgress = 0.0;
   String _publishStep = '';
-
-  // Liste centralisee (product_entity.dart, lot 2) pour rester synchronisee
-  // avec filter_page.dart. "Sacs"/"Bijoux" n'y figurent plus (fusion
-  // cosmétique dans Accessoires) : un nouvel article ne peut plus être
-  // publié directement sous ces deux catégories, mais les articles
-  // existants ne sont pas touchés.
-  final List<Map<String, dynamic>> _categories = [
-    for (final c in selectableProductCategories) {'label': c.label, 'value': c},
-  ];
 
   // ── 4 états exacts du cahier des charges (section 4.3) ──────────────────
   final List<Map<String, dynamic>> _conditions = [
@@ -242,10 +234,14 @@ class _PublishProductPageState extends State<PublishProductPage> {
       final sellerCity = user.city ?? _selectedSellerCity;
 
       // Vendeur sans ville sur son profil : on l'enregistre aussi là-bas
-      // (pas seulement sur cet article), pour ne plus la redemander la
-      // prochaine fois.
+      // (pas seulement sur cet article, déjà renseigné directement via
+      // sellerCity ci-dessous), pour ne plus la redemander la prochaine
+      // fois. Indépendant du reste de la publication : part en
+      // arrière-plan plutôt que d'être attendu ici (AuthCubit.updateProfile
+      // est déjà optimiste côté affichage).
       if (needsCitySelection && _selectedSellerCity != null) {
-        await context.read<AuthCubit>().updateProfile(city: _selectedSellerCity);
+        // ignore: unawaited_futures
+        context.read<AuthCubit>().updateProfile(city: _selectedSellerCity);
       }
 
       List<String> imageUrls = [];
@@ -443,32 +439,19 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         const SizedBox(height: 18),
                         _sectionTitle('Catégorie *'),
                         const SizedBox(height: 8),
-                        _dropdownContainer(
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<ProductCategory>(
-                              value: _selectedCategory,
-                              isExpanded: true,
-                              items: _categories.map((cat) {
-                                return DropdownMenuItem<ProductCategory>(
-                                  value: cat['value'] as ProductCategory,
-                                  child: Text(cat['label'] as String,
-                                      style: TextStyle(
-                                          color: Theme.of(context).brightness ==
-                                                  Brightness.dark
-                                              ? Theme.of(context).colorScheme.onSurface
-                                              : Colors.black87)),
-                                );
-                              }).toList(),
-                              onChanged: (v) => setState(() {
-                                _selectedCategory = v!;
-                                // Reinitialise la taille au changement de
-                                // categorie (options differentes selon
-                                // vetements/enfants/chaussures/masquee).
-                                _selectedSizeOption = null;
-                                _tailleController.clear();
-                              }),
-                            ),
-                          ),
+                        SheetPickerField<ProductCategory>(
+                          label: 'Catégorie',
+                          value: _selectedCategory,
+                          options: selectableProductCategories,
+                          labelOf: (c) => c.label,
+                          onChanged: (v) => setState(() {
+                            _selectedCategory = v!;
+                            // Reinitialise la taille au changement de
+                            // categorie (options differentes selon
+                            // vetements/enfants/chaussures/masquee).
+                            _selectedSizeOption = null;
+                            _tailleController.clear();
+                          }),
                         ),
                         const SizedBox(height: 18),
                         _sectionTitle('État du vêtement *'),
@@ -550,17 +533,12 @@ class _PublishProductPageState extends State<PublishProductPage> {
                         ),
                         if (sellerHasNoCity) ...[
                           const SizedBox(height: 18),
-                          _sectionTitle('Ta ville'),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedSellerCity,
-                            decoration: _inputDeco(
-                                'Dans quelle ville te trouves-tu ?'),
-                            items: [
-                              for (final city in maliCities)
-                                DropdownMenuItem(
-                                    value: city, child: Text(city)),
-                            ],
+                          SheetPickerField<String>(
+                            label: 'Ta ville',
+                            hint: 'Dans quelle ville te trouves-tu ?',
+                            value: _selectedSellerCity,
+                            options: maliCities,
+                            labelOf: (c) => c,
                             onChanged: (v) =>
                                 setState(() => _selectedSellerCity = v),
                             validator: (v) =>
@@ -1035,20 +1013,6 @@ class _PublishProductPageState extends State<PublishProductPage> {
     );
   }
 
-  Widget _dropdownContainer({required Widget child}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Theme.of(context).colorScheme.surfaceContainerHighest
-            : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: child,
-    );
-  }
-
   // ── Menu deroulant avec option "Autre" (champ texte, 40 car. max,
   // obligatoire si choisie) — marque/taille/couleur. La valeur finale reste
   // ecrite dans [controller], que l'option vienne de la liste ou du texte
@@ -1065,35 +1029,16 @@ class _PublishProductPageState extends State<PublishProductPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle(label),
-        const SizedBox(height: 8),
-        _dropdownContainer(
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: selected,
-              isExpanded: true,
-              hint: Text('Choisis une option',
-                  style: TextStyle(
-                      color: isDark
-                          ? Theme.of(context).colorScheme.onSurfaceVariant
-                          : Colors.grey,
-                      fontSize: 13)),
-              items: options
-                  .map((o) => DropdownMenuItem(
-                        value: o,
-                        child: Text(o,
-                            style: TextStyle(
-                                color: isDark
-                                    ? Theme.of(context).colorScheme.onSurface
-                                    : Colors.black87)),
-                      ))
-                  .toList(),
-              onChanged: (v) {
-                onSelected(v);
-                controller.text = (v == null || v == _kAutre) ? '' : v;
-              },
-            ),
-          ),
+        SheetPickerField<String>(
+          label: label,
+          hint: 'Choisis une option',
+          value: selected,
+          options: options,
+          labelOf: (o) => o,
+          onChanged: (v) {
+            onSelected(v);
+            controller.text = (v == null || v == _kAutre) ? '' : v;
+          },
         ),
         if (selected == _kAutre) ...[
           const SizedBox(height: 8),

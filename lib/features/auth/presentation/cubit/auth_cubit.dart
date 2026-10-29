@@ -1,5 +1,6 @@
 // ─── Bamako Thrift — Auth Cubit ────────────────────────────────────────────
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/snackbar_service.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../bloc/auth_state.dart';
@@ -127,6 +128,13 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   // ── Mise à jour profil ───────────────────────────────────────────────────
+  // Optimiste : affiche tout de suite la version à jour (copyWith local),
+  // sans AuthLoading global (qui ferait clignoter tout écran écoutant ce
+  // cubit pour un simple changement de profil). L'écriture Firestore/Auth
+  // part en arrière-plan ; en cas d'échec on restaure l'ancienne valeur et
+  // on avertit via SnackBarService (pas ScaffoldMessenger.of(context) : la
+  // page qui a appelé ceci a pu être quittée avant la fin de l'écriture —
+  // sauvegarde optimiste côté edit_profile_page.dart).
   Future<bool> updateProfile({
     String? fullName,
     String? bio,
@@ -134,19 +142,32 @@ class AuthCubit extends Cubit<AuthState> {
     String? phoneNumber,
     String? avatarUrl,
   }) async {
-    emit(const AuthLoading());
+    final current = state;
+    if (current is! AuthAuthenticated) return false;
+    final previousUser = current.user;
+
+    final optimisticUser = previousUser.copyWith(
+      fullName: fullName,
+      bio: bio,
+      city: city,
+      phoneNumber: phoneNumber,
+      avatarUrl: avatarUrl,
+    );
+    emit(AuthAuthenticated(optimisticUser));
+
     try {
-      final user = await _authRepository.updateProfile(
+      await _authRepository.updateProfile(
         fullName: fullName,
         bio: bio,
         city: city,
         phoneNumber: phoneNumber,
         avatarUrl: avatarUrl,
       );
-      emit(AuthAuthenticated(user));
       return true;
     } catch (e) {
-      emit(AuthError(e.toString().replaceFirst('Exception: ', '')));
+      emit(AuthAuthenticated(previousUser));
+      SnackBarService.instance
+          .showError('La mise à jour du profil a échoué. Réessaie.');
       return false;
     }
   }

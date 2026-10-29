@@ -69,32 +69,52 @@ class _FavoritesPageState extends State<FavoritesPage> {
     }
   }
 
+  // Optimiste : la carte disparaît tout de suite, les deux écritures
+  // (favori + compteur, documents indépendants) partent en parallèle en
+  // arrière-plan, et on la remet si elles échouent.
   Future<void> _removeFavorite(String productId) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('favorites')
-        .doc(productId)
-        .delete();
-    await FirebaseFirestore.instance
-        .collection('product')
-        .doc(productId)
-        .update({'favoriteCount': FieldValue.increment(-1)}).catchError((_) {});
+    final index = _favorites.indexWhere((f) => f['productId'] == productId);
+    if (index == -1) return;
+    final removed = _favorites[index];
+    setState(() => _favorites.removeAt(index));
 
-    setState(() {
-      _favorites.removeWhere((f) => f['productId'] == productId);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Retiré des favoris'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    try {
+      await Future.wait([
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('favorites')
+            .doc(productId)
+            .delete(),
+        FirebaseFirestore.instance
+            .collection('product')
+            .doc(productId)
+            .update({'favoriteCount': FieldValue.increment(-1)}).catchError(
+                (_) {}),
+      ]);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Retiré des favoris'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _favorites.insert(index, removed));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur : impossible de retirer ce favori.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override

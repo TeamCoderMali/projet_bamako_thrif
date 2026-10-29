@@ -91,6 +91,10 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }
 
   // ── Créer un produit ─────────────────────────────────────────────────────
+  // Écriture produit + signal d'activité (indépendants) lancés en
+  // parallèle, et plus de relecture du document créé : on connaît déjà
+  // toutes les valeurs envoyées, seul serverTimestamp() n'est pas résolu
+  // localement (approximé par DateTime.now(), sans impact d'affichage).
   @override
   Future<ProductModel> createProduct(ProductModel product) async {
     final data = product.toFirestore();
@@ -98,16 +102,19 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     data['createdAt'] = FieldValue.serverTimestamp();
     data.remove('updatedAt');
 
-    final docRef = await _productsCol.add(data);
-    final created = await docRef.get();
-    final createdData = _convertTimestamps(created.data()!);
+    final addFuture = _productsCol.add(data);
+    final activityFuture = _firestore
+        .collection('users')
+        .doc(product.sellerId)
+        .update({'lastActivityAt': FieldValue.serverTimestamp()});
 
-    // Signal d'activité pour la relance des utilisateurs inactifs.
-    await _firestore.collection('users').doc(product.sellerId).update({
-      'lastActivityAt': FieldValue.serverTimestamp(),
-    });
+    final docRef = await addFuture;
+    await activityFuture;
 
-    return ProductModel.fromFirestore(createdData, docRef.id);
+    final localData = Map<String, dynamic>.from(data)
+      ..['createdAt'] = DateTime.now().millisecondsSinceEpoch;
+
+    return ProductModel.fromFirestore(localData, docRef.id);
   }
 
   // ── Mettre à jour un produit ─────────────────────────────────────────────

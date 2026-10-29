@@ -388,8 +388,13 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
   }
 
   // ── Mise à jour profil ───────────────────────────────────────────────────
+  // Écritures indépendantes (doc public, sous-collection privée,
+  // displayName Firebase Auth) lancées en parallèle plutôt qu'en séquence,
+  // et plus de relecture Firestore finale : AuthCubit.updateProfile affiche
+  // déjà la version à jour de façon optimiste (copyWith local) sans
+  // attendre ce retour (~5s cumulées sur mobile avant ce correctif).
   @override
-  Future<UserEntity> updateProfile({
+  Future<void> updateProfile({
     String? fullName,
     String? bio,
     String? city,
@@ -406,23 +411,17 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     if (bio != null) updates['bio'] = bio.trim();
     if (city != null) updates['city'] = city.trim();
     if (avatarUrl != null) updates['avatarUrl'] = avatarUrl;
-    await _usersCol.doc(uid).update(updates);
 
-    if (phoneNumber != null) {
-      await _privateDoc(uid).set(
-        {'phoneNumber': phoneNumber.trim()},
-        SetOptions(merge: true),
-      );
-    }
-
-    // Mettre à jour Firebase Auth displayName si nécessaire
-    if (fullName != null) {
-      await _auth.currentUser!.updateDisplayName(fullName.trim());
-    }
-
-    final updated = await _fetchUserFromFirestore(uid);
-    if (updated == null) throw Exception('Profil introuvable.');
-    return updated;
+    await Future.wait([
+      _usersCol.doc(uid).update(updates),
+      if (phoneNumber != null)
+        _privateDoc(uid).set(
+          {'phoneNumber': phoneNumber.trim()},
+          SetOptions(merge: true),
+        ),
+      if (fullName != null)
+        _auth.currentUser!.updateDisplayName(fullName.trim()),
+    ]);
   }
 
   // ── Suppression compte ───────────────────────────────────────────────────

@@ -42,6 +42,39 @@ class UserEntity extends Equatable {
     this.isVendeurPro = false,
   });
 
+  // Mise à jour optimiste du profil côté client (AuthCubit.updateProfile) :
+  // un paramètre null veut dire "ne pas changer", même convention que
+  // AuthRepositoryImpl.updateProfile côté serveur (ne pas désynchroniser
+  // les deux sinon l'affichage optimiste mentirait sur ce qui a vraiment
+  // été écrit).
+  UserEntity copyWith({
+    String? fullName,
+    String? phoneNumber,
+    String? avatarUrl,
+    String? bio,
+    String? city,
+  }) {
+    return UserEntity(
+      id: id,
+      email: email,
+      fullName: fullName ?? this.fullName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      bio: bio ?? this.bio,
+      city: city ?? this.city,
+      role: role,
+      isEmailVerified: isEmailVerified,
+      isActive: isActive,
+      createdAt: createdAt,
+      updatedAt: DateTime.now(),
+      totalListings: totalListings,
+      totalSales: totalSales,
+      rating: rating,
+      reviewCount: reviewCount,
+      isVendeurPro: isVendeurPro,
+    );
+  }
+
   bool get isSeller => role == UserRole.seller || role == UserRole.admin;
   bool get isRelayManager => role == UserRole.relay_manager;
   bool get isAdmin => role == UserRole.admin;

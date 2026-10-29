@@ -108,6 +108,13 @@ class _PaymentPageState extends State<PaymentPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
+    // Indépendant de la commande (ne lit/n'écrit pas orderId) : part en
+    // parallèle plutôt que d'être attendu après coup.
+    final activityFuture = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .update({'lastActivityAt': FieldValue.serverTimestamp()});
+
     final orderRef =
         await FirebaseFirestore.instance.collection('order').add({
       'buyerId': uid,
@@ -125,13 +132,11 @@ class _PaymentPageState extends State<PaymentPage> {
     // L'article n'est plus disponible à l'achat dès que la vente est payée
     // (évite qu'un autre acheteur le paie en même temps). orderId est vérifié
     // côté règles Firestore pour empêcher qu'un tiers marque l'article d'un
-    // autre vendeur comme vendu sans commande réelle.
+    // autre vendeur comme vendu sans commande réelle. Dépend du orderRef
+    // ci-dessus : ne peut pas partir en parallèle avec la création de la
+    // commande.
     await _markProductSold(product.id, orderRef.id);
-
-    // Signal d'activité pour la relance des utilisateurs inactifs.
-    await FirebaseFirestore.instance.collection('users').doc(uid).update({
-      'lastActivityAt': FieldValue.serverTimestamp(),
-    });
+    await activityFuture;
 
     // ⚠️ Le crédit du portefeuille vendeur ne se fait PAS ici.
     // Il est fait quand l'acheteur confirme la réception (statut

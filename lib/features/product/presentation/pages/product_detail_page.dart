@@ -205,6 +205,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   // ── Ajouter/Retirer des favoris Firestore ──────────────────────────────
+  // Optimiste : le cœur et le compteur changent tout de suite ; les deux
+  // écritures (favori + compteur, documents indépendants) partent en
+  // parallèle en arrière-plan, et on revient en arrière avec un message si
+  // elles échouent.
   Future<void> _toggleFavorite() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -213,7 +217,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
 
     if (_isFavoriteLoading) return;
-    setState(() => _isFavoriteLoading = true);
+    _isFavoriteLoading = true;
 
     final favRef = FirebaseFirestore.instance
         .collection('users')
@@ -224,18 +228,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final productRef =
         FirebaseFirestore.instance.collection('product').doc(widget.productId);
 
+    final wasFavorite = _isFavorite;
+    final previousCountOverride = _favoriteCountOverride;
+
+    setState(() {
+      _isFavorite = !wasFavorite;
+      _favoriteCountOverride =
+          (_favoriteCountOverride ?? _currentFavoriteCount()) +
+              (wasFavorite ? -1 : 1);
+    });
+
     try {
-      if (_isFavorite) {
-        await favRef.delete();
-        await productRef
-            .update({'favoriteCount': FieldValue.increment(-1)}).catchError(
-                (_) {});
+      if (wasFavorite) {
+        await Future.wait([
+          favRef.delete(),
+          productRef
+              .update({'favoriteCount': FieldValue.increment(-1)}).catchError(
+                  (_) {}),
+        ]);
         if (mounted) {
-          setState(() {
-            _isFavorite = false;
-            _favoriteCountOverride =
-                (_favoriteCountOverride ?? _currentFavoriteCount()) - 1;
-          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Retiré des favoris'),
@@ -245,19 +256,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           );
         }
       } else {
-        await favRef.set({
-          'productId': widget.productId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await productRef
-            .update({'favoriteCount': FieldValue.increment(1)}).catchError(
-                (_) {});
+        await Future.wait([
+          favRef.set({
+            'productId': widget.productId,
+            'createdAt': FieldValue.serverTimestamp(),
+          }),
+          productRef
+              .update({'favoriteCount': FieldValue.increment(1)}).catchError(
+                  (_) {}),
+        ]);
         if (mounted) {
-          setState(() {
-            _isFavorite = true;
-            _favoriteCountOverride =
-                (_favoriteCountOverride ?? _currentFavoriteCount()) + 1;
-          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Ajouté aux favoris ❤️'),
@@ -269,6 +277,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isFavorite = wasFavorite;
+          _favoriteCountOverride = previousCountOverride;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur : ${e.toString()}'),
@@ -277,7 +289,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isFavoriteLoading = false);
+      _isFavoriteLoading = false;
     }
   }
 
@@ -596,19 +608,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: _isFavoriteLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF6B7F4D),
-                        ),
-                      )
-                    : Icon(
-                        _isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: _isFavorite ? Colors.red : Colors.black,
-                      ),
+                child: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: _isFavorite ? Colors.red : Colors.black,
+                ),
               ),
             ),
             // ── Partager ────────────────────────────────────────────────

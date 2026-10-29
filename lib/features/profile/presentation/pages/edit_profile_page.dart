@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:bamako_thrift/shared/widgets/sheet_picker_field.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -32,7 +33,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   // plateformes y compris le web (lot "putFile web", 2026-10-15).
   XFile? _selectedAvatar;
   bool _isUploadingAvatar = false;
-  bool _isSaving = false;
 
   @override
   void didChangeDependencies() {
@@ -180,53 +180,44 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   // ── Sauvegarder les infos du profil ──────────────────────────────────────
-  Future<void> _save() async {
+  // Optimiste : AuthCubit.updateProfile affiche la nouvelle valeur tout de
+  // suite (avant même l'écriture Firestore), donc on peut afficher le
+  // succès et quitter la page immédiatement ; l'écriture continue en
+  // arrière-plan et le cubit restaure l'ancienne valeur (+ message global)
+  // si elle échoue — voir AuthCubit.updateProfile.
+  void _save() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _isSaving = true);
+    final cubit = context.read<AuthCubit>();
+    if (cubit.state is! AuthAuthenticated) return;
 
-    try {
-      final success = await context.read<AuthCubit>().updateProfile(
-            fullName: _nomController.text.trim(),
-            phoneNumber: _phoneController.text.trim().isEmpty
-                ? null
-                : _phoneController.text.trim(),
-            bio: _bioController.text.trim().isEmpty
-                ? null
-                : _bioController.text.trim(),
-            city: _selectedCity,
-          );
+    // ignore: unawaited_futures
+    cubit.updateProfile(
+      fullName: _nomController.text.trim(),
+      phoneNumber: _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim(),
+      bio: _bioController.text.trim().isEmpty
+          ? null
+          : _bioController.text.trim(),
+      city: _selectedCity,
+    );
 
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle,
-                      color: Theme.of(context).colorScheme.onPrimary, size: 18),
-                  const SizedBox(width: 8),
-                  const Text('Profil mis à jour avec succès !'),
-                ],
-              ),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          );
-          context.canPop() ? context.pop() : context.go(RouteNames.settings);
-        } else {
-          final state = context.read<AuthCubit>().state;
-          final msg =
-              state is AuthError ? state.message : 'Erreur de mise à jour';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.red),
-          );
-        }
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle,
+                color: Theme.of(context).colorScheme.onPrimary, size: 18),
+            const SizedBox(width: 8),
+            const Text('Profil mis à jour avec succès !'),
+          ],
+        ),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+    context.canPop() ? context.pop() : context.go(RouteNames.settings);
   }
 
   @override
@@ -234,7 +225,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         final user = state is AuthAuthenticated ? state.user : null;
-        final isLoading = state is AuthLoading || _isSaving;
+        final isLoading = state is AuthLoading;
 
         return Scaffold(
           appBar: AppBar(
@@ -434,29 +425,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   const SizedBox(height: 16),
 
                   // ── Ville ──────────────────────────────────────────────
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedCity,
-                    decoration: InputDecoration(
-                      labelText: 'Ville',
-                      hintText: 'Dans quelle ville te trouves-tu ?',
-                      prefixIcon: const Icon(Icons.location_on_outlined),
-                      filled: true,
-                      fillColor:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary, width: 1.5),
-                      ),
-                    ),
-                    items: [
-                      for (final city in maliCities)
-                        DropdownMenuItem(value: city, child: Text(city)),
-                    ],
+                  SheetPickerField<String>(
+                    label: 'Ville',
+                    hint: 'Dans quelle ville te trouves-tu ?',
+                    value: _selectedCity,
+                    options: maliCities,
+                    labelOf: (c) => c,
+                    prefixIcon: Icons.location_on_outlined,
                     onChanged: (v) => setState(() => _selectedCity = v),
                   ),
                   const SizedBox(height: 16),

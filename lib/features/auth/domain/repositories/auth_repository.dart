@@ -36,7 +36,10 @@ abstract class AuthRepository {
   Future<void> sendEmailVerification();
 
   /// Met à jour le profil utilisateur (Firestore + FirebaseAuth displayName).
-  Future<UserEntity> updateProfile({
+  /// Les écritures indépendantes partent en parallèle ; ne relit jamais le
+  /// profil après coup (voir AuthCubit.updateProfile pour la version locale
+  /// affichée de façon optimiste).
+  Future<void> updateProfile({
     String? fullName,
     String? bio,
     String? city,
