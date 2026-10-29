@@ -81,7 +81,7 @@ class _IntroPageState extends State<IntroPage> {
                     fit: BoxFit.contain,
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () => context.go(RouteNames.login),
                     child: Text(
                       'Passer',
                       style: TextStyle(

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -237,7 +238,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${((product['price'] ?? 0) as num).toStringAsFixed(0)} FCFA',
+                                    '${((product['price'] ?? 0) as num).toDouble().toPriceFCFA}',
                                     style: TextStyle(
                                       color: Theme.of(context).colorScheme.primary,
                                       fontWeight: FontWeight.bold,

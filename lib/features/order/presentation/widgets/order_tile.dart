@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/extensions/double_extension.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
@@ -52,7 +53,7 @@ class OrderTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${order.amount.toStringAsFixed(0)} FCFA',
+                    '${order.amount.toPriceFCFA}',
                     style: AppTextStyles.titleMedium.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w700,

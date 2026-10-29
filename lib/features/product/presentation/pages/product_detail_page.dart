@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:bamako_thrift/core/constants/brand.dart';
 import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
+import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/blocked_users_service.dart';
 import 'package:bamako_thrift/core/services/payment_config_service.dart';
@@ -53,10 +54,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   // "activé" afficherait une fausse sécurité).
   bool _paymentEnabled = false;
 
+  // Instance de ProductCubit propre a cette page (pas celle, partagee, de
+  // main.dart) : home/catalogue/recherche utilisent toutes la meme
+  // instance racine, donc un chargement concurrent ailleurs pouvait faire
+  // clignoter cette fiche en roue/grise meme apres chargement du produit
+  // (retour de test Fatou, 2026-10-29).
+  late final ProductCubit _cubit = sl<ProductCubit>();
+
   @override
   void initState() {
     super.initState();
-    context.read<ProductCubit>().loadProductDetail(widget.productId);
+    _cubit.loadProductDetail(widget.productId);
     _checkIfFavorite();
     _loadMyRating();
     _loadPaymentConfig();
@@ -70,6 +78,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   @override
   void dispose() {
     _commentController.dispose();
+    _cubit.close();
     super.dispose();
   }
 
@@ -287,7 +296,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       if (mounted) {
         setState(() => _myRating = stars);
         // Recharge le produit pour afficher la nouvelle moyenne
-        context.read<ProductCubit>().loadProductDetail(widget.productId);
+        _cubit.loadProductDetail(widget.productId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Merci pour ta note ⭐'),
@@ -423,14 +432,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   void _shareProduct(ProductEntity product) {
     Share.share(
       '🛍️ ${product.title}\n'
-      '💰 ${product.price.toStringAsFixed(0)} FCFA\n\n'
+      '💰 ${product.price.toPriceFCFA}\n\n'
       'Disponible sur DANAYA – $danayaSlogan.',
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocProvider<ProductCubit>.value(
+      value: _cubit,
+      child: Scaffold(
       body: BlocConsumer<ProductCubit, ProductState>(
         listener: (context, state) {
           if (state is ProductDetailLoaded && !_proStatusRequested) {
@@ -477,6 +488,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           }
           return const SizedBox.shrink();
         },
+      ),
       ),
     );
   }
@@ -705,7 +717,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  '${product.price.toStringAsFixed(0)} FCFA',
+                  '${product.price.toPriceFCFA}',
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.bold,

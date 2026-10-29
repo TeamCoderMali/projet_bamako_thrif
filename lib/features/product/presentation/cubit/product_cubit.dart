@@ -93,6 +93,12 @@ class ProductCubit extends Cubit<ProductState> {
         _blockedUsers = blockedUsers,
         super(const ProductInitial());
 
+  // Garde anti-reponses-obsoletes : ce cubit est partage entre
+  // home/catalogue/recherche/fiche article (voir main.dart), donc 2
+  // chargements peuvent partir en parallele -- seule la reponse du DERNIER
+  // appel lance doit emettre (retour de test Fatou, 2026-10-29).
+  int _requestId = 0;
+
   // Articles des vendeurs bloqués par l'acheteur courant : retirés après
   // coup plutôt que dans la requête Firestore elle-même (pas de règle à
   // changer, pas de nouvelle requête composée — voir BlockedUsersService).
@@ -108,14 +114,17 @@ class ProductCubit extends Cubit<ProductState> {
     ProductCategory? category,
     bool refresh = false,
   }) async {
+    final id = ++_requestId;
     if (refresh) {
       emit(const ProductLoading());
     }
     try {
       final products =
           await _withoutBlockedSellers(await _repository.getProducts(category: category));
+      if (id != _requestId) return;
       emit(ProductLoaded(products: products, hasMore: products.length == 20));
     } catch (e) {
+      if (id != _requestId) return;
       emit(ProductError(e.toString()));
     }
   }
@@ -127,6 +136,7 @@ class ProductCubit extends Cubit<ProductState> {
     double? minPrice,
     double? maxPrice,
   }) async {
+    final id = ++_requestId;
     emit(const ProductLoading());
     try {
       final products = await _withoutBlockedSellers(await _repository.getProducts(
@@ -135,33 +145,41 @@ class ProductCubit extends Cubit<ProductState> {
         minPrice: minPrice,
         maxPrice: maxPrice,
       ));
+      if (id != _requestId) return;
       emit(ProductLoaded(products: products, hasMore: products.length == 20));
     } catch (e) {
+      if (id != _requestId) return;
       emit(ProductError(e.toString()));
     }
   }
 
   // ── Charger le détail d'un produit ───────────────────────────────────────
-  Future<void> loadProductDetail(String id) async {
+  Future<void> loadProductDetail(String productId) async {
+    final id = ++_requestId;
     emit(const ProductLoading());
     try {
-      final product = await _repository.getProductById(id);
+      final product = await _repository.getProductById(productId);
       // Incrémenter les vues en arrière-plan
-      _repository.incrementViewCount(id).catchError((_) {});
+      _repository.incrementViewCount(productId).catchError((_) {});
+      if (id != _requestId) return;
       emit(ProductDetailLoaded(product));
     } catch (e) {
+      if (id != _requestId) return;
       emit(ProductError(e.toString()));
     }
   }
 
   // ── Rechercher des produits ─────────────────────────────────────
   Future<void> searchProducts(String query) async {
+    final id = ++_requestId;
     emit(const ProductLoading());
     try {
       final products =
           await _withoutBlockedSellers(await _repository.searchProducts(query));
+      if (id != _requestId) return;
       emit(ProductSearchResult(results: products, query: query));
     } catch (e) {
+      if (id != _requestId) return;
       emit(ProductError(e.toString()));
     }
   }

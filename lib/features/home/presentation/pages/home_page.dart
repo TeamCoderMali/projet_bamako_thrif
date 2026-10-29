@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bamako_thrift/core/constants/feature_flags.dart';
+import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
@@ -18,6 +19,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   ProductCategory? _selectedCategory;
+  // Derniere liste connue pour "Recommande pour toi" : le ProductCubit est
+  // partage avec la fiche article/la recherche (voir main.dart), donc son
+  // etat peut devenir ProductDetailLoaded/ProductSearchResult pendant que
+  // cet ecran reste monte en arriere-plan. On ne doit jamais remplacer la
+  // grille par une roue dans ce cas -- seul un ProductLoaded met a jour ce
+  // cache (retour de test Fatou, 2026-10-29).
+  List<ProductEntity>? _lastProducts;
 
   final List<Map<String, dynamic>> _categoryFilters = [
     {'label': 'Voir tout', 'value': null, 'icon': Icons.grid_view_rounded},
@@ -106,21 +114,21 @@ class _HomePageState extends State<HomePage> {
             Expanded(
               child: BlocBuilder<ProductCubit, ProductState>(
                 builder: (context, state) {
-                  if (state is ProductLoading ||
-                      state is ProductInitial ||
-                      state is ProductDetailLoaded ||
-                      state is ProductSearchResult) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                          color: Theme.of(context).colorScheme.primary),
-                    );
+                  if (state is ProductLoaded) {
+                    _lastProducts = state.products;
+                    if (state.products.isEmpty) return _buildEmpty(context);
+                    return _buildProductGrid(context, state.products);
+                  }
+                  // Etat venant d'un autre ecran (fiche article, recherche)
+                  // ou rafraichissement en cours : on garde la derniere
+                  // liste affichee plutot qu'une roue, si on en a une.
+                  final cached = _lastProducts;
+                  if (cached != null) {
+                    if (cached.isEmpty) return _buildEmpty(context);
+                    return _buildProductGrid(context, cached);
                   }
                   if (state is ProductError) {
                     return _buildError(context, state.message);
-                  }
-                  if (state is ProductLoaded) {
-                    if (state.products.isEmpty) return _buildEmpty(context);
-                    return _buildProductGrid(context, state.products);
                   }
                   return Center(
                     child: CircularProgressIndicator(
@@ -593,7 +601,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${product.price.toStringAsFixed(0)} FCFA',
+                      '${product.price.toPriceFCFA}',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,

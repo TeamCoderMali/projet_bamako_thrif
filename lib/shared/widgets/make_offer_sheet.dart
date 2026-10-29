@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/dependency_injection/injection.dart';
+import '../../core/extensions/double_extension.dart';
 import '../../core/services/offers_config_service.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/chat/data/repositories/chat_repository_impl.dart';
@@ -92,7 +93,7 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
     }
     if (amount < _minAmount) {
       setState(() => _error =
-          'L\'offre minimale est de ${_minAmount.toStringAsFixed(0)} FCFA '
+          'L\'offre minimale est de ${_minAmount.toPriceFCFA} '
           '(${(_config.minOfferRatio * 100).toStringAsFixed(0)} % du prix).');
       return;
     }
@@ -142,7 +143,7 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
         );
         await chatRepo.sendMessage(
           chatId: chatId,
-          content: 'Offre : ${amount.toStringAsFixed(0)} FCFA',
+          content: 'Offre : ${amount.toPriceFCFA}',
           type: MessageType.offer,
           offerId: offerId,
         );
@@ -202,7 +203,7 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
         icon: Icons.hourglass_top,
         title: 'Offre en attente',
         message: 'Tu as déjà proposé '
-            '${existing.currentPrice.toStringAsFixed(0)} FCFA pour cet '
+            '${existing.currentPrice.toPriceFCFA} pour cet '
             'article. En attente de la réponse du vendeur.',
       );
     }
@@ -213,7 +214,7 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
         icon: Icons.check_circle_outline,
         title: 'Offre acceptée',
         message: 'Le vendeur a accepté ton offre de '
-            '${existing.currentPrice.toStringAsFixed(0)} FCFA. '
+            '${existing.currentPrice.toPriceFCFA}. '
             'Mets-toi d\'accord sur la remise avec lui.',
       );
     }
@@ -232,8 +233,8 @@ class _MakeOfferSheetState extends State<_MakeOfferSheet> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Prix affiché : ${widget.product.price.toStringAsFixed(0)} FCFA. '
-          'Minimum : ${_minAmount.toStringAsFixed(0)} FCFA '
+          'Prix affiché : ${widget.product.price.toPriceFCFA}. '
+          'Minimum : ${_minAmount.toPriceFCFA} '
           '(${(_config.minOfferRatio * 100).toStringAsFixed(0)} % du prix).',
           style: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
         ),

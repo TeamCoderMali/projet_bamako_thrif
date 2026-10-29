@@ -65,6 +65,11 @@ class CatalogPage extends StatefulWidget {
 
 class _CatalogPageState extends State<CatalogPage> {
   late CatalogFilters _filters;
+  // Derniere liste connue : le ProductCubit est partage avec la fiche
+  // article/la recherche/l'accueil (voir main.dart) -- on garde la
+  // derniere liste pendant un rafraichissement au lieu d'une roue ou
+  // d'un "Aucun article trouve" (retour de test Fatou, 2026-10-29).
+  List<ProductEntity>? _lastProducts;
 
   // Catégories rapides dans la barre horizontale. "Tous" n'est pas une
   // catégorie (value null) ; les autres libellés viennent de
@@ -277,13 +282,15 @@ class _CatalogPageState extends State<CatalogPage> {
           Expanded(
             child: BlocBuilder<ProductCubit, ProductState>(
               builder: (context, state) {
-                if (state is ProductLoading) {
+                if (state is ProductLoaded) {
+                  _lastProducts = state.products;
+                } else if (state is ProductLoading && _lastProducts == null) {
                   return Center(
                     child: CircularProgressIndicator(
                         color: Theme.of(context).colorScheme.primary),
                   );
                 }
-                if (state is ProductError) {
+                if (state is ProductError && _lastProducts == null) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -308,8 +315,7 @@ class _CatalogPageState extends State<CatalogPage> {
                     ),
                   );
                 }
-                final products =
-                    state is ProductLoaded ? state.products : <ProductEntity>[];
+                final products = _lastProducts ?? <ProductEntity>[];
 
                 if (products.isEmpty) {
                   return Center(

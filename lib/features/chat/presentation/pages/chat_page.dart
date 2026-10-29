@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
+import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/services/offers_config_service.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
@@ -558,7 +559,7 @@ class _OfferMessageBubbleState extends State<_OfferMessageBubble> {
             children: [
               Text(
                 'Entre ${minAmount.toStringAsFixed(0)} et '
-                '${offer.originalPrice.toStringAsFixed(0)} FCFA.',
+                '${offer.originalPrice.toPriceFCFA}.',
                 style: const TextStyle(fontSize: 12),
               ),
               const SizedBox(height: 8),
@@ -585,7 +586,7 @@ class _OfferMessageBubbleState extends State<_OfferMessageBubble> {
                 if (v == null || v < minAmount || v > offer.originalPrice) {
                   setDialogState(() => error =
                       'Montant hors bornes (${minAmount.toStringAsFixed(0)} - '
-                      '${offer.originalPrice.toStringAsFixed(0)} FCFA).');
+                      '${offer.originalPrice.toPriceFCFA}).');
                   return;
                 }
                 Navigator.pop(ctx, v);
@@ -637,7 +638,7 @@ class _OfferMessageBubbleState extends State<_OfferMessageBubble> {
                       color: colors.primary, size: 18),
                   const SizedBox(width: 6),
                   Text(
-                    'Offre : ${offer.currentPrice.toStringAsFixed(0)} FCFA',
+                    'Offre : ${offer.currentPrice.toPriceFCFA}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: colors.onSurface,

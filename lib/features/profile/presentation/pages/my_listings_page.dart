@@ -509,10 +509,13 @@ class _MyListingsView extends StatelessWidget {
                                       context, docId, 'available'),
                                 ),
                               IconButton(
+                                // Icone distincte de "Marquer vendu/reserve"
+                                // (Icons.sell_outlined, aussi une etiquette)
+                                // -- confusion signalee par Fatou, 2026-10-29.
                                 icon: Icon(
                                   offersEnabled
-                                      ? Icons.local_offer_outlined
-                                      : Icons.local_offer,
+                                      ? Icons.handshake_outlined
+                                      : Icons.handshake,
                                   color: offersEnabled
                                       ? Theme.of(context)
                                           .colorScheme

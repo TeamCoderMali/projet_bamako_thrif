@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:bamako_thrift/core/dependency_injection/injection.dart';
+import 'package:bamako_thrift/core/extensions/double_extension.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/offers/domain/entities/offer_entity.dart';
@@ -164,7 +165,7 @@ class _OfferTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${offer.currentPrice.toStringAsFixed(0)} FCFA',
+                      '${offer.currentPrice.toPriceFCFA}',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,

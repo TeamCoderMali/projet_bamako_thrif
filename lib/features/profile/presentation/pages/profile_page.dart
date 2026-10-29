@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+import 'package:bamako_thrift/core/services/payment_config_service.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/shared/widgets/bottom_navigation.dart';
 import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
@@ -143,10 +144,6 @@ class ProfilePage extends StatelessWidget {
                             builder: (context, snap) {
                               final data =
                                   snap.data?.data() as Map<String, dynamic>?;
-                              final totalListings =
-                                  data?['totalListings'] as int? ??
-                                      user?.totalListings ??
-                                      0;
                               final totalSales = data?['totalSales'] as int? ??
                                   user?.totalSales ??
                                   0;
@@ -162,10 +159,27 @@ class ProfilePage extends StatelessWidget {
                               return Row(
                                 children: [
                                   Expanded(
-                                    child: _buildStatCard(
-                                      context,
-                                      '$totalListings',
-                                      'Annonces',
+                                    // totalListings (champ stocke, jamais
+                                    // incremente nulle part) remplace par un
+                                    // vrai comptage en direct (retour de
+                                    // test Fatou, 2026-10-29).
+                                    child: FutureBuilder<AggregateQuerySnapshot>(
+                                      future: user == null
+                                          ? null
+                                          : FirebaseFirestore.instance
+                                              .collection('product')
+                                              .where('sellerId', isEqualTo: user.id)
+                                              .where('status', isEqualTo: 'available')
+                                              .count()
+                                              .get(),
+                                      builder: (context, countSnap) {
+                                        final count = countSnap.data?.count ?? 0;
+                                        return _buildStatCard(
+                                          context,
+                                          '$count',
+                                          'Annonces',
+                                        );
+                                      },
                                     ),
                                   ),
                                   const SizedBox(width: 10),
@@ -193,6 +207,18 @@ class ProfilePage extends StatelessWidget {
 
                           const SizedBox(height: 12),
 
+                          // Portefeuille/Paiements masques tant que le
+                          // paiement reste desactive (meme reglage que
+                          // PaymentPage/support_page.dart) -- retour de
+                          // test Fatou, 2026-10-29.
+                          FutureBuilder<bool>(
+                            future:
+                                PaymentConfigService.instance.isPaymentEnabled(),
+                            builder: (context, payState) {
+                              final paymentEnabled = payState.data ?? false;
+                              if (!paymentEnabled) return const SizedBox.shrink();
+                              return Column(
+                                children: [
                           // ── Portefeuille ──────────────────────────────
                           GestureDetector(
                             onTap: () => context.push(RouteNames.wallet),
@@ -253,8 +279,11 @@ class ProfilePage extends StatelessWidget {
                               ),
                             ),
                           ),
-
-                          const SizedBox(height: 12),
+                                  SizedBox(height: 12),
+                                ],
+                              );
+                            },
+                          ),
 
                           // ── Dashboard Admin ───────────────────────────
                           if (user != null && user.isAdmin) ...[
@@ -275,7 +304,18 @@ class ProfilePage extends StatelessWidget {
                           ],
 
                           // ── Menu principal ────────────────────────────
-                          _buildMenuSection(context, [
+                          // "Paiements" masque tant que le paiement reste
+                          // desactive (meme reglage que ci-dessus) --
+                          // "Mes commandes" garde : la liste reste
+                          // consultable (commandes existantes) meme si
+                          // aucune nouvelle commande ne peut etre creee tant
+                          // que PaymentPage est elle-meme desactivee.
+                          FutureBuilder<bool>(
+                            future:
+                                PaymentConfigService.instance.isPaymentEnabled(),
+                            builder: (context, payState) {
+                              final paymentEnabled = payState.data ?? false;
+                              return _buildMenuSection(context, [
                             _buildMenuItem(
                               context,
                               icon: Icons.list_alt,
@@ -308,6 +348,7 @@ class ProfilePage extends StatelessWidget {
                               title: 'Mes commandes',
                               onTap: () => context.push(RouteNames.orders),
                             ),
+                            if (paymentEnabled)
                             _buildMenuItem(
                               context,
                               icon: Icons.credit_card_outlined,
@@ -326,7 +367,9 @@ class ProfilePage extends StatelessWidget {
                                   context.push(RouteNames.notifications),
                               isLast: true,
                             ),
-                          ]),
+                              ]);
+                            },
+                          ),
 
                           const SizedBox(height: 12),
 
