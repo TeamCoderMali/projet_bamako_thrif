@@ -347,12 +347,12 @@ class ProfilePage extends StatelessWidget {
                           ],
 
                           // ── Menu principal ────────────────────────────
-                          // "Paiements" masque tant que le paiement reste
-                          // desactive (meme reglage que ci-dessus) --
-                          // "Mes commandes" garde : la liste reste
-                          // consultable (commandes existantes) meme si
-                          // aucune nouvelle commande ne peut etre creee tant
-                          // que PaymentPage est elle-meme desactivee.
+                          // "Paiements" ET "Mes commandes" masques tant que
+                          // le paiement reste desactive (meme reglage que
+                          // ci-dessus) -- demande d'Ali du 2026-10-31 :
+                          // aucune UI de paiement/commande visible pendant
+                          // cette phase de test, meme la liste (vide tant
+                          // qu'aucune commande n'existe de toute facon).
                           FutureBuilder<bool>(
                             future:
                                 PaymentConfigService.instance.isPaymentEnabled(),
@@ -383,6 +383,7 @@ class ProfilePage extends StatelessWidget {
                               title: 'Mes favoris',
                               onTap: () => context.push(RouteNames.favorites),
                             ),
+                            if (paymentEnabled)
                             _buildMenuItem(
                               context,
                               icon: Icons.shopping_bag_outlined,

@@ -88,7 +88,7 @@ class _AboutPageState extends State<AboutPage> {
                   ? 'Orange Money & Moov Money'
                   : 'Directement entre acheteur et vendeur (phase test)',
             ),
-            _buildInfo(context, 'Support', 'support@danaya.ml'),
+            _buildInfo(context, 'Support', 'danaya.marketplace@gmail.com'),
 
             const SizedBox(height: 32),
 

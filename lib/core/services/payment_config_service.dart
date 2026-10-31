@@ -12,6 +12,7 @@
 // l'interrupteur (jamais par l'app mobile, qui ne fait que lire).
 // À REPASSER à activé par défaut quand un vrai paiement existera.
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../constants/feature_flags.dart';
 
 class PaymentConfigService {
   PaymentConfigService._();
@@ -20,6 +21,10 @@ class PaymentConfigService {
   static const bool fallbackEnabled = false;
 
   Future<bool> isPaymentEnabled() async {
+    // Verrou de test (feature_flags.dart) : ignore même le document
+    // config/payment pendant cette phase, pour ne jamais dépendre d'un
+    // interrupteur back-office qu'on ne peut pas vérifier depuis l'app.
+    if (paymentForceDisabledForTesting) return false;
     try {
       final snap = await FirebaseFirestore.instance
           .collection('config')

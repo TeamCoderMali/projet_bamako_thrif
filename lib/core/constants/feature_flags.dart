@@ -22,3 +22,15 @@ const bool pressingEnabled = false;
 /// true le 2026-10-18 sur demande d'Ali — remettre à false si besoin de le
 /// masquer à nouveau, sans rien supprimer.
 const bool facebookLoginEnabled = true;
+
+/// Verrou de test (demande d'Ali, 2026-10-31) : aucune UI de paiement ne
+/// doit être visible pendant cette phase de test, quel que soit l'état de
+/// config/payment dans Firestore (back-office) -- garantie au niveau code,
+/// pas dépendante d'un interrupteur distant qu'on ne peut pas vérifier
+/// depuis l'app. Lu par PaymentConfigService.isPaymentEnabled(), qui
+/// gouverne déjà Portefeuille/Paiements/Mes commandes (profile_page.dart),
+/// le bouton "Je craque" (product_detail_page.dart), les textes
+/// intro/about/privacy, et les boutons "Vendu"/"Annuler" de Mes annonces.
+/// Remettre à false pour redonner le contrôle au seul document
+/// config/payment quand un vrai paiement existera.
+const bool paymentForceDisabledForTesting = true;

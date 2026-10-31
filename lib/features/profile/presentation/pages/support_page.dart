@@ -154,7 +154,7 @@ class _SupportPageState extends State<SupportPage> {
               context,
               Icons.email_outlined,
               'Email',
-              'support@danaya.ml',
+              'danaya.marketplace@gmail.com',
             ),
             _buildContactItem(
               context,
