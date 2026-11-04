@@ -44,7 +44,7 @@ const _categoryTiles = <_CategoryTile>[
   ),
   _CategoryTile(
     category: ProductCategory.objets,
-    svgAsset: null, // illustration a fournir par Ali
+    svgAsset: 'assets/images/categories/objets.svg',
   ),
   _CategoryTile(
     category: ProductCategory.beaute,
