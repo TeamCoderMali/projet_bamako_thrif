@@ -68,13 +68,19 @@ Future<void> main() async {
   // n'est pas activé côté console, ce code n'a aucun effet observable --
   // try/catch pour ne jamais bloquer le démarrage si le provider n'est pas
   // encore reconnu (ex. app pas encore publiée sur Play Store).
-  try {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity,
-      appleProvider: AppleProvider.appAttest,
-    );
-  } catch (e) {
-    logger.warning('App Check non activé (normal avant enregistrement de l\'app) : $e');
+  // kIsWeb exclu (bug 2026-11-04) : activate() sur le web exige un
+  // webProvider (reCAPTCHA) pas encore configuré -- plantait au chargement
+  // du SDK JS avec une "Uncaught Error" non rattrapable par ce try/catch
+  // Dart, avant même l'affichage de l'écran d'accueil.
+  if (!kIsWeb) {
+    try {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.playIntegrity,
+        appleProvider: AppleProvider.appAttest,
+      );
+    } catch (e) {
+      logger.warning('App Check non activé (normal avant enregistrement de l\'app) : $e');
+    }
   }
 
   // ── Logging ──────────────────────────────────────────────────────────────

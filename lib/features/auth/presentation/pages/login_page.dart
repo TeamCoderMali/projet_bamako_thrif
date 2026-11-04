@@ -1,5 +1,5 @@
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +7,13 @@ import 'package:bamako_thrift/core/constants/brand.dart';
 import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 
-// defaultTargetPlatform (pas dart:io Platform.isIOS, qui plante sur web) :
-// ce bouton doit rester invisible sur Android/web, visible seulement iOS.
-bool get _isApplePlatform => defaultTargetPlatform == TargetPlatform.iOS;
+// !kIsWeb d'abord (bug 2026-11-04) : sur le web, defaultTargetPlatform
+// reflète l'OS de l'appareil qui fait tourner le navigateur (ex. Safari sur
+// iPhone -> TargetPlatform.iOS) et NON le fait d'être une app iOS native --
+// sans ce garde-fou, le bouton Apple (et sign_in_with_apple) s'activerait
+// aussi pour un visiteur web sur iPhone, alors qu'il n'est prévu que pour
+// l'app native iOS.
+bool get _isApplePlatform => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
