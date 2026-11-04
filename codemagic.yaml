@@ -1,0 +1,51 @@
+#  DANAYA — Codemagic : build iOS + envoi TestFlight
+#  ──────────────────────────────────────────────────────────────────────
+#  Prépare le pipeline avant même la création du compte Apple Developer
+#  (demande Ali, 2026-11-04). AUCUN secret dans ce fichier : la clé API
+#  App Store Connect est lue depuis l'intégration "app_store_connect"
+#  configurée dans Codemagic (Teams > Integrations > App Store Connect),
+#  jamais écrite ici. Signature automatique (ios_signing + xcode-project
+#  use-profiles), pas de certificat/profil fourni à la main.
+#
+#  A faire par Ali avant le premier build :
+#  1. Créer le compte Apple Developer + l'app sur App Store Connect
+#     (bundle ID com.danaya.app, déjà aligné avec Android dans ce commit).
+#  2. Codemagic > Teams > Integrations > App Store Connect : créer une clé
+#     API (App Store Connect > Users and Access > Keys) et l'enregistrer
+#     sous le nom "danaya_app_store_connect" (ou adapter le nom ci-dessous).
+#  3. Ajouter ios/Runner/GoogleService-Info.plist au dépôt (ou comme
+#     fichier "Encrypted file" Codemagic si préféré hors dépôt public).
+
+workflows:
+  ios-testflight:
+    name: DANAYA — iOS TestFlight
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: danaya_app_store_connect
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.danaya.app
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Récupérer les packages Flutter
+        script: flutter pub get
+      - name: Configurer la signature automatique (certificat + profil)
+        script: xcode-project use-profiles
+      - name: Installer les pods CocoaPods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Construire l'IPA (release)
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

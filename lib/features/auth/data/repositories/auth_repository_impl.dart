@@ -1,11 +1,15 @@
 // ─── Bamako Thrift — Auth Repository Implementation ─────────────────────────
 // Implémentation complète Firebase Auth + Firestore
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -339,6 +343,89 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
       throw Exception(
           'Connexion Google impossible pour le moment. Réessaie ou connecte-toi avec ton email.');
     }
+  }
+
+  // ── Connexion Apple (iOS uniquement) ─────────────────────────────────────
+  // Préparation 2026-11-04 (demande Ali) : compte Apple Developer pas encore
+  // créé, donc pas testable aujourd'hui -- le bouton (login_page.dart) et ce
+  // code existent déjà pour que l'activation (Firebase Console > Auth >
+  // Apple + capability Xcode) n'exige ensuite aucun nouveau développement.
+  // Même structure que signInWithGoogle ci-dessus.
+  @override
+  Future<UserEntity> signInWithApple() async {
+    try {
+      // nonce brut + sa version hachée (SHA256) : exigé par Firebase pour
+      // relier la réponse Apple à CETTE tentative de connexion précise et
+      // empêcher un replay d'un jeton Apple intercepté ailleurs.
+      final rawNonce = _generateNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      final userCredential = await _auth.signInWithCredential(oauthCredential);
+      final firebaseUser = userCredential.user!;
+      final uid = firebaseUser.uid;
+
+      UserModel? user = await _fetchUserFromFirestore(uid);
+
+      if (user == null) {
+        // Apple ne fournit le nom complet qu'à la TOUTE première connexion
+        // (jamais aux suivantes) -- d'où appleCredential.givenName/familyName
+        // en repli ici, plutôt que firebaseUser.displayName qui reste vide.
+        final appleFullName = [
+          appleCredential.givenName,
+          appleCredential.familyName,
+        ].where((s) => s != null && s.isNotEmpty).join(' ');
+        final now = DateTime.now();
+        final newUser = UserModel(
+          id: uid,
+          email: firebaseUser.email ?? appleCredential.email ?? '',
+          fullName: appleFullName.isNotEmpty
+              ? appleFullName
+              : (firebaseUser.displayName ?? 'Utilisateur DANAYA'),
+          role: UserRole.buyer,
+          isEmailVerified: firebaseUser.emailVerified,
+          isActive: true,
+          createdAt: now,
+        );
+        await _createUserDoc(uid, newUser);
+        return newUser;
+      }
+
+      await _enforceSanctions(uid);
+      return user;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_mapFirebaseAuthError(e.code));
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw Exception('Connexion Apple annulée.');
+      }
+      throw Exception(
+          'Connexion Apple impossible pour le moment. Réessaie ou connecte-toi avec ton email.');
+    } catch (_) {
+      throw Exception(
+          'Connexion Apple impossible pour le moment. Réessaie ou connecte-toi avec ton email.');
+    }
+  }
+
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
   }
 
   // ── Déconnexion ──────────────────────────────────────────────────────────

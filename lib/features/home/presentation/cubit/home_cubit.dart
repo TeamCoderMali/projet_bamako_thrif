@@ -66,11 +66,11 @@ class HomeCubit extends Cubit<HomeState> {
         recentlyAdded: results[1],
         nearbyItems: results[2],
         trendingCategories: const [
-          ProductCategory.women,
-          ProductCategory.men,
-          ProductCategory.shoes,
-          ProductCategory.accessories,
-          ProductCategory.beauty,
+          ProductCategory.femme,
+          ProductCategory.homme,
+          ProductCategory.enfant,
+          ProductCategory.objets,
+          ProductCategory.beaute,
         ],
       ));
     } catch (e) {

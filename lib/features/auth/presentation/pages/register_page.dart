@@ -3,9 +3,19 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:bamako_thrift/core/constants/brand.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import '../../domain/entities/user_entity.dart';
+
+// Liens legaux externes (demande Ali, 2026-11-04) -- pages PAS ENCORE
+// publiees sur Firebase Hosting (en attente du contenu de Fatou), voir
+// settings_page.dart pour le meme lien cote profil.
+const _kPrivacyUrl = 'https://danaya.web.app/confidentialite';
+const _kTermsUrl = 'https://danaya.web.app/cgu';
+
+Future<void> _openExternalLegalUrl(String url) =>
+    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -334,6 +344,42 @@ class _RegisterPageState extends State<RegisterPage> {
                                       context.push(RouteNames.termsOfService),
                               ),
                               const TextSpan(text: '.'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Liens web externes (demande Ali, 2026-11-04) -- en
+                    // plus du lien in-app ci-dessus, voir settings_page.dart.
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'Confidentialité',
+                                style: const TextStyle(
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => _openExternalLegalUrl(_kPrivacyUrl),
+                              ),
+                              const TextSpan(text: '  ·  '),
+                              TextSpan(
+                                text: 'CGU (site web)',
+                                style: const TextStyle(
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () => _openExternalLegalUrl(_kTermsUrl),
+                              ),
                             ],
                           ),
                         ),

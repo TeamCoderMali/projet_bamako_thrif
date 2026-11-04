@@ -797,6 +797,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       label: product.condition.label,
                       color: Colors.green,
                     ),
+                    if (product.subCategory != null)
+                      _Badge(label: product.subCategory!, color: Colors.purple),
                     if (pressingEnabled && product.verifie)
                       const _Badge(label: '✓ Vérifié', color: Colors.teal),
                     if (product.brand != null)

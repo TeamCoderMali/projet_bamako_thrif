@@ -27,38 +27,21 @@ class _HomePageState extends State<HomePage> {
   // cache (retour de test Fatou, 2026-10-29).
   List<ProductEntity>? _lastProducts;
 
+  // Issu de selectableProductCategories (product_entity.dart, seule source
+  // de vérité -- refonte 2026-11-04) + "Voir tout".
+  static IconData _iconFor(ProductCategory c) => switch (c) {
+        ProductCategory.femme => Icons.woman_outlined,
+        ProductCategory.homme => Icons.man_outlined,
+        ProductCategory.enfant => Icons.child_care,
+        ProductCategory.objets => Icons.inventory_2_outlined,
+        ProductCategory.beaute => Icons.spa_outlined,
+        ProductCategory.other => Icons.category_outlined,
+      };
+
   final List<Map<String, dynamic>> _categoryFilters = [
     {'label': 'Voir tout', 'value': null, 'icon': Icons.grid_view_rounded},
-    {
-      'label': 'Femmes',
-      'value': ProductCategory.women,
-      'icon': Icons.woman_outlined
-    },
-    {
-      'label': 'Hommes',
-      'value': ProductCategory.men,
-      'icon': Icons.man_outlined
-    },
-    {
-      'label': 'Enfants',
-      'value': ProductCategory.children,
-      'icon': Icons.child_care
-    },
-    {
-      'label': 'Chaussures',
-      'value': ProductCategory.shoes,
-      'icon': Icons.do_not_step_outlined
-    },
-    {
-      'label': 'Accessoires',
-      'value': ProductCategory.accessories,
-      'icon': Icons.watch_outlined
-    },
-    {
-      'label': 'Beauté',
-      'value': ProductCategory.beauty,
-      'icon': Icons.spa_outlined
-    },
+    for (final c in selectableProductCategories)
+      {'label': c.label, 'value': c, 'icon': _iconFor(c)},
   ];
 
   @override

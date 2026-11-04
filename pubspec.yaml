@@ -2,7 +2,7 @@ name: bamako_thrift
 description: "DANAYA – Seconde main, première confiance."
 publish_to: 'none'
 
-version: 1.0.0+19
+version: 1.0.0+20
 
 environment:
   sdk: ^3.6.2
@@ -39,9 +39,16 @@ dependencies:
   cloud_firestore: ^5.4.4
   firebase_storage: ^12.3.2
   firebase_messaging: ^15.1.3
+  # Preparation App Check (Play Integrity/App Attest) -- pas encore active
+  # cote console, voir main.dart (demande Ali, 2026-11-04).
+  firebase_app_check: ^0.3.2
 
   # ── Connexion sociale ───────────────────────────────────────────────────
   google_sign_in: ^6.2.1
+  # Apple : iOS uniquement (voir login_page.dart) -- compte Apple Developer
+  # pas encore cree, preparation seulement (lot iOS, 2026-11-04).
+  sign_in_with_apple: ^6.1.2
+  crypto: ^3.0.6
 
   # ── Storage ─────────────────────────────────────────────────────────────
   shared_preferences: ^2.3.2

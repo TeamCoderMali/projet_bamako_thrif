@@ -26,6 +26,12 @@ abstract class AuthRepository {
   /// Connexion avec Google.
   Future<UserEntity> signInWithGoogle();
 
+  /// Connexion avec Apple (iOS uniquement, voir loginButton côté UI --
+  /// préparation 2026-11-04, compte Apple Developer pas encore créé par
+  /// Ali : le bouton existe mais ne fonctionnera qu'une fois ce compte et
+  /// la capability "Sign in with Apple" enregistrés).
+  Future<UserEntity> signInWithApple();
+
   /// Déconnexion.
   Future<void> signOut();
 

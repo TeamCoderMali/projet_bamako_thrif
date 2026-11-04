@@ -72,22 +72,21 @@ class _CatalogPageState extends State<CatalogPage> {
   List<ProductEntity>? _lastProducts;
 
   // Catégories rapides dans la barre horizontale. "Tous" n'est pas une
-  // catégorie (value null) ; les autres libellés viennent de
-  // ProductCategoryLabel (lot 8, remplace l'abréviation "Accès.").
+  // catégorie (value null) ; les autres viennent de selectableProductCategories
+  // (product_entity.dart, seule source de vérité -- refonte 2026-11-04).
   static final _quickCats = <_QuickCat>[
     const _QuickCat(null, 'Tous', Icons.grid_view_rounded),
-    _QuickCat(ProductCategory.women, ProductCategory.women.label,
-        Icons.woman_outlined),
-    _QuickCat(ProductCategory.men, ProductCategory.men.label, Icons.man_outlined),
-    _QuickCat(ProductCategory.children, ProductCategory.children.label,
-        Icons.child_care),
-    _QuickCat(ProductCategory.shoes, ProductCategory.shoes.label,
-        Icons.do_not_step_outlined),
-    _QuickCat(ProductCategory.accessories, ProductCategory.accessories.label,
-        Icons.watch_outlined),
-    _QuickCat(ProductCategory.beauty, ProductCategory.beauty.label,
-        Icons.spa_outlined),
+    for (final c in selectableProductCategories) _QuickCat(c, c.label, _iconFor(c)),
   ];
+
+  static IconData _iconFor(ProductCategory c) => switch (c) {
+        ProductCategory.femme => Icons.woman_outlined,
+        ProductCategory.homme => Icons.man_outlined,
+        ProductCategory.enfant => Icons.child_care,
+        ProductCategory.objets => Icons.inventory_2_outlined,
+        ProductCategory.beaute => Icons.spa_outlined,
+        ProductCategory.other => Icons.category_outlined,
+      };
 
   @override
   void initState() {

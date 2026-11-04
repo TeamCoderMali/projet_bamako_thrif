@@ -3,15 +3,12 @@
 // Taper la barre de recherche ouvre l'écran de recherche existant (inchangé).
 // Chaque tuile ouvre le catalogue filtré sur la catégorie correspondante.
 //
-// Seules 7 des 10 catégories du modèle produit sont affichées ici (décision
-// Ali) : traditional/other restent valides pour les articles existants et
-// le formulaire de vente, juste pas de tuile dédiée sur cet écran. "Sacs"
-// et "Bijoux" n'ont plus de tuile dédiée non plus (fusion cosmétique dans
-// Accessoires, lot 2, 2026-10-12) : la tuile Accessoires inclut déjà ces
-// anciens articles via whereIn côté requête (productCategoriesFor(),
-// product_remote_datasource_impl.dart) — rien à ajouter ici pour ça. Pas de
-// repli générique silencieux : un asset manquant (svgAsset null) affiche
-// une erreur visible au lieu d'une icône grise qui masquerait le problème.
+// Les 5 tuiles correspondent exactement à selectableProductCategories
+// (product_entity.dart, seule source de vérité -- refonte catégories du
+// 2026-11-04 : Femme/Homme/Enfant/Objets/Beauté, Sport retiré). "Objets"
+// n'a pas encore d'illustration (svgAsset: null) : pas de repli générique
+// silencieux, un asset manquant affiche une erreur visible au lieu d'une
+// icône grise qui masquerait le problème -- Ali doit fournir le SVG.
 // Illustrations centrées dans chaque tuile (taille régulière), nom sous le
 // dessin.
 import 'package:flutter/material.dart';
@@ -34,31 +31,23 @@ class _CategoryTile {
 // explicite ici, pour ne pas pouvoir diverger de la liste centralisee.
 const _categoryTiles = <_CategoryTile>[
   _CategoryTile(
-    category: ProductCategory.women,
+    category: ProductCategory.femme,
     svgAsset: 'assets/images/categories/femmes.svg',
   ),
   _CategoryTile(
-    category: ProductCategory.men,
+    category: ProductCategory.homme,
     svgAsset: 'assets/images/categories/hommes.svg',
   ),
   _CategoryTile(
-    category: ProductCategory.children,
+    category: ProductCategory.enfant,
     svgAsset: 'assets/images/categories/enfants.svg',
   ),
   _CategoryTile(
-    category: ProductCategory.shoes,
-    svgAsset: 'assets/images/categories/chaussures.svg',
+    category: ProductCategory.objets,
+    svgAsset: null, // illustration a fournir par Ali
   ),
   _CategoryTile(
-    category: ProductCategory.accessories,
-    svgAsset: 'assets/images/categories/accessoires.svg',
-  ),
-  _CategoryTile(
-    category: ProductCategory.sportswear,
-    svgAsset: 'assets/images/categories/sport.svg',
-  ),
-  _CategoryTile(
-    category: ProductCategory.beauty,
+    category: ProductCategory.beaute,
     svgAsset: 'assets/images/categories/beaute.svg',
   ),
 ];

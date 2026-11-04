@@ -36,7 +36,11 @@ class _PublishProductPageState extends State<PublishProductPage> {
   final _couleurController = TextEditingController();
   final _localisationController = TextEditingController();
 
-  ProductCategory _selectedCategory = ProductCategory.women;
+  ProductCategory _selectedCategory = ProductCategory.femme;
+  // Sous-categorie (ex. "Haut", "Chaussures"...) -- refonte categories du
+  // 2026-11-04. null tant que la categorie n'a pas de sous-categorie
+  // (Objets) ou que le vendeur n'a pas encore choisi.
+  String? _selectedSubCategory;
   ProductCondition _selectedCondition = ProductCondition.bon;
 
   // ── Menus deroulants marque/taille/couleur (retour de test Fatou,
@@ -73,19 +77,19 @@ class _PublishProductPageState extends State<PublishProductPage> {
     _kAutre,
   ];
 
-  // null = champ taille masque (categorie sans notion de taille).
-  List<String>? _sizeOptionsFor(ProductCategory cat) => switch (cat) {
-        ProductCategory.women ||
-        ProductCategory.men ||
-        ProductCategory.sportswear ||
-        ProductCategory.traditional ||
-        ProductCategory.other =>
-          _clothingSizes,
-        ProductCategory.children => _childrenSizes,
-        ProductCategory.shoes => _shoeSizes,
-        ProductCategory.accessories || ProductCategory.beauty => null,
-        ProductCategory.bags || ProductCategory.jewelry => _clothingSizes,
-      };
+  // null = champ taille masque (categorie/sous-categorie sans notion de
+  // taille). Depend desormais de la sous-categorie (refonte 2026-11-04) :
+  // "Chaussures" demande une pointure quelle que soit la categorie parente,
+  // "Sacs"/"Accessoires" n'ont pas de taille.
+  List<String>? _sizeOptionsFor(ProductCategory cat, String? subCat) {
+    if (cat == ProductCategory.objets || cat == ProductCategory.beaute) {
+      return null;
+    }
+    if (subCat == 'Chaussures') return _shoeSizes;
+    if (subCat == 'Sacs' || subCat == 'Accessoires') return null;
+    if (cat == ProductCategory.enfant) return _childrenSizes;
+    return _clothingSizes;
+  }
   // Ville du vendeur, demandée ici seulement si absente de son profil
   // (lot 6) — enregistrée sur le profil en plus d'être copiée sur
   // l'article (sellerCity).
@@ -313,6 +317,7 @@ class _PublishProductPageState extends State<PublishProductPage> {
         price: double.parse(_prixController.text.replaceAll(' ', '')),
         imageUrls: imageUrls,
         category: _selectedCategory,
+        subCategory: _selectedSubCategory,
         condition: _selectedCondition,
         brand: _marqueController.text.trim().isEmpty
             ? null
@@ -446,13 +451,30 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           labelOf: (c) => c.label,
                           onChanged: (v) => setState(() {
                             _selectedCategory = v!;
-                            // Reinitialise la taille au changement de
-                            // categorie (options differentes selon
-                            // vetements/enfants/chaussures/masquee).
+                            // Reinitialise sous-categorie et taille au
+                            // changement de categorie (options differentes
+                            // selon vetements/enfants/objets/beaute).
+                            _selectedSubCategory = null;
                             _selectedSizeOption = null;
                             _tailleController.clear();
                           }),
                         ),
+                        if (subCategoriesFor(_selectedCategory).isNotEmpty) ...[
+                          const SizedBox(height: 18),
+                          _sectionTitle('Sous-catégorie'),
+                          const SizedBox(height: 8),
+                          SheetPickerField<String>(
+                            label: 'Sous-catégorie',
+                            value: _selectedSubCategory,
+                            options: subCategoriesFor(_selectedCategory),
+                            labelOf: (s) => s,
+                            onChanged: (v) => setState(() {
+                              _selectedSubCategory = v;
+                              _selectedSizeOption = null;
+                              _tailleController.clear();
+                            }),
+                          ),
+                        ],
                         const SizedBox(height: 18),
                         _sectionTitle('État du vêtement *'),
                         const SizedBox(height: 8),
@@ -509,11 +531,11 @@ class _PublishProductPageState extends State<PublishProductPage> {
                           controller: _marqueController,
                           otherHint: 'Précise la marque (40 caractères max)',
                         ),
-                        if (_sizeOptionsFor(_selectedCategory) != null) ...[
+                        if (_sizeOptionsFor(_selectedCategory, _selectedSubCategory) != null) ...[
                           const SizedBox(height: 18),
                           _dropdownWithOther(
                             label: 'Taille',
-                            options: _sizeOptionsFor(_selectedCategory)!,
+                            options: _sizeOptionsFor(_selectedCategory, _selectedSubCategory)!,
                             selected: _selectedSizeOption,
                             onSelected: (v) =>
                                 setState(() => _selectedSizeOption = v),

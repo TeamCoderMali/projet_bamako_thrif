@@ -4,6 +4,7 @@ import 'package:bamako_thrift/features/auth/data/repositories/auth_repository_im
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/notification/domain/repositories/notification_repository.dart';
 import 'package:bamako_thrift/firebase_options.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
@@ -56,6 +57,25 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // ── App Check ────────────────────────────────────────────────────────────
+  // Préparation sécurité (demande Ali, 2026-11-04) : attache un jeton
+  // d'intégrité (Play Integrity / App Attest) à chaque appel Firebase, mais
+  // SANS rien imposer -- l'application d'App Check (Firestore/Storage) est
+  // un réglage à activer par Ali dans la console Firebase APRES avoir
+  // enregistré l'app (Play Integrity nécessite la publication Play Store ;
+  // App Attest, un compte Apple Developer, pas encore créé). Tant que ce
+  // n'est pas activé côté console, ce code n'a aucun effet observable --
+  // try/catch pour ne jamais bloquer le démarrage si le provider n'est pas
+  // encore reconnu (ex. app pas encore publiée sur Play Store).
+  try {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.playIntegrity,
+      appleProvider: AppleProvider.appAttest,
+    );
+  } catch (e) {
+    logger.warning('App Check non activé (normal avant enregistrement de l\'app) : $e');
+  }
 
   // ── Logging ──────────────────────────────────────────────────────────────
   logger.init(isProduction: kReleaseMode);

@@ -15,6 +15,10 @@ class ProductEntity extends Equatable {
   final double price;
   final List<String> imageUrls;
   final ProductCategory category;
+  // Sous-categorie (ex. "Haut", "Chaussures"...) -- voir subCategoriesFor().
+  // Nullable : categories sans sous-categorie (Objets) et anciennes
+  // annonces publiees avant la refonte 2026-11-04.
+  final String? subCategory;
   final ProductCondition condition;
   final String? brand;
   final String? size;
@@ -46,6 +50,7 @@ class ProductEntity extends Equatable {
     required this.price,
     required this.imageUrls,
     required this.category,
+    this.subCategory,
     required this.condition,
     this.brand,
     this.size,
@@ -83,6 +88,7 @@ class ProductEntity extends Equatable {
       price: price,
       imageUrls: imageUrls,
       category: category,
+      subCategory: subCategory,
       condition: condition,
       brand: brand,
       size: size,
@@ -103,29 +109,27 @@ class ProductEntity extends Equatable {
   @override
   List<Object?> get props => [
         id, sellerId, title, description, price, imageUrls,
-        category, condition, brand, size, color, status, verifie,
+        category, subCategory, condition, brand, size, color, status, verifie,
         offersEnabled, viewCount, favoriteCount, rating, reviewCount,
         createdAt, updatedAt,
       ];
 }
 
+// Refonte des catégories du 2026-11-04 (demande Ali) : 5 catégories de
+// premier niveau seulement (Sport retiré). Les anciennes catégories de
+// premier niveau (shoes/accessories/bags/jewelry/sportswear/traditional)
+// deviennent des SOUS-catégories (voir subCategoriesFor ci-dessous) ou
+// disparaissent (sportswear). Aucune migration de données : une ancienne
+// annonce Firestore portant une de ces anciennes valeurs ne plante pas,
+// elle retombe simplement sur `other` (voir ProductModel._parseCategory,
+// qui utilise déjà firstWhere(orElse: () => ProductCategory.other)).
+// Ali supprimera ces anciennes annonces à la main.
 enum ProductCategory {
-  men,
-  women,
-  children,
-  shoes,
-  accessories,
-  // bags/jewelry : fusion cosmétique dans Accessoires (lot 2, 2026-10-12).
-  // Gardées comme valeurs d'enum valides pour ne pas perdre les articles
-  // déjà publiés sous ces catégories (aucune migration de données) ; ne
-  // sont simplement plus proposées dans les sélecteurs, voir
-  // selectableProductCategories ci-dessous. Le filtrage par "Accessoires"
-  // doit matcher les 3 valeurs (whereIn), pas seulement `accessories`.
-  bags,
-  jewelry,
-  sportswear,
-  traditional,
-  beauty,
+  femme,
+  homme,
+  enfant,
+  objets,
+  beaute,
   other,
 }
 
@@ -135,54 +139,62 @@ enum ProductCategory {
 /// N'affecte jamais le filtrage (basé sur la valeur d'enum, pas le texte).
 extension ProductCategoryLabel on ProductCategory {
   String get label => switch (this) {
-        ProductCategory.women => 'Femmes',
-        ProductCategory.men => 'Hommes',
-        ProductCategory.children => 'Enfants',
-        ProductCategory.shoes => 'Chaussures',
-        ProductCategory.accessories => 'Accessoires',
-        ProductCategory.bags => 'Sacs',
-        ProductCategory.jewelry => 'Bijoux',
-        ProductCategory.sportswear => 'Sports',
-        ProductCategory.traditional => 'Tenues traditionnelles',
-        ProductCategory.beauty => 'Beauté',
+        ProductCategory.femme => 'Femme',
+        ProductCategory.homme => 'Homme',
+        ProductCategory.enfant => 'Enfant',
+        ProductCategory.objets => 'Objets',
+        ProductCategory.beaute => 'Beauté',
         ProductCategory.other => 'Autres',
       };
 }
 
-/// Catégories proposées à l'utilisateur (formulaire de vente et filtres),
-/// dans l'ordre d'affichage — centralisé ici pour que
-/// publish_product_page.dart et filter_page.dart restent synchronisés
-/// (lot 2, 2026-10-12 ; même risque de divergence déjà trouvé au lot 8).
-/// "Sacs" et "Bijoux" n'y figurent plus (fusionnés dans "Accessoires"),
-/// mais les articles existants sous ces catégories restent affichés :
-/// voir productCategoriesFor() dans product_remote_datasource_impl.dart
-/// pour le whereIn qui les inclut toujours au filtrage.
+/// Catégories proposées à l'utilisateur (formulaire de vente, accueil,
+/// catalogue, filtres) — seule source de vérité sur l'ensemble des
+/// catégories actives, pour que tous ces écrans restent synchronisés
+/// (lot 2, 2026-10-12 ; refonte 2026-11-04). `other` n'y figure pas : ce
+/// n'est plus une catégorie proposée à la publication, seulement un repli
+/// pour les anciennes annonces (voir commentaire sur l'enum ci-dessus).
 const List<ProductCategory> selectableProductCategories = [
-  ProductCategory.women,
-  ProductCategory.men,
-  ProductCategory.children,
-  ProductCategory.shoes,
-  ProductCategory.accessories,
-  ProductCategory.beauty,
-  ProductCategory.sportswear,
-  ProductCategory.traditional,
-  ProductCategory.other,
+  ProductCategory.femme,
+  ProductCategory.homme,
+  ProductCategory.enfant,
+  ProductCategory.objets,
+  ProductCategory.beaute,
 ];
 
-/// Valeurs Firestore (`category.name`) à matcher pour filtrer sur [category]
-/// — un filtre "Accessoires" doit aussi inclure les anciens articles postés
-/// sous "Sacs"/"Bijoux" avant la fusion cosmétique (lot 2), d'où plusieurs
-/// valeurs pour ce seul cas. Utilisé avec `whereIn` côté requête Firestore
-/// quand la liste a plus d'un élément, `isEqualTo` sinon.
+/// Sous-catégories par catégorie (refonte 2026-11-04, demande Ali). Liste
+/// vide = catégorie sans sous-catégorie (Objets, et le repli `other`).
+/// Stockée telle quelle (String, pas d'enum) dans ProductEntity.subCategory
+/// car certaines listes contiennent des parenthèses d'exemples qui ne sont
+/// pas un niveau de choix supplémentaire (ex. "Cheveux (mèches, perruques)"
+/// = une seule sous-catégorie "Cheveux").
+const Map<ProductCategory, List<String>> _subCategoriesByCategory = {
+  ProductCategory.femme: [
+    'Haut', 'Bas', 'Robes', 'Tenues traditionnelles', 'Chaussures', 'Sacs',
+    'Accessoires',
+  ],
+  ProductCategory.homme: [
+    'Haut', 'Bas', 'Tenues traditionnelles', 'Chaussures', 'Accessoires',
+  ],
+  ProductCategory.enfant: [
+    'Haut', 'Bas', 'Ensembles', 'Chaussures', 'Accessoires',
+  ],
+  ProductCategory.objets: [],
+  ProductCategory.beaute: ['Soins', 'Maquillage', 'Parfums', 'Cheveux'],
+  ProductCategory.other: [],
+};
+
+List<String> subCategoriesFor(ProductCategory category) =>
+    _subCategoriesByCategory[category] ?? const [];
+
+/// Valeurs Firestore (`category.name`) à matcher pour filtrer sur [category].
+/// Plus de cas particulier depuis la refonte 2026-11-04 (l'ancienne fusion
+/// Sacs/Bijoux -> Accessoires n'existe plus, ces deux valeurs d'enum ont
+/// disparu). Gardée comme fonction (plutôt qu'un simple `.name` en ligne)
+/// pour ne pas devoir toucher les appelants si un futur cas particulier
+/// réapparaît.
 List<String> productCategoriesFor(ProductCategory category) =>
-    switch (category) {
-      ProductCategory.accessories => [
-          ProductCategory.accessories.name,
-          ProductCategory.bags.name,
-          ProductCategory.jewelry.name,
-        ],
-      _ => [category.name],
-    };
+    [category.name];
 
 enum ProductCondition {
   satisfaisant,       // État satisfaisant — porté, quelques signes d'usure visibles

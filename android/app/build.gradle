@@ -55,6 +55,15 @@ android {
             signingConfig = keystorePropertiesFile.exists()
                 ? signingConfigs.release
                 : signingConfigs.debug
+            // Minification + réduction des ressources (audit sécurité du
+            // 2026-11-04, demande Ali) : étaient absents, l'APK release
+            // n'était jamais réduit/obfusqué au niveau Java/Kotlin (indépendant
+            // de --obfuscate côté Dart). Firebase/Google Sign-In/Play Integrity
+            // fournissent leurs propres règles consumer-proguard dans leurs AAR,
+            // donc aucune règle manuelle requise au-delà du fichier par defaut.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

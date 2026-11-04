@@ -3,9 +3,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
 import 'package:bamako_thrift/core/theme/theme_cubit.dart';
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
+
+// Liens legaux externes (demande Ali, 2026-11-04) -- pages PAS ENCORE
+// publiees sur Firebase Hosting (en attente du contenu de Fatou) : le lien
+// existe deja dans l'appli pour ne rien avoir a redevelopper le jour de la
+// publication, mais menera a un "Page not found" Firebase en attendant.
+const _kPrivacyUrl = 'https://danaya.web.app/confidentialite';
+const _kTermsUrl = 'https://danaya.web.app/cgu';
+
+Future<void> _openExternalLegalUrl(String url) =>
+    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -54,6 +65,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 () => context.push(RouteNames.blockedSellers)),
             _item(context, Icons.description_outlined, 'Conditions d\'utilisation',
                 () => context.push(RouteNames.termsOfService)),
+            _item(context, Icons.open_in_new, 'Confidentialité (site web)',
+                () => _openExternalLegalUrl(_kPrivacyUrl)),
+            _item(context, Icons.open_in_new, 'CGU (site web)',
+                () => _openExternalLegalUrl(_kTermsUrl)),
           ]),
           const SizedBox(height: 22),
           _sectionLabel(context, 'Préférences'),

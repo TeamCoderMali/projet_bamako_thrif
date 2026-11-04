@@ -201,13 +201,8 @@ class _Item<T> {
   const _Item(this.value, this.label);
 }
 
-// Liste centralisee (product_entity.dart, lot 2) pour rester synchronisee
-// avec publish_product_page.dart. "Sacs"/"Bijoux" n'apparaissent plus comme
-// chips séparées (fusion cosmétique dans "Accessoires") : filtrer par
-// "Accessoires" doit matcher les 3 valeurs d'enum (whereIn côté requête
-// Firestore, voir product_remote_datasource_impl.dart), pas seulement
-// ProductCategory.accessories — sinon les anciens articles Sacs/Bijoux
-// deviendraient invisibles au filtrage.
+// Liste centralisee (product_entity.dart, seule source de vérité -- lot 2,
+// refonte 2026-11-04) pour rester synchronisee avec publish_product_page.dart.
 final _catItems = [
   for (final c in selectableProductCategories) _Item(c, c.label),
 ];

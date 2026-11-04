@@ -103,6 +103,17 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  // ── Connexion Apple (iOS uniquement) ─────────────────────────────────────
+  Future<void> signInWithApple() async {
+    emit(const AuthLoading());
+    try {
+      final user = await _authRepository.signInWithApple();
+      emit(AuthAuthenticated(user));
+    } catch (e) {
+      emit(AuthError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
   // ── Déconnexion ──────────────────────────────────────────────────────────
   Future<void> signOut() async {
     emit(const AuthLoading());

@@ -1,5 +1,6 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '12.0'
+# sign_in_with_apple exige iOS 13+ (lot iOS, 2026-11-04) -- aligne avec
+# IPHONEOS_DEPLOYMENT_TARGET dans Runner.xcodeproj/project.pbxproj.
+platform :ios, '13.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'

@@ -1,10 +1,15 @@
 import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bamako_thrift/core/constants/brand.dart';
 import 'package:bamako_thrift/core/constants/feature_flags.dart';
 import 'package:bamako_thrift/core/router/route_names.dart';
+
+// defaultTargetPlatform (pas dart:io Platform.isIOS, qui plante sur web) :
+// ce bouton doit rester invisible sur Android/web, visible seulement iOS.
+bool get _isApplePlatform => defaultTargetPlatform == TargetPlatform.iOS;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -46,6 +51,12 @@ class _LoginPageState extends State<LoginPage> {
     if (mounted) setState(() => _loadingAction = null);
   }
 
+  Future<void> _loginWithApple() async {
+    setState(() => _loadingAction = 'apple');
+    await context.read<AuthCubit>().signInWithApple();
+    if (mounted) setState(() => _loadingAction = null);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthState>(
@@ -65,6 +76,7 @@ class _LoginPageState extends State<LoginPage> {
         final isAnyLoading = state is AuthLoading;
         final isEmailLoading = isAnyLoading && _loadingAction == 'email';
         final isGoogleLoading = isAnyLoading && _loadingAction == 'google';
+        final isAppleLoading = isAnyLoading && _loadingAction == 'apple';
         return Scaffold(
           body: SafeArea(
             child: SingleChildScrollView(
@@ -415,6 +427,47 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ],
                     ),
+                    // Apple — iOS uniquement (demande Ali, 2026-11-04). Sans
+                    // effet sur Android/web : _isApplePlatform y vaut
+                    // toujours false, ce bloc n'est jamais construit.
+                    if (_isApplePlatform) ...[
+                      const SizedBox(height: 12),
+                      Opacity(
+                        opacity: isAnyLoading && !isAppleLoading ? 0.5 : 1,
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: ElevatedButton.icon(
+                            onPressed: isAnyLoading ? null : _loginWithApple,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            icon: isAppleLoading
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.apple, size: 24),
+                            label: const Text(
+                              'Se connecter avec Apple',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 28),
 
                     // ── Lien Inscription ───────────────────────────────────

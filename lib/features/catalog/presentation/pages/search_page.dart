@@ -26,40 +26,21 @@ class _SearchPageState extends State<SearchPage> {
   ProductCategory? _selectedCategory;
   ProductCondition? _selectedCondition;
 
-  // Libellés centralises (ProductCategoryLabel, lot 8) : corrige au passage
-  // "Tradition" -> "Tenues traditionnelles" (incoherent avec les autres
-  // ecrans avant ce lot).
-  // "Sacs"/"Bijoux" retirés de la liste affichée (fusion cosmétique dans
-  // Accessoires, lot 2, 2026-10-12) : gardés dans le switch ci-dessous
-  // (exhaustivité exigée sur tout ProductCategory, indépendamment de cette
-  // liste) mais plus proposés comme rubrique séparée.
+  // Issu de selectableProductCategories (product_entity.dart, seule source
+  // de vérité -- refonte 2026-11-04), pour rester synchronisé avec la
+  // publication/l'accueil/le catalogue/les filtres.
   final List<Map<String, dynamic>> _categories = [
-    for (final c in [
-      ProductCategory.women,
-      ProductCategory.men,
-      ProductCategory.children,
-      ProductCategory.shoes,
-      ProductCategory.accessories,
-      ProductCategory.sportswear,
-      ProductCategory.traditional,
-      ProductCategory.beauty,
-      ProductCategory.other,
-    ])
+    for (final c in selectableProductCategories)
       {
         'label': c.label,
         'value': c,
         'emoji': switch (c) {
-          ProductCategory.women => '👗',
-          ProductCategory.men => '👔',
-          ProductCategory.children => '👶',
-          ProductCategory.shoes => '👟',
-          ProductCategory.accessories => '🧣',
-          ProductCategory.bags => '👜',
-          ProductCategory.jewelry => '💍',
-          ProductCategory.sportswear => '⚽',
-          ProductCategory.traditional => '🎋',
-          ProductCategory.beauty => '💄',
-          ProductCategory.other => '📦',
+          ProductCategory.femme => '👗',
+          ProductCategory.homme => '👔',
+          ProductCategory.enfant => '👶',
+          ProductCategory.objets => '📦',
+          ProductCategory.beaute => '💄',
+          ProductCategory.other => '❔',
         },
       },
   ];
