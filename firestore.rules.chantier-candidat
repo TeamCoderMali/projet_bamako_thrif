@@ -64,6 +64,46 @@ service cloud.firestore {
       return offersMaxRounds() == null || currentRound < offersMaxRounds();
     }
 
+    // Compteurs produit modifiables par n'importe quel utilisateur connecte
+    // (viewCount, favoriteCount, rating, reviewCount) -- durci le 2026-11-04
+    // (revue Ali) : avant, hasOnly() verifiait QUELS champs changeaient mais
+    // jamais la VALEUR -- un compte pouvait ecrire favoriteCount a 999999
+    // ou rating a -1 sur l'article de n'importe qui. Correspond exactement
+    // aux seules ecritures que l'appli produit aujourd'hui :
+    //  - viewCount : +1 uniquement, une vue = une ouverture de fiche
+    //    (ProductCubit.refreshProductDetail), jamais de decrement ;
+    //  - favoriteCount : +1 (ajout favori) ou -1 (retrait), jamais au-dela,
+    //    jamais negatif (product_detail_page.dart, favorites_page.dart) ;
+    //  - reviewCount : inchange (avis existant modifie) ou +1 (premier
+    //    avis), jamais plus, jamais negatif (_rateProduct -- aucun flux de
+    //    suppression d'avis, reviews/{reviewId} interdit delete) ;
+    //  - rating : moyenne recalculee cote client dans une transaction
+    //    (_rateProduct), bornee a [0, 5] -- pas de replay de l'arithmetique
+    //    exacte ici (deja proteges par ailleurs : reviews/{reviewId} impose
+    //    une note individuelle entre 1 et 5).
+    // S'applique au proprietaire comme a tout autre utilisateur : le
+    // proprietaire passe aussi par ce chemin quand il ouvre sa propre fiche
+    // (incrementation de viewCount) -- ses autres droits (statut, etc.)
+    // restent inchanges via la branche dediee ci-dessous.
+    function isLegitimateCounterUpdate() {
+      let diffKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return diffKeys.hasOnly(['viewCount', 'favoriteCount', 'rating', 'reviewCount'])
+        && (!diffKeys.hasAny(['viewCount'])
+            || request.resource.data.viewCount == resource.data.get('viewCount', 0) + 1)
+        && (!diffKeys.hasAny(['favoriteCount'])
+            || (request.resource.data.favoriteCount >= 0
+                && (request.resource.data.favoriteCount == resource.data.get('favoriteCount', 0) + 1
+                    || request.resource.data.favoriteCount == resource.data.get('favoriteCount', 0) - 1)))
+        && (!diffKeys.hasAny(['reviewCount'])
+            || (request.resource.data.reviewCount >= 0
+                && (request.resource.data.reviewCount == resource.data.get('reviewCount', 0)
+                    || request.resource.data.reviewCount == resource.data.get('reviewCount', 0) + 1)))
+        && (!diffKeys.hasAny(['rating'])
+            || (request.resource.data.rating is number
+                && request.resource.data.rating >= 0
+                && request.resource.data.rating <= 5));
+    }
+
     // ── Collection users ───────────────────────────────────────────────────
     // Profil public (nom, avatar, note...) — lecture ouverte à tout
     // utilisateur connecté (marketplace, chat). Les champs sensibles
@@ -234,8 +274,7 @@ service cloud.firestore {
                        && request.resource.data.status == 'available'))
                  || paymentDisabled()))
             || isAdmin()
-            || request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['viewCount', 'favoriteCount', 'rating', 'reviewCount'])
+            || isLegitimateCounterUpdate()
             || (request.resource.data.diff(resource.data).affectedKeys()
                   .hasOnly(['status', 'updatedAt', 'orderId'])
                 && request.resource.data.status in ['sold', 'available']
@@ -390,23 +429,28 @@ service cloud.firestore {
     }
 
     // ── Collection wallet ──────────────────────────────────────────────────
-    // Durci le 2026-10-26 (audit securite) : "allow write: if isAuthenticated()"
-    // laissait n'importe quel compte credite le wallet de n'importe qui,
-    // sans aucun lien avec une commande reelle -- combine a l'absence de
-    // validation sur /order (corrigee ci-dessus), ca permettait de fabriquer
-    // un solde avec 2 comptes. En attendant une vraie Cloud Function
-    // (le code de paiement/paymentDisabled() est conserve pour ce jour-la,
-    // voir PaymentConfigService cote mobile), toute ecriture client est
-    // desormais bloquee tant que le paiement reste desactive -- ce qui est
-    // le cas aujourd'hui, donc ferme immediatement la faille en production
-    // sans rien supprimer.
+    // Durci le 2026-10-26 (audit securite), puis a nouveau le 2026-11-04
+    // (revue Ali) : la version precedente ("allow write: if isAuthenticated()
+    // && !paymentDisabled()") n'avait AUCUN controle de proprietaire -- le
+    // jour ou config/payment.enabled passe a true, n'importe quel compte
+    // authentifie aurait pu crediter/debiter le wallet de n'importe qui,
+    // sans lien avec une commande reelle. Decision du 2026-11-04 : plus
+    // aucune ecriture client, meme une fois le paiement active -- seuls les
+    // admins (back-office, via admin_users) ecrivent, en attendant une
+    // vraie Cloud Function pour les mouvements automatiques (credit vente,
+    // remboursement). Les 2 points d'ecriture client existants
+    // (order_tracking_page.dart : _creditSellerWallet, _submitCancelSale)
+    // restent en best-effort (try/catch + log, deja le cas avant -- voir
+    // leurs commentaires), ils deviennent simplement toujours no-op au lieu
+    // de l'etre seulement tant que le paiement est desactive. paymentDisabled()
+    // reste utilisee ailleurs (product/order), pas supprimee.
     match /wallet/{uid} {
       allow read: if isOwner(uid) || isAdmin();
-      allow write: if isAuthenticated() && !paymentDisabled();
+      allow write: if isAdmin();
 
       match /transactions/{txId} {
         allow read: if isOwner(uid) || isAdmin();
-        allow create: if isAuthenticated() && !paymentDisabled();
+        allow create: if isAdmin();
       }
     }
 

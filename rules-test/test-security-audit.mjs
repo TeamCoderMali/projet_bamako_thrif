@@ -10,7 +10,7 @@
 //
 // Teste UNIQUEMENT ../firestore.rules.chantier-candidat (jamais le fichier de
 // production firestore.rules). Necessite l'emulateur Firestore local sur
-// 127.0.0.1:8123 (firebase emulators:start --only firestore).
+// 127.0.0.1:8124 (firebase emulators:start --only firestore).
 import { readFileSync } from 'node:fs';
 import {
   initializeTestEnvironment,
@@ -53,7 +53,7 @@ async function probe(name, fn) {
 
 const testEnv = await initializeTestEnvironment({
   projectId: PROJECT_ID,
-  firestore: { rules: readFileSync(RULES_PATH, 'utf8'), host: '127.0.0.1', port: 8123 },
+  firestore: { rules: readFileSync(RULES_PATH, 'utf8'), host: '127.0.0.1', port: 8124 },
 });
 // Ce script est relance plusieurs fois (avant/apres correction) sous le
 // meme projectId : sans ce nettoyage, les documents crees par l'execution

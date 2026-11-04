@@ -1,0 +1,734 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Fonctions utilitaires ──────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    // ── Rôles back-office (admin/relay_manager) ─────────────────────────────
+    // Les comptes admin/relais sont stockés dans admin_users/{uid}, séparément
+    // des clients de l'app mobile (users/{uid}). Le dashboard (Angular) utilise
+    // le SDK client Firebase, donc ces vérifications de rôle sont la SEULE
+    // barrière serveur — sans elles, le dashboard n'a aucun accès légitime.
+    function isAdmin() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isRelayManager() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role == 'relay_manager';
+    }
+    // Un commentaire texte sur un avis n'est autorisé que si le vendeur du
+    // produit est "Vendeur Pro" — vérifié côté serveur, pas seulement caché
+    // côté app (un client pourrait sinon écrire directement via le SDK).
+    function sellerIsPro(productId) {
+      let sellerId = get(/databases/$(database)/documents/product/$(productId)).data.sellerId;
+      return get(/databases/$(database)/documents/users/$(sellerId)).data.isVendeurPro == true;
+    }
+    // Phase test sans paiement integre (back-office > Parametres >
+    // Paiement). Document absent ou champ absent = paiement DESACTIVE
+    // (meme repli que cote mobile, voir PaymentConfigService : la page de
+    // paiement actuelle est une simulation, un repli "active" donnerait
+    // une fausse securite). Actif seulement si le document existe ET
+    // enabled vaut explicitement true. A REPASSER quand un vrai paiement
+    // existera.
+    function paymentDisabled() {
+      return !(exists(/databases/$(database)/documents/config/payment)
+        && get(/databases/$(database)/documents/config/payment).data.get('enabled', false) == true);
+    }
+
+    // Lot "offres" (voir PLAN_OFFRES.md) : valeurs reglables depuis
+    // config/offers (back-office a venir), repli en dur si document/champ
+    // absent -- memes valeurs de repli que OffersConfigService (mobile).
+    // Valeurs validees par Fatou le 2026-10-08.
+    function offersMinRatio() {
+      return exists(/databases/$(database)/documents/config/offers)
+        ? get(/databases/$(database)/documents/config/offers).data.get('minOfferRatio', 0.3)
+        : 0.3;
+    }
+    // Null = illimite (pas de plafond de tours), par defaut comme a
+    // l'explicite. Utiliser via offersRoundAllowed(), pas directement,
+    // pour eviter de repeter la verification de null partout.
+    function offersMaxRounds() {
+      return exists(/databases/$(database)/documents/config/offers)
+        ? get(/databases/$(database)/documents/config/offers).data.get('maxRounds', null)
+        : null;
+    }
+    function offersRoundAllowed(currentRound) {
+      return offersMaxRounds() == null || currentRound < offersMaxRounds();
+    }
+
+    // Compteurs produit modifiables par n'importe quel utilisateur connecte
+    // (viewCount, favoriteCount, rating, reviewCount) -- durci le 2026-11-04
+    // (revue Ali) : avant, hasOnly() verifiait QUELS champs changeaient mais
+    // jamais la VALEUR -- un compte pouvait ecrire favoriteCount a 999999
+    // ou rating a -1 sur l'article de n'importe qui. Correspond exactement
+    // aux seules ecritures que l'appli produit aujourd'hui :
+    //  - viewCount : +1 uniquement, une vue = une ouverture de fiche
+    //    (ProductCubit.refreshProductDetail), jamais de decrement ;
+    //  - favoriteCount : +1 (ajout favori) ou -1 (retrait), jamais au-dela,
+    //    jamais negatif (product_detail_page.dart, favorites_page.dart) ;
+    //  - reviewCount : inchange (avis existant modifie) ou +1 (premier
+    //    avis), jamais plus, jamais negatif (_rateProduct -- aucun flux de
+    //    suppression d'avis, reviews/{reviewId} interdit delete) ;
+    //  - rating : moyenne recalculee cote client dans une transaction
+    //    (_rateProduct), bornee a [0, 5] -- pas de replay de l'arithmetique
+    //    exacte ici (deja proteges par ailleurs : reviews/{reviewId} impose
+    //    une note individuelle entre 1 et 5).
+    // S'applique au proprietaire comme a tout autre utilisateur : le
+    // proprietaire passe aussi par ce chemin quand il ouvre sa propre fiche
+    // (incrementation de viewCount) -- ses autres droits (statut, etc.)
+    // restent inchanges via la branche dediee ci-dessous.
+    function isLegitimateCounterUpdate() {
+      let diffKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return diffKeys.hasOnly(['viewCount', 'favoriteCount', 'rating', 'reviewCount'])
+        && (!diffKeys.hasAny(['viewCount'])
+            || request.resource.data.viewCount == resource.data.get('viewCount', 0) + 1)
+        && (!diffKeys.hasAny(['favoriteCount'])
+            || (request.resource.data.favoriteCount >= 0
+                && (request.resource.data.favoriteCount == resource.data.get('favoriteCount', 0) + 1
+                    || request.resource.data.favoriteCount == resource.data.get('favoriteCount', 0) - 1)))
+        && (!diffKeys.hasAny(['reviewCount'])
+            || (request.resource.data.reviewCount >= 0
+                && (request.resource.data.reviewCount == resource.data.get('reviewCount', 0)
+                    || request.resource.data.reviewCount == resource.data.get('reviewCount', 0) + 1)))
+        && (!diffKeys.hasAny(['rating'])
+            || (request.resource.data.rating is number
+                && request.resource.data.rating >= 0
+                && request.resource.data.rating <= 5));
+    }
+
+    // ── Collection users ───────────────────────────────────────────────────
+    // Profil public (nom, avatar, note...) — lecture ouverte à tout
+    // utilisateur connecté (marketplace, chat). Les champs sensibles
+    // (email, téléphone, token FCM) vivent dans la sous-collection /private.
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      // isVendeurPro : jamais a la creation non plus (audit securite du
+      // 2026-10-26) -- avant, un client pouvait s'auto-declarer Vendeur Pro
+      // au moment de l'inscription ; la regle d'update bloquait deja le
+      // changement APRES coup, mais pas la valeur initiale.
+      allow create: if isOwner(userId)
+        && (!('isVendeurPro' in request.resource.data)
+            || request.resource.data.isVendeurPro == false);
+      // Exception pour totalSales/lastActivityAt : l'acheteur qui confirme
+      // une reception met a jour ces compteurs sur le document du VENDEUR
+      // (pas de Cloud Function pour le faire cote serveur). Durcie le
+      // 2026-10-26 (audit securite) : exige desormais la preuve d'une
+      // commande reellement completee entre les deux comptes
+      // (lastCompletedOrderId, ecrit par order_tracking_page.dart) --
+      // avant, n'importe quel compte authentifie pouvait gonfler/vandaliser
+      // ces compteurs sur le profil de n'importe qui, sans aucune commande.
+      // isVendeurPro : exclu de l'auto-modification, seul un admin peut le
+      // changer (statut accorde par la plateforme, pas auto-declare).
+      allow update: if isAdmin()
+        || (isOwner(userId)
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['isVendeurPro']))
+        || (isAuthenticated()
+            && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['totalSales', 'lastActivityAt', 'lastCompletedOrderId'])
+            // hasAll ajoute le 2026-10-26 (revue Ali) : rend explicite que
+            // lastCompletedOrderId doit etre present dans CETTE ecriture
+            // (pas seulement autorise), plutot que de compter implicitement
+            // sur l'erreur d'evaluation d'un champ absent.
+            && request.resource.data.diff(resource.data).affectedKeys()
+               .hasAll(['lastCompletedOrderId'])
+            && request.resource.data.lastCompletedOrderId is string
+            // anti-rejeu ajoute le 2026-10-26 (revue Ali) : la MEME commande
+            // completee ne peut pas servir de preuve deux fois -- sinon un
+            // compte avec une seule vraie commande pouvait rejouer cette
+            // ecriture indefiniment (totalSales +1 a chaque fois, toujours
+            // avec la meme preuve deja valide).
+            && (!('lastCompletedOrderId' in resource.data)
+                || resource.data.lastCompletedOrderId != request.resource.data.lastCompletedOrderId)
+            // totalSales ne peut plus etre pousse a une valeur arbitraire :
+            // doit etre exactement l'ancienne valeur + 1 (0 si le champ
+            // n'existe pas encore), comme le produit un vrai
+            // FieldValue.increment(1) sur une seule commande.
+            && request.resource.data.totalSales == resource.data.get('totalSales', 0) + 1
+            && get(/databases/$(database)/documents/order/$(request.resource.data.lastCompletedOrderId)).data.sellerId == userId
+            && get(/databases/$(database)/documents/order/$(request.resource.data.lastCompletedOrderId)).data.buyerId == request.auth.uid
+            && get(/databases/$(database)/documents/order/$(request.resource.data.lastCompletedOrderId)).data.status == 'completed');
+      allow delete: if isOwner(userId);
+
+      // Sous-collection favorites
+      // Lecture directe (get) aussi ouverte au vendeur d'UN produit precis
+      // (productId = l'ID du doc) -- jamais la liste complete des favoris
+      // d'un autre utilisateur, seulement "cet utilisateur a-t-il CE
+      // produit en favori ?". ATTENTION : cette regle imbriquee ne
+      // s'applique PAS aux requetes collectionGroup('favorites') (seulement
+      // au get()/write() direct par chemin complet) -- voir le bloc
+      // /{path=**}/favorites/{productId} plus bas, necessaire pour la
+      // requete collectionGroup de la notification "vendu" (bug signale
+      // par Ali le 2026-10-29, corrige).
+      match /favorites/{productId} {
+        allow read: if isOwner(userId)
+          || (isAuthenticated()
+              && get(/databases/$(database)/documents/product/$(productId)).data.sellerId == request.auth.uid);
+        allow write: if isOwner(userId);
+      }
+
+      // Sous-collection blocked_sellers : vendeurs bloqués par cet acheteur
+      // (lot blocage vendeur, 2026-10-16) — même forme que favorites
+      // ci-dessus, propriétaire uniquement, aucun autre utilisateur n'y a
+      // accès.
+      match /blocked_sellers/{sellerId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Sous-collection privée : email, téléphone, statut de vérification
+      // email, token FCM — jamais exposés aux autres utilisateurs
+      // (contrairement au reste du profil, public pour la marketplace/chat).
+      match /private/{doc} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Autorise la requete collectionGroup('favorites') utilisee par la
+    // notification "article vendu" (my_listings_page.dart, _markStatus).
+    // Une regle imbriquee sous /users/{userId}/favorites ne s'applique
+    // QU'aux acces par chemin complet (get/write direct) -- jamais aux
+    // requetes collectionGroup, qui exigent leur propre bloc avec le
+    // joker {path=**} (signale par Ali le 2026-10-29, corrige). "list"
+    // seulement (pas "get", deja couvert ci-dessus) : le vendeur peut
+    // lister tous les favoris pointant vers SON produit, jamais la liste
+    // complete des favoris d'un autre utilisateur.
+    match /{path=**}/favorites/{productId} {
+      // resource.data.productId (le champ du document), pas le segment de
+      // chemin {productId} : pour une requete "list" (par opposition a un
+      // "get" ponctuel), Firestore evalue la regle avant de connaitre un
+      // ID de document precis -- le joker de chemin n'est pas resolu a ce
+      // stade ("Null value error" confirme a l'emulateur), seul
+      // resource.data (le contenu reel de chaque document candidat) l'est.
+      allow list: if isAuthenticated()
+        && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.sellerId == request.auth.uid;
+    }
+
+    // ── Collection admin_users ─────────────────────────────────────────────
+    // Comptes du dashboard back-office (admin / relay_manager). Distincte de
+    // /users (clients mobile).
+    match /admin_users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, delete: if isAdmin();
+      // Durci le 2026-10-26 (audit securite), puis passe en LISTE BLANCHE le
+      // meme jour (revue Ali) : un relay_manager pouvait reecrire N'IMPORTE
+      // QUEL champ de son propre doc, y compris "role", et se promouvoir
+      // admin lui-meme. Champs lus ailleurs pour decider un droit, revus un
+      // par un : "role" (firestore.rules isAdmin()/isRelayManager() ET
+      // auth.service.ts readAdminUserDoc -- le seul qui compte reellement
+      // aujourd'hui) ; "relayCenterId" (declare dans auth.models.ts "for
+      // relay_manager only" mais jamais lu nulle part dans le code actuel --
+      // mort aujourd'hui, a proteger si quelqu'un l'active plus tard) ;
+      // "isActive" (ecrit a true a la creation dans
+      // admin-accounts.component.ts, affiche comme badge, mais jamais
+      // verifie pour bloquer un acces -- aucun bouton ne le fait meme
+      // passer a false apres coup). Liste blanche limitee aux champs
+      // reellement ecrits par l'auto-edition de profil
+      // (relay-profile.component.ts) : displayName/email/phone/city/
+      // relayName/updatedAt. Tout le reste (role, relayCenterId, isActive,
+      // createdAt...) n'est modifiable que par un admin existant.
+      allow update: if isAdmin()
+        || (isOwner(uid)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['displayName', 'email', 'phone', 'city', 'relayName', 'updatedAt']));
+    }
+
+    // ── Collection product ─────────────────────────────────────────────────
+    // Lecture publique pour les utilisateurs connectés.
+    // Création uniquement par l'auteur.
+    // Modification/suppression uniquement par l'auteur.
+    match /product/{productId} {
+      allow read: if isAuthenticated();
+      // Bornes ajoutees le 2026-10-26 (audit securite) : price/title n'etaient
+      // pas valides a la creation (champs texte/numeriques du formulaire
+      // publish_product_page.dart, aucune contrainte cote serveur avant).
+      allow create: if isAuthenticated()
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.price is number
+        && request.resource.data.price > 0
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 200;
+      allow update: if isAuthenticated()
+        && (
+            // Vendeur marque/annule vendu-reserve sur son propre article :
+            // seulement en phase sans paiement integre (lot 5). Une vente
+            // reelle (paiement actif) reste geree par le flux de commande,
+            // pas par ce carve-out. Tout le reste des droits du vendeur
+            // (inchange par rapport a la production) reste ouvert.
+            // sellerId epingle le 2026-10-26 (audit securite) : le vendeur
+            // ne pouvait pas, avant, transferer sa propre annonce a un
+            // autre uid via cette branche.
+            (resource.data.sellerId == request.auth.uid
+             && request.resource.data.sellerId == resource.data.sellerId
+             && (!((resource.data.status == 'available'
+                    && request.resource.data.status in ['sold', 'reserved'])
+                   || (resource.data.status in ['sold', 'reserved']
+                       && request.resource.data.status == 'available'))
+                 || paymentDisabled()))
+            || isAdmin()
+            || isLegitimateCounterUpdate()
+            || (request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['status', 'updatedAt', 'orderId'])
+                && request.resource.data.status in ['sold', 'available']
+                && request.resource.data.orderId is string
+                && get(/databases/$(database)/documents/order/$(request.resource.data.orderId)).data.buyerId == request.auth.uid
+                && get(/databases/$(database)/documents/order/$(request.resource.data.orderId)).data.productId == productId));
+      allow delete: if isAuthenticated()
+        && (resource.data.sellerId == request.auth.uid || isAdmin());
+
+      // Avis (note + commentaire optionnel). L'ID du doc = uid de l'auteur,
+      // donc un seul avis par personne et par produit.
+      match /reviews/{reviewId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isOwner(reviewId)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && (!('comment' in request.resource.data)
+              || (request.resource.data.comment is string
+                  && request.resource.data.comment.size() <= 500
+                  && sellerIsPro(productId)));
+        allow delete: if false;
+      }
+    }
+
+    // ── Collection chat ────────────────────────────────────────────────────
+    // Un chat est accessible uniquement aux participants.
+    match /chat/{chatId} {
+      allow read: if isAuthenticated()
+        && request.auth.uid in resource.data.participantIds;
+      // size()==2 ajoute le 2026-10-26 (revue Ali) : les 3 points d'entree
+      // reels (make_offer_sheet.dart, product_detail_page.dart,
+      // new_chat_page.dart) ne creent jamais qu'un chat a 2 (acheteur +
+      // vendeur) -- pas de groupe. Empeche un chat a 1 seul participant ou
+      // a 3+ (confusion de droits sur les futures regles de update/delete
+      // ci-dessous, pensees pour exactement 2 parties).
+      allow create: if isAuthenticated()
+        && request.resource.data.participantIds.size() == 2
+        && request.auth.uid in request.resource.data.participantIds;
+      // Durci le 2026-10-26 (audit securite) : "allow write" ouvrait aussi
+      // bien l'update (champs libres, dont participantIds) que le delete
+      // (suppression de toute la conversation par un seul participant,
+      // affectant l'autre). ChatRepositoryImpl.deleteChat() existe cote app
+      // mais n'est appele par aucun ecran -- supprimer ici ne casse rien de
+      // reel. lastMessage/lastMessageAt (sendMessage) et unreadCount
+      // (markAsRead) restent les seuls champs modifiables par un
+      // participant.
+      allow update: if isAuthenticated()
+        && request.auth.uid in resource.data.participantIds
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['lastMessage', 'lastMessageAt', 'unreadCount']);
+      allow delete: if false;
+
+      // Messages : uniquement les participants du chat parent
+      match /message/{messageId} {
+        allow read: if isAuthenticated()
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds;
+        allow create: if isAuthenticated()
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds
+          && request.resource.data.senderId == request.auth.uid;
+        // Seul le champ isRead est modifiable (marquer comme lu) — pas le
+        // contenu du message ni son expéditeur.
+        allow update: if isAuthenticated()
+          && request.auth.uid in get(/databases/$(database)/documents/chat/$(chatId)).data.participantIds
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+        allow delete: if false;
+      }
+    }
+
+    // ── Collection notification ────────────────────────────────────────────
+    // Chaque utilisateur lit/modifie uniquement ses notifications.
+    match /notification/{notificationId} {
+      allow read, update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      // Durci le 2026-10-26 (audit securite) : n'importe quel compte
+      // authentifie pouvait creer une notification adressee a n'importe
+      // quel autre utilisateur (spam/hameconnage via la liste in-app).
+      // L'app mobile ne cree jamais de notification elle-meme ; seul le
+      // back-office le fait (admin : article verifie, relay_manager :
+      // remise en etat requise).
+      // Exception ajoutee le 2026-10-29 (retour de test Fatou) : le vendeur
+      // d'un article peut notifier (type "productSold" uniquement) un
+      // utilisateur precis, seulement si cet article est reellement a lui
+      // ET que cet utilisateur l'a reellement en favori -- regle minimale,
+      // pas un allow-create general.
+      allow create: if isAuthenticated()
+        && (request.resource.data.userId == request.auth.uid
+            || isAdmin()
+            || isRelayManager()
+            || (request.resource.data.type == 'productSold'
+                && request.resource.data.data.productId is string
+                && get(/databases/$(database)/documents/product/$(request.resource.data.data.productId)).data.sellerId == request.auth.uid
+                && exists(/databases/$(database)/documents/users/$(request.resource.data.userId)/favorites/$(request.resource.data.data.productId))));
+    }
+
+    // ── Collection order ──────────────────────────────────────────────────
+    match /order/{orderId} {
+      allow read: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isAdmin());
+      // Durci le 2026-10-26 (audit securite) : ni la creation ni la mise a
+      // jour ne validaient quoi que ce soit contre le produit reel --
+      // sellerId/totalAmount pouvaient etre entierement fabriques, et un
+      // acheteur pouvait reecrire totalAmount/status librement apres coup
+      // (chaine d'exploitation jusqu'a /wallet, voir ci-dessous). Les 3
+      // transitions ci-apres sont les seules faites par l'app
+      // (order_tracking_page.dart) : vendeur "collecte", acheteur
+      // "completed" (avec ou sans collecte prealable), acheteur "cancelled"
+      // (litige refuse).
+      // totalAmount accepte aussi le prix d'une offre acceptee (revue Ali du
+      // 2026-10-26) : seul payment_page.dart cree un order aujourd'hui (prix
+      // plein, aucun flux "payer l'offre negociee" n'existe encore -- une
+      // offre acceptee se regle hors app, voir le texte de l'offre
+      // "mets-toi d'accord sur la remise dans le chat"), mais si ce flux
+      // est ajoute plus tard il n'aura pas besoin d'un nouveau changement
+      // de regle. L'ID de l'offre est deterministe (productId_buyerId, voir
+      // offers/{offerId}), donc verifiable sans champ supplementaire.
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.sellerId ==
+             get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.sellerId
+        && (
+             request.resource.data.totalAmount ==
+               get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.price
+          || (request.resource.data.totalAmount ==
+                get(/databases/$(database)/documents/offers/$(request.resource.data.productId + '_' + request.auth.uid)).data.currentPrice
+              && get(/databases/$(database)/documents/offers/$(request.resource.data.productId + '_' + request.auth.uid)).data.status == 'accepted'
+              && get(/databases/$(database)/documents/offers/$(request.resource.data.productId + '_' + request.auth.uid)).data.sellerId == request.resource.data.sellerId)
+           );
+      allow update: if isAuthenticated()
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['buyerId', 'sellerId', 'productId', 'totalAmount'])
+        && (
+             (resource.data.sellerId == request.auth.uid
+              && resource.data.status == 'pending'
+              && request.resource.data.status == 'collecte'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'collectedAt']))
+          || (resource.data.buyerId == request.auth.uid
+              && resource.data.status in ['pending', 'collecte']
+              && request.resource.data.status == 'completed'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'receivedAt']))
+          || (resource.data.buyerId == request.auth.uid
+              && resource.data.status in ['pending', 'collecte']
+              && request.resource.data.status == 'cancelled'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']))
+          || isAdmin()
+           );
+      allow delete: if false;
+    }
+
+    // ── Collection wallet ──────────────────────────────────────────────────
+    // Durci le 2026-10-26 (audit securite), puis a nouveau le 2026-11-04
+    // (revue Ali) : la version precedente ("allow write: if isAuthenticated()
+    // && !paymentDisabled()") n'avait AUCUN controle de proprietaire -- le
+    // jour ou config/payment.enabled passe a true, n'importe quel compte
+    // authentifie aurait pu crediter/debiter le wallet de n'importe qui,
+    // sans lien avec une commande reelle. Decision du 2026-11-04 : plus
+    // aucune ecriture client, meme une fois le paiement active -- seuls les
+    // admins (back-office, via admin_users) ecrivent, en attendant une
+    // vraie Cloud Function pour les mouvements automatiques (credit vente,
+    // remboursement). Les 2 points d'ecriture client existants
+    // (order_tracking_page.dart : _creditSellerWallet, _submitCancelSale)
+    // restent en best-effort (try/catch + log, deja le cas avant -- voir
+    // leurs commentaires), ils deviennent simplement toujours no-op au lieu
+    // de l'etre seulement tant que le paiement est desactive. paymentDisabled()
+    // reste utilisee ailleurs (product/order), pas supprimee.
+    match /wallet/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isAdmin();
+
+      match /transactions/{txId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create: if isAdmin();
+      }
+    }
+
+    // Requête groupée (collectionGroup) sur toutes les sous-collections
+    // transactions, utilisée par le dashboard Finances du back-office.
+    match /{path=**}/transactions/{txId} {
+      allow read: if isAdmin();
+    }
+
+    // ── Collection non_conformities ────────────────────────────────────────
+    // Signalement acheteur (remplace l'ancienne inspection relais). Le relais
+    // (et l'admin) doivent voir et traiter tous les signalements, pas
+    // seulement ceux où ils sont partie prenante.
+    // ID deterministe {orderId}_{buyerId} (audit du 2026-10-08) : un seul
+    // signalement actif par commande et par acheteur -- l'ancien ID
+    // auto-genere permettait des envois illimites sur la meme commande.
+    match /non_conformities/{ncId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid
+        && ncId == request.resource.data.orderId + '_' + request.resource.data.buyerId;
+      // !exists(...) restreint a ncId.split('_')[1] == auth.uid (sa propre
+      // place, ncId = orderId + '_' + buyerId) : meme bug que sur
+      // offers/{offerId} (resource.data plante quand le document n'existe
+      // pas encore) -- ici il cassait la verification de doublon dans
+      // order_tracking_page.dart:137-140 (.doc(ncId).get() avant toute
+      // premiere declaration sur une commande). Trouve/corrige le
+      // 2026-10-09 en repondant a la meme question pour les 3 collections
+      // a ID deterministe.
+      //
+      // "read" et "update" separes (c'etaient les memes conditions sous
+      // un "allow read, update" avant le 2026-10-09) : la clause de
+      // champs immuables ci-dessous reference request.resource, qui
+      // n'existe QUE pour les ecritures -- combinee a "read", elle
+      // plantait TOUTE lecture par un non-admin, meme d'un document
+      // existant (pas seulement le cas "n'existe pas encore" ci-dessus).
+      // Ca cassait aussi silencieusement la fiche vendeur "Validation
+      // remise en etat" (notifications_page.dart:183-187, StreamBuilder
+      // reste bloque en chargement infini) -- jamais remarque faute de
+      // test de lecture pure sur cette collection avant aujourd'hui.
+      allow read: if isAuthenticated()
+        && ((!exists(/databases/$(database)/documents/non_conformities/$(ncId))
+             && ncId.split('_')[1] == request.auth.uid)
+            || resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isRelayManager()
+            || isAdmin());
+
+      allow update: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isRelayManager()
+            || isAdmin())
+        // Pour un non-admin : ni les champs identifiants, ni le contenu
+        // du signalement (fourni une seule fois a la creation) ne
+        // changent -- empeche de reutiliser "update" pour resoumettre un
+        // nouveau motif/description/photos sur le meme document (ce qui
+        // contournerait sinon l'ID deterministe). Les transitions de
+        // statut existantes (evaluation du cout, acceptation vendeur via
+        // notifications_page.dart) ne touchent jamais ces champs, donc
+        // restent inchangees.
+        && (isAdmin() || !request.resource.data.diff(resource.data)
+             .affectedKeys().hasAny(['orderId', 'buyerId', 'sellerId', 'productId',
+                                      'reason', 'description', 'photoUrls',
+                                      'listingPhotoUrls', 'createdAt']));
+    }
+
+    // ── Collection refund_requests ─────────────────────────────────────────
+    // ID deterministe {orderId}_{buyerId} (audit du 2026-10-08) : une
+    // seule demande de remboursement active par commande et par acheteur.
+    match /refund_requests/{id} {
+      allow create: if isAuthenticated()
+        && request.resource.data.buyerId == request.auth.uid
+        && id == request.resource.data.orderId + '_' + request.resource.data.buyerId;
+      allow read: if isAuthenticated()
+        && (resource.data.buyerId == request.auth.uid || isAdmin());
+    }
+
+    // ── Collection disputes ─────────────────────────────────────────────────
+    // Litiges génériques gérés par l'admin (distinct de non_conformities,
+    // qui est le flux relais du nouveau circuit de livraison).
+    match /disputes/{id} {
+      allow read, update: if isAdmin();
+    }
+
+    // ── Collection reports ──────────────────────────────────────────────────
+    // Signalement libre (article ou conversation), distinct de
+    // non_conformities (lié à une commande) et de disputes (litige
+    // acheteur/vendeur). Tout utilisateur connecté peut créer un
+    // signalement avec son propre reporterId ; seuls les admins le
+    // traitent (update).
+    // ID deterministe {reporterId}_{targetType}_{targetId} (audit du
+    // 2026-10-08) : un seul signalement actif par personne et par objet
+    // signale. Une seconde tentative sur le meme objet est traitee comme
+    // un "update" (le document existe deja) et refusee a un non-admin --
+    // aucune regle update n'existe pour eux, ni aucune regle delete.
+    match /reports/{id} {
+      allow create: if isAuthenticated()
+        && request.resource.data.reporterId == request.auth.uid
+        && id == request.resource.data.reporterId + '_' + request.resource.data.targetType + '_' + request.resource.data.targetId;
+      // id.split('_')[0] == auth.uid : l'ID commence TOUJOURS par le
+      // reporterId (impose a la creation ci-dessus), donc cette seule
+      // verification suffit pour "est-ce ma propre place ?", que le
+      // document existe deja ou non -- pas besoin d'un exists() separe,
+      // contrairement a offers/non_conformities ou un second role
+      // (vendeur) a aussi besoin de lire resource.data. Corrige le
+      // 2026-10-09 : la regle precedente (isAdmin() seul) interdisait a
+      // l'auteur de lire SON PROPRE signalement, existant ou non --
+      // report_dialog.dart fait un .get() sans try/catch avant meme
+      // d'afficher le formulaire, donc CHAQUE signalement (pas seulement
+      // les doublons) echouait avec permission-denied en production.
+      allow read: if isAdmin()
+        || (isAuthenticated() && id.split('_')[0] == request.auth.uid);
+      allow update: if isAdmin();
+    }
+
+    // ── Collection config ───────────────────────────────────────────────────
+    // Reglages globaux lus par l'app mobile (ex: interrupteur paiement,
+    // config/payment). Lecture ouverte a tout utilisateur connecte : l'app a
+    // besoin de savoir si le paiement est actif avant meme d'afficher quoi
+    // que ce soit. Ecriture reservee aux admins (back-office).
+    match /config/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ── Collection offers ────────────────────────────────────────────────────
+    // Negociation de prix acheteur/vendeur (lot "offres", PLAN_OFFRES.md).
+    // Lot A (socle) : regles ecrites et testees, AUCUN ecran ne les utilise
+    // encore. Valeurs validees par Fatou le 2026-10-08 : pas de plafond de
+    // nombre d'offres par defaut (illimite), pas de plafond de rounds par
+    // defaut (illimite, voir offersRoundAllowed()). L'expiration (respondBy
+    // depasse) est geree par ecriture paresseuse cote client a l'ouverture
+    // d'un ecran concerne, pas par un cron serveur.
+    //
+    // "Une seule offre pending par acheteur/article" : garanti par un ID de
+    // document DETERMINISTE {productId}_{buyerId} (voir OfferModel.buildId,
+    // mobile) -- un seul document possible par paire, donc un seul statut
+    // possible a la fois. Une negociation refusee/annulee/expiree se relance
+    // en reutilisant CE MEME document (branche "relance" ci-dessous), pas en
+    // creant un nouveau document.
+    match /offers/{offerId} {
+      allow create: if isAuthenticated()
+        && offerId == request.resource.data.productId + '_' + request.resource.data.buyerId
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.buyerId != request.resource.data.sellerId
+        && request.resource.data.sellerId ==
+             get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.sellerId
+        && get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.status == 'available'
+        && get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.get('offersEnabled', true) == true
+        && request.resource.data.status == 'pending'
+        && request.resource.data.round == 1
+        && request.resource.data.turn == 'seller'
+        // originalPrice epingle au vrai prix produit (audit securite du
+        // 2026-10-26) : avant, l'acheteur pouvait inventer n'importe quelle
+        // base de negociation, deconnectee du prix reel de l'annonce.
+        && request.resource.data.originalPrice ==
+             get(/databases/$(database)/documents/product/$(request.resource.data.productId)).data.price
+        && request.resource.data.currentPrice < request.resource.data.originalPrice
+        && request.resource.data.currentPrice >= request.resource.data.originalPrice * offersMinRatio();
+
+      // !exists(...) : un "get" sur un document qui n'existe pas encore
+      // (ex. un acheteur qui n'a jamais fait d'offre sur ce produit) doit
+      // renvoyer exists=false, pas permission-denied -- sinon "resource"
+      // vaut null et resource.data plante l'evaluation de la regle avant
+      // meme d'atteindre les conditions de proprietaire. Restreint a
+      // offerId.split('_')[1] == auth.uid (sa PROPRE place, puisque
+      // offerId = productId + '_' + buyerId) : un tiers qui sonde la
+      // place d'un autre acheteur reste refuse, meme si le document
+      // n'existe pas. Bug trouve le 2026-10-09 en testant le flux "Faire
+      // une offre" sur un premier contact (aucune offre existante).
+      allow read: if isAuthenticated()
+        && ((!exists(/databases/$(database)/documents/offers/$(offerId))
+             && offerId.split('_')[1] == request.auth.uid)
+            || resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid
+            || isAdmin());
+
+      // Les champs identifiants/prix de depart ne changent jamais apres
+      // creation, quelle que soit la transition (y compris une relance :
+      // originalPrice reste celui de la toute premiere offre sur cette
+      // paire, meme si le prix du produit a change depuis). Seule la
+      // partie dont c'est le tour peut agir (verrou optimiste sur "turn").
+      allow update: if isAuthenticated()
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['buyerId', 'sellerId', 'productId', 'originalPrice', 'chatId'])
+        && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid)
+        && (
+             // Expiration paresseuse : uniquement depuis "pending" (pas depuis
+             // "accepted" -- la reservation post-acceptation a son propre
+             // delai, pas encore gere par cette regle) et seulement une fois
+             // le delai de reponse du tour en cours reellement depasse. Seuls
+             // le statut et l'historique changent.
+             (resource.data.status == 'pending'
+               && request.time > resource.data.respondBy
+               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+               && request.resource.data.status == 'expired')
+
+             // L'acheteur retire son offre tant que le vendeur n'a pas repondu :
+             // seuls le statut et l'historique changent.
+             || (resource.data.buyerId == request.auth.uid
+                 && resource.data.turn == 'seller'
+                 && resource.data.status == 'pending'
+                 && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+                 && request.resource.data.status == 'cancelled')
+
+             // Relance par l'acheteur : seulement depuis un statut terminal
+             // issu d'un refus/annulation/expiration (jamais depuis
+             // "pending" ou "accepted"). Memes conditions qu'une creation
+             // (ratio, prix strictement inferieur, produit disponible,
+             // offres autorisees), retour a round 1 / turn seller.
+             // L'historique est conserve (pas remplace) par les champs
+             // globalement immuables + le fait qu'on ne touche pas
+             // "history" ici (l'app y ajoutera l'entree de relance).
+             || (resource.data.buyerId == request.auth.uid
+                 && resource.data.status in ['rejected', 'cancelled', 'expired']
+                 && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.status == 'available'
+                 && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.get('offersEnabled', true) == true
+                 && request.resource.data.status == 'pending'
+                 && request.resource.data.round == 1
+                 && request.resource.data.turn == 'seller'
+                 && request.resource.data.currentPrice < resource.data.originalPrice
+                 && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio())
+
+             // Le vendeur agit quand c'est son tour.
+             || (resource.data.sellerId == request.auth.uid
+                 && resource.data.turn == 'seller'
+                 && resource.data.status == 'pending'
+                 && (
+                      // Accepter/refuser : currentPrice, round et turn
+                      // restent inchanges, seuls le statut et l'historique
+                      // bougent. Accepter exige en plus que le produit
+                      // soit toujours disponible au moment T (empeche
+                      // d'accepter une offre devenue perimee si l'article
+                      // a ete vendu/reserve entre-temps, lot D) ; refuser
+                      // reste possible dans tous les cas.
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+                        && ((request.resource.data.status == 'accepted'
+                             && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.status == 'available')
+                            || request.resource.data.status == 'rejected'))
+
+                      // Contre-offre : prix dans les bornes [ratio min, prix
+                      // de depart], round+1, tour qui passe a l'acheteur.
+                      || (request.resource.data.status == 'pending'
+                          && request.resource.data.turn == 'buyer'
+                          && request.resource.data.round == resource.data.round + 1
+                          && offersRoundAllowed(resource.data.round)
+                          && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio()
+                          && request.resource.data.currentPrice <= resource.data.originalPrice)
+                    ))
+
+             // L'acheteur agit quand c'est son tour (apres une contre-offre).
+             || (resource.data.buyerId == request.auth.uid
+                 && resource.data.turn == 'buyer'
+                 && resource.data.status == 'pending'
+                 && (
+                      // Memes conditions que pour le vendeur ci-dessus :
+                      // accepter exige le produit toujours disponible.
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'history'])
+                        && ((request.resource.data.status == 'accepted'
+                             && get(/databases/$(database)/documents/product/$(resource.data.productId)).data.status == 'available')
+                            || request.resource.data.status == 'rejected'))
+
+                      || (request.resource.data.status == 'pending'
+                          && request.resource.data.turn == 'seller'
+                          && request.resource.data.round == resource.data.round + 1
+                          && offersRoundAllowed(resource.data.round)
+                          && request.resource.data.currentPrice >= resource.data.originalPrice * offersMinRatio()
+                          && request.resource.data.currentPrice <= resource.data.originalPrice)
+                    ))
+           );
+    }
+
+    // ── Collection relay_centers ────────────────────────────────────────────
+    // Gestion des points relais (admin uniquement) ; lecture aussi ouverte
+    // au relay_manager pour consulter les infos de son centre.
+    match /relay_centers/{id} {
+      allow read: if isAdmin() || isRelayManager();
+      allow write: if isAdmin();
+    }
+  }
+}

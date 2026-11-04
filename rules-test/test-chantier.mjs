@@ -25,7 +25,7 @@ async function check(name, fn) {
 
 const testEnv = await initializeTestEnvironment({
   projectId: PROJECT_ID,
-  firestore: { rules: readFileSync(RULES_PATH, 'utf8'), host: '127.0.0.1', port: 8123 },
+  firestore: { rules: readFileSync(RULES_PATH, 'utf8'), host: '127.0.0.1', port: 8124 },
 });
 
 const SELLER = 'seller1';
