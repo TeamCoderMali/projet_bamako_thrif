@@ -10,11 +10,6 @@ class PermissionService {
     return status.isGranted;
   }
 
-  Future<bool> requestPhotos() async {
-    final status = await Permission.photos.request();
-    return status.isGranted;
-  }
-
   Future<bool> requestNotifications() async {
     final status = await Permission.notification.request();
     return status.isGranted;
@@ -25,13 +20,7 @@ class PermissionService {
     return status.isGranted;
   }
 
-  Future<bool> requestStorage() async {
-    final status = await Permission.storage.request();
-    return status.isGranted;
-  }
-
   Future<PermissionStatus> checkCamera() => Permission.camera.status;
-  Future<PermissionStatus> checkPhotos() => Permission.photos.status;
   Future<PermissionStatus> checkNotifications() =>
       Permission.notification.status;
   Future<PermissionStatus> checkLocation() =>

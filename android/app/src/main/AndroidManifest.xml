@@ -1,10 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Permissions image picker -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <!-- Pour Android ≤ 12 -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32"/>
+    <!-- READ_MEDIA_IMAGES / READ_EXTERNAL_STORAGE retirées (Google Play,
+         2026-11-05) : image_picker utilise le photo picker systeme sur
+         Android 13+ et le contrat SAF sur les versions plus anciennes,
+         aucune des deux permissions n'est necessaire pour choisir une
+         photo dans la galerie. -->
 
     <application
         android:label="DANAYA"
