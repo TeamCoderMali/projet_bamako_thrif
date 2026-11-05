@@ -16,6 +16,7 @@ import 'package:bamako_thrift/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:bamako_thrift/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:bamako_thrift/features/product/domain/entities/product_entity.dart';
 import 'package:bamako_thrift/features/product/presentation/cubit/product_cubit.dart';
+import 'package:bamako_thrift/shared/widgets/fullscreen_photo_viewer.dart';
 import 'package:bamako_thrift/shared/widgets/make_offer_sheet.dart';
 import 'package:bamako_thrift/shared/widgets/report_dialog.dart';
 import 'package:bamako_thrift/shared/widgets/vendeur_pro_badge.dart';
@@ -1082,23 +1083,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     return PageView.builder(
       itemCount: product.imageUrls.length,
       itemBuilder: (context, index) {
-        return CachedNetworkImage(
-          imageUrl: product.imageUrls[index],
-          fit: BoxFit.cover,
-          placeholder: (_, __) => Container(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: Center(
-              child: CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.primary,
-                strokeWidth: 2,
+        return GestureDetector(
+          onTap: () => showFullScreenPhotoViewer(
+            context,
+            imageUrls: product.imageUrls,
+            initialIndex: index,
+          ),
+          child: CachedNetworkImage(
+            imageUrl: product.imageUrls[index],
+            fit: BoxFit.cover,
+            placeholder: (_, __) => Container(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.primary,
+                  strokeWidth: 2,
+                ),
               ),
             ),
-          ),
-          errorWidget: (_, __, ___) => Container(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: Center(
-              child: Icon(Icons.checkroom,
-                  size: 100, color: Theme.of(context).colorScheme.primary),
+            errorWidget: (_, __, ___) => Container(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: Center(
+                child: Icon(Icons.checkroom,
+                    size: 100, color: Theme.of(context).colorScheme.primary),
+              ),
             ),
           ),
         );
