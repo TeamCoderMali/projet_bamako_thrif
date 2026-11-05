@@ -7,6 +7,7 @@ abstract class ProductRepository {
     int page = 0,
     int limit = 20,
     ProductCategory? category,
+    String? subCategory,
     ProductCondition? condition,
     double? minPrice,
     double? maxPrice,

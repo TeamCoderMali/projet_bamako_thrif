@@ -19,6 +19,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   ProductCategory? _selectedCategory;
+  // Sous-categorie choisie (barre sous les categories, ajout 2026-11-05) --
+  // null = "Tout", reinitialisee a chaque changement de categorie.
+  String? _selectedSubCategory;
   // Derniere liste connue pour "Recommande pour toi" : le ProductCubit est
   // partage avec la fiche article/la recherche (voir main.dart), donc son
   // etat peut devenir ProductDetailLoaded/ProductSearchResult pendant que
@@ -67,6 +70,11 @@ class _HomePageState extends State<HomePage> {
             _buildSearchBar(context),
             const SizedBox(height: 14),
             _buildCategoryFilters(),
+            if (_selectedCategory != null &&
+                subCategoriesFor(_selectedCategory!).isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _buildSubCategoryFilters(),
+            ],
             const SizedBox(height: 14),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -300,7 +308,11 @@ class _HomePageState extends State<HomePage> {
           return GestureDetector(
             onTap: () {
               final cat = filter['value'] as ProductCategory?;
-              setState(() => _selectedCategory = cat);
+              // Reinitialise la sous-categorie au changement de categorie.
+              setState(() {
+                _selectedCategory = cat;
+                _selectedSubCategory = null;
+              });
               context
                   .read<ProductCubit>()
                   .loadProducts(category: cat, refresh: true);
@@ -344,13 +356,67 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildSubCategoryFilters() {
+    final subCats = subCategoriesFor(_selectedCategory!);
+    return SizedBox(
+      height: 30,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: subCats.length + 1,
+        itemBuilder: (context, index) {
+          final subCat = index == 0 ? null : subCats[index - 1];
+          final isSelected = _selectedSubCategory == subCat;
+          return GestureDetector(
+            onTap: () {
+              setState(() => _selectedSubCategory = subCat);
+              context.read<ProductCubit>().loadProducts(
+                    category: _selectedCategory,
+                    subCategory: subCat,
+                    refresh: true,
+                  );
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outlineVariant,
+                ),
+              ),
+              child: Text(
+                index == 0 ? 'Tout' : subCat!,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildProductGrid(BuildContext context, List<ProductEntity> products) {
     return RefreshIndicator(
       color: Theme.of(context).colorScheme.primary,
       onRefresh: () async {
-        context
-            .read<ProductCubit>()
-            .loadProducts(category: _selectedCategory, refresh: true);
+        context.read<ProductCubit>().loadProducts(
+              category: _selectedCategory,
+              subCategory: _selectedSubCategory,
+              refresh: true,
+            );
       },
       child: GridView.builder(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),

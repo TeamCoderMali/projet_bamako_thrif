@@ -16,6 +16,10 @@ class FilterPage extends StatefulWidget {
 
 class _FilterPageState extends State<FilterPage> {
   late ProductCategory? _category;
+  // Pas de choix de sous-catégorie ici (seulement la barre rapide du
+  // catalogue) -- juste préservée tant que la catégorie ne change pas, pour
+  // ne pas l'effacer silencieusement en appliquant les filtres avancés.
+  late String? _subCategory;
   late ProductCondition? _condition;
   late RangeValues _priceRange;
 
@@ -26,6 +30,7 @@ class _FilterPageState extends State<FilterPage> {
     super.initState();
     final f = widget.currentFilters ?? const CatalogFilters();
     _category = f.category;
+    _subCategory = f.subCategory;
     _condition = f.condition;
     _priceRange = RangeValues(f.minPrice, f.maxPrice);
   }
@@ -33,14 +38,23 @@ class _FilterPageState extends State<FilterPage> {
   void _reset() {
     setState(() {
       _category = null;
+      _subCategory = null;
       _condition = null;
       _priceRange = const RangeValues(0, _maxPrice);
+    });
+  }
+
+  void _setCategory(ProductCategory? cat) {
+    setState(() {
+      _category = cat;
+      _subCategory = null;
     });
   }
 
   void _apply() {
     final filters = CatalogFilters(
       category: _category,
+      subCategory: _subCategory,
       condition: _condition,
       minPrice: _priceRange.start,
       maxPrice: _priceRange.end,
@@ -90,12 +104,12 @@ class _FilterPageState extends State<FilterPage> {
                 _FilterChip(
                   label: 'Toutes',
                   selected: _category == null,
-                  onTap: () => setState(() => _category = null),
+                  onTap: () => _setCategory(null),
                 ),
                 ..._catItems.map((e) => _FilterChip(
                       label: e.label,
                       selected: _category == e.value,
-                      onTap: () => setState(() => _category = e.value),
+                      onTap: () => _setCategory(e.value),
                     )),
               ],
             ),

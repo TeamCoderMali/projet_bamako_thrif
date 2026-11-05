@@ -15,12 +15,16 @@ import 'package:bamako_thrift/shared/widgets/bottom_navigation.dart';
 // ── Modèle de filtres partagé entre CatalogPage et FilterPage ────────────────
 class CatalogFilters {
   final ProductCategory? category;
+  // Sous-categorie choisie (subCategoriesFor(category)) -- null = "Tout",
+  // pas de clause de filtre (ajout filtre sous-categorie, 2026-11-05).
+  final String? subCategory;
   final ProductCondition? condition;
   final double minPrice;
   final double maxPrice;
 
   const CatalogFilters({
     this.category,
+    this.subCategory,
     this.condition,
     this.minPrice = 0,
     this.maxPrice = 100000,
@@ -28,18 +32,21 @@ class CatalogFilters {
 
   bool get hasActiveFilters =>
       category != null ||
+      subCategory != null ||
       condition != null ||
       minPrice > 0 ||
       maxPrice < 100000;
 
   CatalogFilters copyWith({
     ProductCategory? Function()? category,
+    String? Function()? subCategory,
     ProductCondition? Function()? condition,
     double? minPrice,
     double? maxPrice,
   }) {
     return CatalogFilters(
       category: category != null ? category() : this.category,
+      subCategory: subCategory != null ? subCategory() : this.subCategory,
       condition: condition != null ? condition() : this.condition,
       minPrice: minPrice ?? this.minPrice,
       maxPrice: maxPrice ?? this.maxPrice,
@@ -98,6 +105,7 @@ class _CatalogPageState extends State<CatalogPage> {
   void _load() {
     context.read<ProductCubit>().loadProductsWithFilters(
           category: _filters.category,
+          subCategory: _filters.subCategory,
           condition: _filters.condition,
           minPrice: _filters.minPrice > 0 ? _filters.minPrice : null,
           maxPrice: _filters.maxPrice < 100000 ? _filters.maxPrice : null,
@@ -105,7 +113,15 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   void _applyCategory(ProductCategory? cat) {
-    setState(() => _filters = _filters.copyWith(category: () => cat));
+    // Reinitialise la sous-categorie au changement de categorie (options
+    // differentes selon la categorie, voir subCategoriesFor()).
+    setState(() => _filters =
+        _filters.copyWith(category: () => cat, subCategory: () => null));
+    _load();
+  }
+
+  void _applySubCategory(String? subCat) {
+    setState(() => _filters = _filters.copyWith(subCategory: () => subCat));
     _load();
   }
 
@@ -238,6 +254,56 @@ class _CatalogPageState extends State<CatalogPage> {
               },
             ),
           ),
+
+          // ── Sous-catégories de la catégorie choisie (Objets n'en a pas) ────
+          if (_filters.category != null &&
+              subCategoriesFor(_filters.category!).isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 30,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                itemCount: subCategoriesFor(_filters.category!).length + 1,
+                itemBuilder: (_, i) {
+                  final subCats = subCategoriesFor(_filters.category!);
+                  final subCat = i == 0 ? null : subCats[i - 1];
+                  final isSelected = _filters.subCategory == subCat;
+                  return GestureDetector(
+                    onTap: () => _applySubCategory(subCat),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      margin: const EdgeInsets.only(right: 8),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primaryContainer
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
+                      child: Text(
+                        i == 0 ? 'Tout' : subCat!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
 
           // ── Bandeau filtres actifs ────────────────────────────────────────
           if (_filters.condition != null ||

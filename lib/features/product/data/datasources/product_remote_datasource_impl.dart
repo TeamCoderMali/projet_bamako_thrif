@@ -19,6 +19,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     int page = 0,
     int limit = 20,
     ProductCategory? category,
+    String? subCategory,
     ProductCondition? condition,
     double? minPrice,
     double? maxPrice,
@@ -38,6 +39,12 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       query = values.length > 1
           ? query.where('category', whereIn: values)
           : query.where('category', isEqualTo: values.first);
+    }
+    // "Tout" (subCategory == null) n'ajoute aucune clause -- les anciennes
+    // annonces sans subCategory restent visibles (filtre absent, pas
+    // isEqualTo: null, qui les exclurait).
+    if (subCategory != null) {
+      query = query.where('subCategory', isEqualTo: subCategory);
     }
     if (condition != null) {
       query = query.where('condition', isEqualTo: condition.name);

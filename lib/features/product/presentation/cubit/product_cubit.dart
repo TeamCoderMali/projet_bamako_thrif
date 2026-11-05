@@ -112,6 +112,7 @@ class ProductCubit extends Cubit<ProductState> {
   // ── Charger les produits ──────────────────────────────────────────────────
   Future<void> loadProducts({
     ProductCategory? category,
+    String? subCategory,
     bool refresh = false,
   }) async {
     final id = ++_requestId;
@@ -119,8 +120,8 @@ class ProductCubit extends Cubit<ProductState> {
       emit(const ProductLoading());
     }
     try {
-      final products =
-          await _withoutBlockedSellers(await _repository.getProducts(category: category));
+      final products = await _withoutBlockedSellers(await _repository.getProducts(
+          category: category, subCategory: subCategory));
       if (id != _requestId) return;
       emit(ProductLoaded(products: products, hasMore: products.length == 20));
     } catch (e) {
@@ -132,6 +133,7 @@ class ProductCubit extends Cubit<ProductState> {
   // ── Charger avec filtres avancés ──────────────────────────────────────────
   Future<void> loadProductsWithFilters({
     ProductCategory? category,
+    String? subCategory,
     ProductCondition? condition,
     double? minPrice,
     double? maxPrice,
@@ -141,6 +143,7 @@ class ProductCubit extends Cubit<ProductState> {
     try {
       final products = await _withoutBlockedSellers(await _repository.getProducts(
         category: category,
+        subCategory: subCategory,
         condition: condition,
         minPrice: minPrice,
         maxPrice: maxPrice,
